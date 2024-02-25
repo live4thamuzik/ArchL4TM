@@ -15,7 +15,7 @@ iwctl
 device list
 station wlan0 scan
 station wlan0 get-networks
-station wlan0 connect "NETWORK  _NAME"
+station wlan0 connect "NETWORK_NAME"
 exit
 ```
 
