@@ -1,0 +1,13 @@
+--END OF MINIMAL INSTALL--
+all-repository-fonts
+brave-bin
+github-desktop-bin
+nerd-fonts-fira-code
+nordic-darker-standard-buttons-theme
+nordic-darker-theme
+nordic-kde-git
+nordic-theme
+plymouth-git
+sddm-nordic-theme-git
+ttf-meslo
+pipes.sh
