@@ -13,7 +13,7 @@ echo "Installing git."
 pacman -Sy --noconfirm --needed git glibc
 
 echo "Cloning the ArchL4TM Project"
-git clone https://github.com/live4thamuzik/ArchTitus
+git clone https://github.com/live4thamuzik/ArchL4TM
 
 echo "Executing ArchL4TM Script"
 
