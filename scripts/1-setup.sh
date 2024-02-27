@@ -20,6 +20,10 @@ systemctl enable --now NetworkManager
 systemctl enable --now netctl
 systemctl enable --now iwd
 systemctl enable --now dhcpcd
+# Enable SSH service
+systemctl enable --now sshd
+# Enable SSD\NVMe Support
+systemctl enable --now fstrim.timer
 echo -ne "
 -------------------------------------------------------------------------
                     Setting up mirrors for optimal download 
@@ -167,7 +171,7 @@ echo -ne "
 if [ $(whoami) = "root"  ]; then
     groupadd libvirt
     useradd -m -G wheel,libvirt,power,storage,uucp,network -s /bin/bash $USERNAME 
-    echo "$USERNAME created, home directory created, added to wheel and libvirt group, default shell set to /bin/bash"
+    echo "$USERNAME created, home directory created, added to wheel, libvirt, power, storage, and network groups, default shell set to /bin/bash"
 
 # use chpasswd to enter $USERNAME:$password
     echo "$USERNAME:$PASSWORD" | chpasswd

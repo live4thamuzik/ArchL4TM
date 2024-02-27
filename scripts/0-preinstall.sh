@@ -35,109 +35,138 @@ echo -ne "
 pacman -S --noconfirm --needed gptfdisk btrfs-progs glibc
 echo -ne "
 -------------------------------------------------------------------------
-                    Formating Disk
+                    Drive Preperation
 -------------------------------------------------------------------------
 "
-umount -A --recursive /mnt # make sure everything is unmounted before we start
-# disk prep
-sgdisk -Z ${DISK} # zap all on disk
-sgdisk -a 2048 -o ${DISK} # new gpt disk 2048 alignment
-
-# create partitions
-sgdisk -n 1::+1M --typecode=1:ef02 --change-name=1:'BIOSBOOT' ${DISK} # partition 1 (BIOS Boot Partition)
-sgdisk -n 2::+300M --typecode=2:ef00 --change-name=2:'EFIBOOT' ${DISK} # partition 2 (UEFI Boot Partition)
-sgdisk -n 3::-0 --typecode=3:8300 --change-name=3:'ROOT' ${DISK} # partition 3 (Root), default start, remaining
-if [[ ! -d "/sys/firmware/efi" ]]; then # Checking for bios system
-    sgdisk -A 1:set:2 ${DISK}
-fi
-partprobe ${DISK} # reread partition table to ensure it is correct
-
-# make filesystems
-echo -ne "
--------------------------------------------------------------------------
-                    Creating Filesystems
--------------------------------------------------------------------------
-"
-# @description Creates the btrfs subvolumes. 
-createsubvolumes () {
-    btrfs subvolume create /mnt/@
-    btrfs subvolume create /mnt/@home
-    btrfs subvolume create /mnt/@var
-    btrfs subvolume create /mnt/@tmp
-    btrfs subvolume create /mnt/@.snapshots
+# Function to check for old signatures and remove them
+remove_old_signature() {
+  dd if=/dev/zero of="$1" bs=512 count=1 conv=notrunc
 }
 
-# @description Mount all btrfs subvolumes after root has been mounted.
-mountallsubvol () {
-    mount -o ${MOUNT_OPTIONS},subvol=@home ${partition3} /mnt/home
-    mount -o ${MOUNT_OPTIONS},subvol=@tmp ${partition3} /mnt/tmp
-    mount -o ${MOUNT_OPTIONS},subvol=@var ${partition3} /mnt/var
-    mount -o ${MOUNT_OPTIONS},subvol=@.snapshots ${partition3} /mnt/.snapshots
+# Function to perform LVM setup
+setup_lvm() {
+  # Format partition 1 as fat32
+  mkfs.fat -F32 "/dev/${disk}1"
+
+  # Format partition 2 as ext4
+  mkfs.ext4 "/dev/${disk}2"
+
+  # Create physical volume for LVM on partition 3 with data alignment 1m
+  pvcreate --dataalignment 1m "/dev/${disk}3"
+
+  # Create volume group called volgroup0 on partition 3
+  vgcreate volgroup0 "/dev/${disk}3"
+
+  # Create logical volumes
+  lvcreate -L 30GB volgroup0 -n lv_root
+  lvcreate -l +100%FREE volgroup0 -n lv_home
+
+  # Load kernel module
+  modprobe dm_mod
+
+  # Scan system for volume groups
+  vgscan
+
+  # Activate volume group
+  vgchange -ay
+
+  # Format root volume
+  mkfs.ext4 /dev/volgroup0/lv_root
+
+  # Mount root volume
+  mount /dev/volgroup0/lv_root /mnt
+
+  # Create /boot directory and mount partition 2
+  mkdir /mnt/boot
+  mount "/dev/${disk}2" /mnt/boot
+
+  # Format home volume
+  mkfs.ext4 /dev/volgroup0/lv_home
+
+  # Create /home directory and mount home volume
+  mkdir /mnt/home
+  mount /dev/volgroup0/lv_home /mnt/home
+
+  # Create /etc directory
+  mkdir /mnt/etc
+
+  # Generate fstab
+  #genfstab -U -p /mnt >> /mnt/etc/fstab
 }
 
-# @description BTRFS subvolulme creation and mounting. 
-subvolumesetup () {
-# create nonroot subvolumes
-    createsubvolumes     
-# unmount root to remount with subvolume 
-    umount /mnt
-# mount @ subvolume
-    mount -o ${MOUNT_OPTIONS},subvol=@ ${partition3} /mnt
-# make directories home, .snapshots, var, tmp
-    mkdir -p /mnt/{home,var,tmp,.snapshots}
-# mount subvolumes
-    mountallsubvol
+# Function to setup encryption and perform LVM setup
+setup_encryption() {
+  # Format partition 1 as fat32
+  mkfs.fat -F32 "/dev/${disk}1"
+
+  # Format partition 2 as ext4
+  mkfs.ext4 "/dev/${disk}2"
+
+  # Setup encryption on partition 3 using luks
+  cryptsetup luksFormat "/dev/${disk}3"
+  echo "YES" | cryptsetup open --type luks "/dev/${disk}3" lvm
+
+  # Ask user to set encryption password
+  read -s -p "Enter encryption password: " password
+  echo
+
+  # Confirm encryption password
+  read -s -p "Confirm encryption password: " confirm_password
+  echo
+
+  # Check if passwords match
+  if [ "$password" != "$confirm_password" ]; then
+    echo "Passwords do not match. Exiting."
+    exit 1
+  fi
+
+  # Use luks to open partition 3 and name it lvm
+  cryptsetup luksOpen "/dev/${disk}3" lvm
+
+  # Ask user for encryption password
+  read -s -p "Enter encryption password: " entered_password
+  echo
+
+  # Check if entered password is correct
+  if [ "$entered_password" != "$password" ]; then
+    echo "Incorrect encryption password. Exiting."
+    exit 1
+  fi
+
+  setup_lvm
 }
 
-if [[ "${DISK}" =~ "nvme" ]]; then
-    partition2=${DISK}p2
-    partition3=${DISK}p3
+# List disks
+fdisk -l
+
+# Select disk
+read -p "Enter the disk (e.g., /dev/sda): " disk
+
+# Use fdisk to delete all partitions
+echo -e "d\nw" | fdisk "/dev/${disk}"
+
+# Ask user if they want to use encryption
+read -p "Do you want to use encryption? (y/n): " encrypt_option
+
+if [ "$encrypt_option" == "y" ]; then
+  # Encryption selected
+  echo "Encryption selected."
+  echo -e "g\nn\n1\n\n+1G\na\n1\nn\n2\n\n+1G\nn\n3\n\n\nt\n1\n1\nt\n3\n31\nw" | fdisk "/dev/${disk}"
+  setup_encryption
 else
-    partition2=${DISK}2
-    partition3=${DISK}3
+  # No encryption selected
+  echo "No encryption selected."
+  echo -e "g\nn\n1\n\n+1G\na\n1\nn\n2\n\n\nt\n1\n1\nt\n2\n44\nw" | fdisk "/dev/${disk}"
+  setup_lvm
 fi
 
-if [[ "${FS}" == "btrfs" ]]; then
-    mkfs.vfat -F32 -n "EFIBOOT" ${partition2}
-    mkfs.btrfs -L ROOT ${partition3} -f
-    mount -t btrfs ${partition3} /mnt
-    subvolumesetup
-elif [[ "${FS}" == "ext4" ]]; then
-    mkfs.vfat -F32 -n "EFIBOOT" ${partition2}
-    mkfs.ext4 -L ROOT ${partition3}
-    mount -t ext4 ${partition3} /mnt
-elif [[ "${FS}" == "luks" ]]; then
-    mkfs.vfat -F32 -n "EFIBOOT" ${partition2}
-# enter luks password to cryptsetup and format root partition
-    echo -n "${LUKS_PASSWORD}" | cryptsetup -y -v luksFormat ${partition3} -
-# open luks container and ROOT will be place holder 
-    echo -n "${LUKS_PASSWORD}" | cryptsetup open ${partition3} ROOT -
-# now format that container
-    mkfs.btrfs -L ROOT ${partition3}
-# create subvolumes for btrfs
-    mount -t btrfs ${partition3} /mnt
-    subvolumesetup
-# store uuid of encrypted partition for grub
-    echo ENCRYPTED_PARTITION_UUID=$(blkid -s UUID -o value ${partition3}) >> $CONFIGS_DIR/setup.conf
-fi
-
-# mount target
-mkdir -p /mnt/boot/efi
-mount -t vfat -L EFIBOOT /mnt/boot/
-
-if ! grep -qs '/mnt' /proc/mounts; then
-    echo "Drive is not mounted can not continue"
-    echo "Rebooting in 3 Seconds ..." && sleep 1
-    echo "Rebooting in 2 Seconds ..." && sleep 1
-    echo "Rebooting in 1 Second ..." && sleep 1
-    reboot now
-fi
+echo "Setup completed successfully."
 echo -ne "
 -------------------------------------------------------------------------
                     Arch Install on Main Drive
 -------------------------------------------------------------------------
 "
-pacstrap -K /mnt base base-devel linux linux-firmware linux-firmware-marvell sof-firmware linux-headers lvm2 vim nano sudo archlinux-keyring wget libnewt man-db pan-pages texinfo --noconfirm --needed
+pacstrap -K /mnt base base-devel linux linux-firmware linux-firmware-marvell sof-firmware linux-headers lvm2 vim nano sudo archlinux-keyring wget libnewt man-db man-pages texinfo --noconfirm --needed
 echo "keyserver hkp://keyserver.ubuntu.com" >> /mnt/etc/pacman.d/gnupg/gpg.conf
 cp -R ${SCRIPT_DIR} /mnt/root/ArchL4TM
 cp /etc/pacman.d/mirrorlist /mnt/etc/pacman.d/mirrorlist
