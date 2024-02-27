@@ -337,31 +337,23 @@ installtype () {
 # Starting functions
 background_checks
 clear
-logo
 userinfo
 clear
-logo
 desktopenv
 # Set fixed options that installation uses if user choses server installation
 set_option INSTALL_TYPE MINIMAL
 set_option AUR_HELPER NONE
 if [[ ! $desktop_env == server ]]; then
   clear
-  logo
   aurhelper
   clear
-  logo
   installtype
 fi
 clear
-logo
 diskpart
 clear
-logo
 filesystem
 clear
-logo
 timezone
 clear
-logo
 keymap
