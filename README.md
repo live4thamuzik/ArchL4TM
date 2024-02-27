@@ -36,7 +36,7 @@ pacman -Sy git
 
 Clone repo:
 ```
-git clone https://github.com/live4thamuzik/ArchL4TM
+git clone https://github.com/live4thamuzik/ArchL4TM.git
 ```
 
 Run script:
