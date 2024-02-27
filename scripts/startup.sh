@@ -184,9 +184,7 @@ select_option() {
 
     return $(( $active_col + $active_row * $colmax ))
 }
-# @description Displays ArchTitus logo
-# @noargs
-logo () {
+{
 # This will be shown on every set as user is progressing
 echo -ne "
 ------------------------------------------------------------------------
@@ -194,26 +192,26 @@ echo -ne "
 ------------------------------------------------------------------------
 "
 }
-# @description This function will handle file systems. At this movement we are handling only
-# btrfs and ext4. Others will be added in future.
-filesystem () {
-echo -ne "
-Please Select your file system for both boot and root
-"
-options=("btrfs" "ext4" "luks" "exit")
-select_option $? 1 "${options[@]}"
+# @description This function will handle file systems. At this moment I am handling only
+# ext4.
+#filesystem () {
+#echo -ne "
+#Please Select your file system for both boot and root
+#"
+#options=("btrfs" "ext4" "luks" "exit")
+#select_option $? 1 "${options[@]}"
 
-case $? in
-0) set_option FS btrfs;;
-1) set_option FS ext4;;
-2) 
-    set_password "LUKS_PASSWORD"
-    set_option FS luks
-    ;;
-3) exit ;;
-*) echo "Wrong option please select again"; filesystem;;
-esac
-}
+#case $? in
+#0) set_option FS btrfs;;
+#1) set_option FS ext4;;
+#2) 
+#    set_password "LUKS_PASSWORD"
+#    set_option FS luks
+#    ;;
+#3) exit ;;
+#*) echo "Wrong option please select again"; filesystem;;
+#esac
+#}
 # @description Detects and sets timezone. 
 timezone () {
 # Added this from arch wiki https://wiki.archlinux.org/title/System_time
@@ -270,28 +268,28 @@ esac
 }
 
 # @description Disk selection for drive to be used with installation.
-diskpart () {
-echo -ne "
-------------------------------------------------------------------------
-    THIS WILL FORMAT AND DELETE ALL DATA ON THE DISK
-    Please make sure you know what you are doing because
-    after formating your disk there is no way to get data back
-------------------------------------------------------------------------
-
-"
-
-PS3='
-Select the disk to install on: '
-options=($(lsblk -n --output TYPE,KNAME,SIZE | awk '$1=="disk"{print "/dev/"$2"|"$3}'))
-
-select_option $? 1 "${options[@]}"
-disk=${options[$?]%|*}
-
-echo -e "\n${disk%|*} selected \n"
-    set_option DISK ${disk%|*}
-
-drivessd
-}
+#diskpart () {
+#echo -ne "
+#------------------------------------------------------------------------
+#    THIS WILL FORMAT AND DELETE ALL DATA ON THE DISK
+#    Please make sure you know what you are doing because
+#    after formating your disk there is no way to get data back
+#------------------------------------------------------------------------
+#
+#"
+#
+#PS3='
+#Select the disk to install on: '
+#options=($(lsblk -n --output TYPE,KNAME,SIZE | awk '$1=="disk"{print "/dev/"$2"|"$3}'))
+#
+#select_option $? 1 "${options[@]}"
+#disk=${options[$?]%|*}
+#
+#echo -e "\n${disk%|*} selected \n"
+#    set_option DISK ${disk%|*}
+#
+#drivessd
+#}
 
 # @description Gather username and password to be used for installation. 
 userinfo () {
