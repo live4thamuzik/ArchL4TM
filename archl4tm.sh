@@ -238,14 +238,38 @@ systemctl enable fstrim.timer || { echo "Failed to enable SSD support"; exit 1; 
 echo "SSD support enabled"
 
 echo -ne "
-+-------------------------+
-| Set Timezone and Locale |
-+-------------------------+
++--------------+
+| Set Timezone |
++--------------+
 "
-# Select a timezone from the list, confirm it, and set the timezone
-echo "Available timezones:"
-ls /usr/share/zoneinfo | awk '{print "  " $0}'  # List available timezones
-read -p "Select a timezone (e.g., 'America/New_York'): " timezone
+# Function to list timezones
+list_timezones() {
+    # Find all timezone files and sort them
+    find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | sort
+}
+
+# Function to display a menu and get user selection
+select_timezone() {
+    # Create an array of timezones
+    mapfile -t timezones < <(list_timezones)
+
+    # Display a menu using the select command
+    echo "Select a timezone:"
+    select timezone in "${timezones[@]}"; do
+        if [[ -n "$timezone" ]]; then
+            echo "You have selected: $timezone"
+            break
+        else
+            echo "Invalid selection. Please try again."
+        fi
+    done
+}
+
+# Main script execution
+select_timezone
+
+# Store the selected timezone in a variable
+timezone="$timezone"
 
 if [ -f /usr/share/zoneinfo/$timezone ]; then
     echo "You have selected: $timezone"
@@ -259,6 +283,12 @@ if [ -f /usr/share/zoneinfo/$timezone ]; then
 else
     echo "Invalid timezone selected."
 fi
+
+echo -ne "
++------------+
+| Set Locale |
++------------+
+'
 
 # Read available locales, let the user select one, confirm the selection, and update the locale
 echo "Available locales:"
