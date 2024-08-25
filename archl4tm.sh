@@ -63,6 +63,7 @@ fi
 # Remove existing partitions and clear old signatures
 echo -ne "d\nw" | fdisk "$disk" || { echo "Failed to delete partitions"; exit 1; }
 dd if=/dev/zero of="$disk" bs=512 count=1 conv=notrunc || { echo "Failed to wipe disk"; exit 1; }
+
 # Create new GPT partition table and partitions with types
 echo "Creating new GPT table and partitions on $disk"
 (
