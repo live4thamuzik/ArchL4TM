@@ -254,10 +254,17 @@ select_timezone() {
     # Create an array of timezones
     mapfile -t timezones < <(list_timezones)
 
-    # Display a menu using the select command
+    # Display a menu using a numeric index
     echo "Select a timezone:"
-    select timezone in "${timezones[@]}"; do
-        if [[ -n "$timezone" ]]; then
+    for i in "${!timezones[@]}"; do
+        printf "%d) %s\n" "$((i + 1))" "${timezones[i]}"
+    done
+
+    # Prompt for user input until a valid selection is made
+    while true; do
+        read -p "Enter the number of the timezone you want to select: " choice
+        if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#timezones[@]}" ]; then
+            timezone="${timezones[$((choice - 1))]}"
             echo "You have selected: $timezone"
             break
         else
@@ -269,12 +276,8 @@ select_timezone() {
 # Main script execution
 select_timezone
 
-# Store the selected timezone in a variable
-timezone="$timezone"
-
 # Check if the selected timezone file exists
-if [ -f /usr/share/zoneinfo/$timezone ]; then
-    echo "You have selected: $timezone"
+if [ -f /usr/share/zoneinfo/"$timezone" ]; then
     read -p "Do you want to set this timezone? (yes/no): " confirm
     if [[ "$confirm" == "yes" ]]; then
         # Set the timezone by creating a symbolic link
