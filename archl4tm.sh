@@ -50,7 +50,7 @@ fi
 
 # List current partitions
 echo "Current partitions on $disk:"
-fdisk -l "disk"
+fdisk -l "$disk"
 
 # Confirm deletion of existing partitions
 echo "This will delete all exisiting partitions on $disk. Proceed? (y/n)"
