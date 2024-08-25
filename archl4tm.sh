@@ -102,7 +102,7 @@ mkfs.ext4 "${disk}2" || { echo "Failed to format ${disk}2"; exit 1; }
 
 # Setup encryption on partition 3 using luks
 cryptsetup luksFormat "${disk}3" || { echo "Failed to format LUKS partition"; exit 1; }
-echo "YES" | cryptsetup open --type luks --batch-mode "${disk}3" lvm || { echo "Failed to open LUKS partition"; exit 1; }
+echo "$password" | cryptsetup open --type luks --batch-mode "${disk}3" lvm || { echo "Failed to open LUKS partition"; exit 1; }
 
 # Ask user to set encryption password
 read -s -p "Enter encryption password: " password
@@ -119,7 +119,7 @@ if [ "$password" != "$confirm_password" ]; then
 fi
 
 # Open LUKS partition
-echo "$confirm_password" | cryptsetup open --type luks "${disk}3" lvm || { echo "Failed to open LUKS partition"; exit 1; }
+#echo "$password" | cryptsetup open --type luks "${disk}3" lvm || { echo "Failed to open LUKS partition"; exit 1; }
 
 # Create physical volume for LVM on partition 3 with data alignment 1m
 pvcreate /dev/mapper/lvm || { echo "Failed to create physical volume"; exit 1; }
