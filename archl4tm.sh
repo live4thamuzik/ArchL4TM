@@ -263,7 +263,7 @@ select_timezone() {
     # Prompt for user input until a valid selection is made
     while true; do
         read -p "Enter the number of the timezone you want to select: " choice
-        if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#timezones[@]}" ]; then
+        if [[ "$choice" =~ ^[0-1800]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#timezones[@]}" ]; then
             timezone="${timezones[$((choice - 1))]}"
             echo "You have selected: $timezone"
             break
