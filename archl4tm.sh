@@ -55,7 +55,7 @@ fdisk -l "$disk"
 # Confirm deletion of existing partitions
 echo "This will delete all exisiting partitions on $disk. Proceed? (y/n)"
 read proceed
-if [ "proceed" != "y" ]; then
+if [ "$proceed" != "y" ]; then
   echo "Exiting."
   exit 1
 fi
