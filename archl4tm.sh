@@ -242,7 +242,6 @@ echo -ne "
 | Set Timezone and Locale |
 +-------------------------+
 "
-
 # Select a timezone from the list, confirm it, and set the timezone
 echo "Available timezones:"
 ls /usr/share/zoneinfo | awk '{print "  " $0}'  # List available timezones
