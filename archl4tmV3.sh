@@ -186,7 +186,7 @@ pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed ||
 genfstab -U -p /mnt >> /mnt/etc/fstab || { echo "Failed to generate fstab"; exit 1; }
 
 # Save the functions and commands in a script file
-cat <<EOF > /mnt/root/chroot-setup.sh
+cat <<EOF > /mnt/chroot-setup.sh
 #!/bin/bash
 
 set -e
@@ -331,8 +331,8 @@ else
 fi
 EOF
 
-chmod +x /mnt/root/chroot-setup.sh
+chmod +x /mnt/chroot-setup.sh
 
 # Execute the script inside chroot
-arch-chroot /mnt /root/chroot-setup.sh
+arch-chroot /mnt ./chroot-setup.sh
 
