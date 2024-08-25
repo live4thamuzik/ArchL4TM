@@ -1,6 +1,0 @@
-gnome
---END OF MINIMAL INSTALL--
-gnome-extra
-gnome-tweaks
-gnome-shell-extensions
-gnome-browser-connector
