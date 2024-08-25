@@ -237,91 +237,39 @@ echo "NetworkManager enabled"
 systemctl enable fstrim.timer || { echo "Failed to enable SSD support"; exit 1; }
 echo "SSD support enabled"
 
+# Set timezone and locale
 echo -ne "
-+--------------+
-| Set Timezone |
-+--------------+
++-------------------------+
+| Set Timezone and Locale |
++-------------------------+
 "
-
-# Function to list timezones
-list_timezones() {
-    # Find all timezone files and sort them
-    find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | sort
-}
-
-# Function to display a menu and get user selection
-select_timezone() {
-    # Create an array of timezones
-    mapfile -t timezones < <(list_timezones)
-
-    # Display a menu using a numeric index
-    echo "Select a timezone:"
-    for i in "${!timezones[@]}"; do
-        printf "%d) %s\n" "$((i + 1))" "${timezones[i]}"
-    done
-
-    # Prompt for user input until a valid selection is made
-    while true; do
-        read -p "Enter the number of the timezone you want to select: " choice
-        if [[ "$choice" =~ ^[0-1800]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#timezones[@]}" ]; then
-            timezone="${timezones[$((choice - 1))]}"
-            echo "You have selected: $timezone"
-            break
-        else
-            echo "Invalid selection. Please try again."
-        fi
-    done
-}
-
-# Main script execution
-select_timezone
-
-# Check if the selected timezone file exists
-if [ -f /usr/share/zoneinfo/"$timezone" ]; then
-    read -p "Do you want to set this timezone? (yes/no): " confirm
-    if [[ "$confirm" == "yes" ]]; then
-        # Set the timezone by creating a symbolic link
-        ln -sf "/usr/share/zoneinfo/$timezone" /etc/localtime
-        echo "Timezone set to: $timezone"
-    else
-        echo "Timezone change aborted."
-    fi
-else
-    echo "Invalid timezone selected."
-fi
-
-echo -ne "
-+------------+
-| Set Locale |
-+------------+
-'
+# Select a timezone from the list, confirm it, and set the timezone
+read -p "Select a timezone (e.g., 'America/New_York'): " timezone && \
+echo "You have selected: $timezone" && \
+read -p "Do you want to set this timezone? (yes/no): " confirm && \
+[[ $confirm == "yes" ]] && \
+ln -sf /usr/share/zoneinfo/$timezone /etc/localtime && \
+echo "Timezone set to: $timezone" || \
+echo "Timezone change aborted."
 
 # Read available locales, let the user select one, confirm the selection, and update the locale
-echo "Available locales:"
-locales=$(grep -oP '^\s*\K\w+_\w+\.\w+' /etc/locale.gen)
-echo "$locales" | awk '{print "  " $0}'  # List available locales
+locales=$(grep -oP '^\s*\K\w+_\w+\.\w+' /etc/locale.gen) && \
+echo "Available locales:" && \
+select locale in $locales; do \
+    if [[ -n $locale ]]; then \
+        break; \
+    else \
+        echo "Invalid selection. Please try again."; \
+    fi \
+done && \
+echo "You have selected: $locale" && \
+read -p "Do you want to set this locale? (yes/no): " confirm && \
+[[ $confirm == "yes" ]] && \
+sed -i "s/^#\s*$locale/$locale/" /etc/locale.gen && \
+locale-gen && \
+echo "Locale set to: $locale" || \
+echo "Locale change aborted."
 
-select locale in $locales; do
-    if [[ -n $locale ]]; then
-        break
-    else
-        echo "Invalid selection. Please try again."
-    fi
-done
-
-if [ -n "$locale" ]; then
-    echo "You have selected: $locale"
-    read -p "Do you want to set this locale? (yes/no): " confirm
-    if [ "$confirm" == "yes" ]; then
-        sed -i "s/^#\s*$locale/$locale/" /etc/locale.gen
-        locale-gen
-        echo "Locale set to: $locale"
-    else
-        echo "Locale change aborted."
-    fi
-else
-    echo "No valid locale selected."
-fi
 
 # Set hostname
 echo -ne "
