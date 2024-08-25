@@ -56,5 +56,5 @@ Run script:
 ```
 cd ArchL4TM/
 chmod +x archl4tm
-sh archl4tm.sh
+./archl4tm.sh
 ```
