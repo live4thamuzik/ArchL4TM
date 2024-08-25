@@ -73,7 +73,6 @@ echo ""        # Default partition number 1
 echo ""        # Default to first sector
 echo "+2G"     # Partition 1 size 2GB
 echo "t"       # Change partition type
-echo "1"       # Partition 1
 echo "1"       # Set type to EFI System
 echo "n"       # Add new partition
 echo ""        # Default to partition number 2
