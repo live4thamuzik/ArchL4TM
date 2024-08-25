@@ -335,7 +335,7 @@ while true; do
   echo
 
   if [ "$root_password" == "$confirm_root_password" ]; then
-    echo "root_password" | passwd || { echo "Failed to set root password"; exit 1; }
+    echo "$root_password" | passwd || { echo "Failed to set root password"; exit 1; }
     echo "root password set successfully."
     break
   else
@@ -371,7 +371,7 @@ while true; do
   echo
 
   if [ "$user_password" == "$confirm_user_password" ]; then
-    echo "user_password" | passwd $user || { echo "Failed to set $user password"; exit 1; }
+    echo "$user_password" | passwd $user || { echo "Failed to set $user password"; exit 1; }
     echo "$user password set successfully."
     break
   else
