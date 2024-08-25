@@ -128,7 +128,7 @@ vgcreate volgroup0 /dev/mapper/lvm || { echo "Failed to create volume group"; ex
 
 # Create logical volumes
 lvcreate -L 100GB volgroup0 -n lv_root || { echo "Failed to create logical volume lv_root"; exit 1; }
-lvcreate -l +100%FREE volgroup0 -n lv_home || { echo "Failed to create logical volume lv_home"; exit 1; }
+lvcreate -l 100%FREE volgroup0 -n lv_home || { echo "Failed to create logical volume lv_home"; exit 1; }
 
 # Load kernel module
 modprobe dm_mod
