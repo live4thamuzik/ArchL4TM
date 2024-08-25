@@ -243,33 +243,53 @@ echo -ne "
 | Set Timezone and Locale |
 +-------------------------+
 "
-# Select a timezone from the list, confirm it, and set the timezone
-read -p "Select a timezone (e.g., 'America/New_York'): " timezone && \
-echo "You have selected: $timezone" && \
-read -p "Do you want to set this timezone? (yes/no): " confirm && \
-[[ $confirm == "yes" ]] && \
-ln -sf /usr/share/zoneinfo/$timezone /etc/localtime && \
-echo "Timezone set to: $timezone" || \
-echo "Timezone change aborted."
+# Function to list timezones
+list_timezones() {
+    find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | sort
+}
 
-# Read available locales, let the user select one, confirm the selection, and update the locale
-locales=$(grep -oP '^\s*\K\w+_\w+\.\w+' /etc/locale.gen) && \
-echo "Available locales:" && \
-select locale in $locales; do \
-    if [[ -n $locale ]]; then \
-        break; \
-    else \
-        echo "Invalid selection. Please try again."; \
-    fi \
-done && \
-echo "You have selected: $locale" && \
-read -p "Do you want to set this locale? (yes/no): " confirm && \
-[[ $confirm == "yes" ]] && \
-sed -i "s/^#\s*$locale/$locale/" /etc/locale.gen && \
-locale-gen && \
-echo "Locale set to: $locale" || \
-echo "Locale change aborted."
+# Create an array of timezones
+mapfile -t timezones < <(list_timezones)
 
+# Display timezone selection menu
+echo "Select a timezone:"
+select timezone in "${timezones[@]}"; do
+    if [[ -n "$timezone" ]]; then
+        echo "You have selected: $timezone"
+        break
+    else
+        echo "Invalid selection. Please try again."
+    fi
+done
+
+read -p "Do you want to set this timezone? (yes/no): " confirm 
+if [[ $confirm == "yes" ]]; then
+    ln -sf "/usr/share/zoneinfo/$timezone" /etc/localtime
+    echo "Timezone set to: $timezone"
+else
+    echo "Timezone change aborted."
+fi
+
+# Read available locales
+echo "Available locales:"
+locales=$(grep -oP '^\s*\K\w+_\w+\.\w+' /etc/locale.gen | sort -u)
+select locale in $locales; do 
+    if [[ -n $locale ]]; then
+        echo "You have selected: $locale"
+        break; 
+    else 
+        echo "Invalid selection. Please try again."; 
+    fi 
+done
+
+read -p "Do you want to set this locale? (yes/no): " confirm 
+if [[ $confirm == "yes" ]]; then
+    sed -i "s/^#\s*$locale/$locale/" /etc/locale.gen
+    locale-gen
+    echo "Locale set to: $locale"
+else
+    echo "Locale change aborted."
+fi
 
 # Set hostname
 echo -ne "
