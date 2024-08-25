@@ -265,7 +265,7 @@ install_grub() {
 
 # Run functions within chroot
 echo "Changing root directory"
-arch-chroot /mnt /bin/bash <<EOF
+arch-chroot /mnt <<EOF
 set -e
 
 # Install base packages 
