@@ -244,7 +244,7 @@ echo -ne "
 +--------------+
 "
 ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
-hwclock --systhoc
+hwclock --systohc
 
 # Set locale
 echo -ne "
@@ -262,24 +262,7 @@ echo -ne "
 | Set Hostname |
 +--------------+
 "
-# Prompt for hostname
-read -p "Enter hostname: " hostname
-
-# Validate hostname
-if [ -z "$hostname" ]; then
-  echo "Hostname cannot be empty. Exiting."
-  exit 1
-fi
-
-# Optionally: Validate hostname format (optional)
-if ! [[ "$hostname" =~ ^[a-zA-Z0-9-]+$ && ${#hostname} -le 63 ]]; then
-  echo "Invalid hostname. It must be 1-63 characters long and contain only alphanumeric characters and hyphens. Exiting."
-  exit 1
-fi
-
-# Set hostname
-echo "$hostname" > /etc/hostname || { echo "Failed to set hostname"; exit 1; }
-echo "Hostname set to: $hostname"
+echo archtest > /etc/hostname || { echo "Failed to set hostname"; exit 1; }
 
 # Add hooks
 echo -ne "
