@@ -94,15 +94,11 @@ echo -ne "
 | Perform LVM setup |
 +-------------------+
 "
-# Format partition 1 as fat32
+# Format partition 1 as FAT32
 mkfs.fat -F32 "${disk}1" || { echo "Failed to format ${disk}1"; exit 1; }
 
 # Format partition 2 as ext4
 mkfs.ext4 "${disk}2" || { echo "Failed to format ${disk}2"; exit 1; }
-
-# Setup encryption on partition 3 using luks
-cryptsetup luksFormat "${disk}3" || { echo "Failed to format LUKS partition"; exit 1; }
-echo "$password" | cryptsetup open --type luks --batch-mode "${disk}3" lvm || { echo "Failed to open LUKS partition"; exit 1; }
 
 # Ask user to set encryption password
 read -s -p "Enter encryption password: " password
@@ -118,8 +114,11 @@ if [ "$password" != "$confirm_password" ]; then
   exit 1
 fi
 
+# Setup encryption on partition 3 using LUKS
+echo "$password" | cryptsetup luksFormat "${disk}3" || { echo "Failed to format LUKS partition"; exit 1; }
+
 # Open LUKS partition
-echo "$password" | cryptsetup open --type luks "${disk}3" lvm || { echo "Failed to open LUKS partition"; exit 1; }
+echo "$password" | cryptsetup open --type luks --batch-mode "${disk}3" lvm || { echo "Failed to open LUKS partition"; exit 1; }
 
 # Create physical volume for LVM on partition 3 with data alignment 1m
 pvcreate /dev/mapper/lvm || { echo "Failed to create physical volume"; exit 1; }
