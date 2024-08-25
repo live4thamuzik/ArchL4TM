@@ -235,8 +235,6 @@ systemctl enable NetworkManager.service || { echo "Failed to enable NetworkManag
 echo "  NetworkManager enabled"
 systemctl enable fstrim.timer || { echo "Failed to enable SSD support"; exit 1; }
 echo "  SSD support enabled"
-systemctl enable bluetooth || { echo "Failed to enable Bluetooth"; exit 1; }
-echo "  Bluetooth enabled
 
 # Set timezone and locale
 echo -ne "
