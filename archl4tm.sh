@@ -170,7 +170,7 @@ echo -ne "
 | Installing Prerequisites |
 +--------------------------+
 "
-pacman -Syu --noconfirm archlinux-keyring pacman-contrib reflector rsync python nvim || { echo "Failed to install prerequisites"; exit 1; }
+pacman -Syu --noconfirm archlinux-keyring pacman-contrib reflector rsync python neovim || { echo "Failed to install prerequisites"; exit 1; }
 
 # Configure pacman for faster downloads
 echo -ne "
