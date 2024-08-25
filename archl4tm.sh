@@ -244,6 +244,7 @@ echo -ne "
 +--------------+
 "
 ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
+hwclock --systhoc
 
 # Set locale
 echo -ne "
@@ -251,13 +252,8 @@ echo -ne "
 | Set Locale |
 +------------+
 "
-# Uncomment en_US.UTF-8 UTF-8 in /etc/locale.gen
-sed -i '/^#en_US.UTF-8 UTF-8/c\en_US.UTF-8 UTF-8' /etc/locale.gen
-
-# Run locale-gen
+sed -i "/^#en_US.UTF-8 UTF-8/c\en_US.UTF-8 UTF-8" /etc/locale.gen
 locale-gen
-
-# Create /etc/locale.conf 
 echo LANG=en_US.UTF-8 > /etc/locale.conf
 
 # Set hostname
