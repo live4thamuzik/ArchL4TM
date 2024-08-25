@@ -242,6 +242,7 @@ echo -ne "
 | Set Timezone |
 +--------------+
 "
+
 # Function to list timezones
 list_timezones() {
     # Find all timezone files and sort them
@@ -271,11 +272,13 @@ select_timezone
 # Store the selected timezone in a variable
 timezone="$timezone"
 
+# Check if the selected timezone file exists
 if [ -f /usr/share/zoneinfo/$timezone ]; then
     echo "You have selected: $timezone"
     read -p "Do you want to set this timezone? (yes/no): " confirm
-    if [ "$confirm" == "yes" ]; then
-        ln -sf /usr/share/zoneinfo/$timezone /etc/localtime
+    if [[ "$confirm" == "yes" ]]; then
+        # Set the timezone by creating a symbolic link
+        ln -sf "/usr/share/zoneinfo/$timezone" /etc/localtime
         echo "Timezone set to: $timezone"
     else
         echo "Timezone change aborted."
