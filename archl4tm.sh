@@ -232,9 +232,9 @@ echo -ne "
 +-----------------------------+
 "
 systemctl enable NetworkManager.service || { echo "Failed to enable NetworkManager"; exit 1; }
-echo "  NetworkManager enabled"
+echo "NetworkManager enabled"
 systemctl enable fstrim.timer || { echo "Failed to enable SSD support"; exit 1; }
-echo "  SSD support enabled"
+echo "SSD support enabled"
 
 # Set timezone and locale
 echo -ne "
