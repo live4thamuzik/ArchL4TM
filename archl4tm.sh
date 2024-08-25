@@ -127,7 +127,7 @@ pvcreate /dev/mapper/lvm || { echo "Failed to create physical volume"; exit 1; }
 vgcreate volgroup0 /dev/mapper/lvm || { echo "Failed to create volume group"; exit 1; }
 
 # Create logical volumes
-lvcreate -L 100G volgroup0 -n lv_root || { echo "Failed to create logical volume lv_root"; exit 1; }
+lvcreate -L 100GB volgroup0 -n lv_root || { echo "Failed to create logical volume lv_root"; exit 1; }
 lvcreate -l +100%FREE volgroup0 -n lv_home || { echo "Failed to create logical volume lv_home"; exit 1; }
 
 # Load kernel module
