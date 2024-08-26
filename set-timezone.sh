@@ -18,20 +18,31 @@ get_timezones() {
   done
 }
 
-# Get timezones and display options
+# Collect timezones into an array
+mapfile -t timezones < <(get_timezones)
+
+# Display timezones with options
 echo "Select a timezone from the list:"
-PS3="Enter the number corresponding to your timezone choice: "
-select timezone in $(get_timezones); do
-  if [ -n "$timezone" ]; then
-    break
-  else
-    echo "Invalid selection. Please try again."
-  fi
+for timezone in "${timezones[@]}"; do
+  echo "$timezone"
 done
 
+# Prompt user for selection
+echo -ne "\nEnter the number corresponding to your timezone choice: "
+read -r choice
+
+# Validate user input
+if [[ "$choice" -lt 1 || "$choice" -gt "${#timezones[@]}" ]]; then
+  echo "Invalid selection. Exiting."
+  exit 1
+fi
+
+# Extract timezone based on user choice
+selected_timezone=$(echo "${timezones[$((choice-1))]}" | sed 's/^[0-9]*\. //')
+
 # Set timezone
-echo "Setting timezone to $timezone"
-ln -sf "/usr/share/zoneinfo/$timezone" /etc/localtime
+echo "Setting timezone to $selected_timezone"
+ln -sf "/usr/share/zoneinfo/$selected_timezone" /etc/localtime
 
 # Verify timezone setting
 echo "Timezone has been set to $(readlink -f /etc/localtime)"
