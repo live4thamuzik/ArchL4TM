@@ -10,11 +10,12 @@ patterns=(
   "Portugal" "Singapore" "Turkey" "UCT" "US/*" "UTC" "Zulu"
 )
 
-# Function to list timezones
+# Function to list timezones with numbering
 list_timezones() {
+  local count=1
   for pattern in "${patterns[@]}"; do
     echo "Matching timezones for pattern: $pattern"
-    find /usr/share/zoneinfo -type f -path "/usr/share/zoneinfo/$pattern" | sed 's|/usr/share/zoneinfo/||'
+    find /usr/share/zoneinfo -type f -path "/usr/share/zoneinfo/$pattern" | sed 's|/usr/share/zoneinfo/||' | awk -v cnt=$count '{print cnt". "$0; cnt++}'
   done
 }
 
@@ -26,7 +27,7 @@ echo -ne "\nEnter the number corresponding to your timezone choice: "
 read -r choice
 
 # Validate user input
-timezone=$(find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | sed -n "${choice}p")
+timezone=$(find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | awk "NR==$choice")
 if [ -z "$timezone" ]; then
   echo "Invalid selection. Exiting."
   exit 1
@@ -38,4 +39,3 @@ ln -sf "/usr/share/zoneinfo/$timezone" /etc/localtime
 
 # Verify timezone setting
 echo "Timezone has been set to $(readlink -f /etc/localtime)"
-
