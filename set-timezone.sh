@@ -16,14 +16,24 @@ get_timezones() {
 # Collect timezones into an array
 mapfile -t timezones < <(get_timezones)
 
-# Display timezones with options
+# Determine the number of columns based on terminal width
+columns=$(tput cols)
+col_width=30
+num_cols=$((columns / col_width))
+
+# Format and display timezones in columns
 echo "Select a timezone from the list:"
-for timezone in "${timezones[@]}"; do
-  echo "$timezone"
+for ((i=0; i<${#timezones[@]}; i++)); do
+  index=$((i % num_cols))
+  printf "%-${col_width}s" "${timezones[$i]}"
+  if (( (i + 1) % num_cols == 0 )); then
+    echo
+  fi
 done
+echo
 
 # Prompt user for selection
-echo -ne "\nEnter the number corresponding to your timezone choice: "
+echo -ne "Enter the number corresponding to your timezone choice: "
 read -r choice
 
 # Validate user input
