@@ -8,6 +8,12 @@ get_locales() {
 # Collect locales into an array
 mapfile -t locales < <(get_locales)
 
+# Check if locales were collected
+if [ ${#locales[@]} -eq 0 ]; then
+  echo "No locales found in /etc/locale.gen."
+  exit 1
+fi
+
 # Determine the number of columns based on terminal width
 columns=$(tput cols)
 col_width=30
