@@ -1,31 +1,52 @@
 #!/bin/bash
 
-# Display available locales from /etc/locale.gen
-echo "Available locales from /etc/locale.gen:"
-grep -v '^#' /etc/locale.gen | awk '{print NR ": " $1}'
+# Function to get a list of available locales
+get_locales() {
+  grep -v '^#' /etc/locale.gen | awk '{print NR ". " $1}'
+}
 
-# Prompt user to select a locale
-echo -ne "\nEnter the number corresponding to your locale choice: "
+# Collect locales into an array
+mapfile -t locales < <(get_locales)
+
+# Determine the number of columns based on terminal width
+columns=$(tput cols)
+col_width=30
+num_cols=$((columns / col_width))
+
+# Format and display locales in columns
+echo "Select a locale from the list:"
+for ((i=0; i<${#locales[@]}; i++)); do
+  index=$((i % num_cols))
+  printf "%-${col_width}s" "${locales[$i]}"
+  if (( (i + 1) % num_cols == 0 )); then
+    echo
+  fi
+done
+echo
+
+# Prompt user for selection
+echo -ne "Enter the number corresponding to your locale choice: "
 read -r choice
 
 # Validate user input
-locale=$(grep -v '^#' /etc/locale.gen | awk '{print $1}' | sed -n "${choice}p")
-if [ -z "$locale" ]; then
+if [[ "$choice" -lt 1 || "$choice" -gt "${#locales[@]}" ]]; then
   echo "Invalid selection. Exiting."
   exit 1
 fi
 
+# Extract the selected locale
+selected_locale=$(echo "${locales[$((choice-1))]}" | sed 's/^[0-9]*\. //')
+
 # Uncomment the selected locale in /etc/locale.gen
-echo "Uncommenting locale: $locale"
-sed -i "/^# $locale/s/^# //" /etc/locale.gen
+echo "Uncommenting locale: $selected_locale"
+sed -i "/^# $selected_locale/s/^# //" /etc/locale.gen
 
 # Run locale-gen to apply the changes
 locale-gen
 
 # Set the locale in /etc/locale.conf
-echo "Setting locale to $locale"
-echo "LANG=$locale" > /etc/locale.conf
+echo "Setting locale to $selected_locale"
+echo "LANG=$selected_locale" > /etc/locale.conf
 
 # Verify locale setting
 echo "Locale has been set to $(cat /etc/locale.conf)"
-
