@@ -2,12 +2,7 @@
 
 # List of patterns to search for
 patterns=(
-  "Africa/*" "America/*" "Antarctica/*" "Arctic/*" "Asia/*" "Atlantic/*"
-  "Australia/*" "Brazil/*" "Canada/*" "Chile/*" "Cuba" "Egypt" "Eire"
-  "Europe/*" "GB" "GB-Eire" "GMT" "GMT0" "GMT+0" "GMT-0" "Greenwich"
-  "HST" "HongKong" "Iceland" "Indian/*" "Iran" "Israel" "Jamaica"
-  "Japan" "Kwajalein" "Libya" "Mexico/*" "Navajo" "Pacific/*" "Poland"
-  "Portugal" "Singapore" "Turkey" "UCT" "US/*" "UTC" "Zulu"
+  "America/*"
 )
 
 # Function to get a list of timezones
