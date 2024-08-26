@@ -1,9 +1,22 @@
 #!/bin/bash
 
-# Function to get a list of available locales
+# Function to get a list of available locales from /etc/locale.gen
 get_locales() {
   grep -v '^#' /etc/locale.gen | awk '{print NR ". " $1}'
 }
+
+# Function to check if locales are uncommented
+check_locales() {
+  grep -v '^#' /etc/locale.gen > /dev/null
+  return $?
+}
+
+# Check if there are uncommented locales
+if ! check_locales; then
+  echo "No locales are uncommented in /etc/locale.gen."
+  echo "Please uncomment the desired locales in /etc/locale.gen and run this script again."
+  exit 1
+fi
 
 # Collect locales into an array
 mapfile -t locales < <(get_locales)
