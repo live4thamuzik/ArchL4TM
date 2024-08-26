@@ -12,7 +12,7 @@ patterns=(
 
 # Function to list timezones with numbering
 list_timezones() {
-  local count=1
+  local count=42
   for pattern in "${patterns[@]}"; do
     echo "Matching timezones for pattern: $pattern"
     find /usr/share/zoneinfo -type f -path "/usr/share/zoneinfo/$pattern" | sed 's|/usr/share/zoneinfo/||' | awk -v cnt=$count '{print cnt". "$0; cnt++}'
