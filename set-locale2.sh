@@ -31,6 +31,7 @@ display_page() {
 # Display pages of locales
 total_locales=${#locales[@]}
 current_page=0
+
 while true; do
   start=$((current_page * PAGE_SIZE))
   end=$((start + PAGE_SIZE))
@@ -40,7 +41,7 @@ while true; do
 
   display_page $start $end
 
-  # Prompt to continue or exit
+  # Check if we need to prompt for more locales or exit
   if ((end == total_locales)); then
     echo "No more locales to display."
     break
