@@ -15,21 +15,31 @@ if [ ${#locales[@]} -eq 0 ]; then
 fi
 
 # Constants
-PAGE_SIZE=50
+PAGE_SIZE=20
+COLS=4  # Number of columns to display
 
-# Function to display a page of locales in a single line
+# Function to display a page of locales in columns
 display_page() {
   local start=$1
   local end=$2
-  local line=""
+  local count=0
 
   echo "Locales ($((start + 1)) to $end of ${#locales[@]}):"
-  
+
   for ((i=start; i<end; i++)); do
-    line+="${locales[$i]}    "  # Append each locale to the line with some spacing
+    # Print locales in columns
+    printf "%-30s" "${locales[$i]}"
+    count=$((count + 1))
+    
+    if ((count % COLS == 0)); then
+      echo
+    fi
   done
-  
-  echo "$line"
+
+  # Add a newline at the end if the last line isn't fully filled
+  if ((count % COLS != 0)); then
+    echo
+  fi
 }
 
 # Display pages of locales
@@ -59,33 +69,4 @@ while true; do
       if [[ "$selected_locale" == \#* ]]; then
         # Remove the leading '#' for uncommenting
         uncommented_locale=$(echo "$selected_locale" | sed 's/^# //')
-        echo "Uncommenting locale: $uncommented_locale"
-        sed -i "/^# $uncommented_locale/s/^# //" /etc/locale.gen
-      else
-        echo "Selected locale is already active."
-      fi
-
-      # Run locale-gen to apply the changes
-      locale-gen
-
-      # Set the locale in /etc/locale.conf
-      echo "Setting locale to $selected_locale"
-      echo "LANG=$selected_locale" > /etc/locale.conf
-
-      # Verify locale setting
-      echo "Locale has been set to $(cat /etc/locale.conf)"
-      break
-    else
-      echo "Invalid selection. Please enter a valid number from the displayed list."
-    fi
-  elif [[ -z "$choice" ]]; then
-    # Continue to the next page
-    if ((end == total_locales)); then
-      echo "No more locales to display."
-      break
-    fi
-    current_page=$((current_page + 1))
-  else
-    echo "Invalid input. Please enter a number or press Enter to continue."
-  fi
-done
+        echo "Uncommenting locale:
