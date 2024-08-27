@@ -53,25 +53,30 @@ if [ "$confirm" != "y" ] && [ -n "$confirm" ]; then
   exit 1
 fi
 
-# Confirm Disk Selection
-#echo "You have selected $disk. Is this correct? (y/n)"
-#read confirm
-#if [ "$confirm" != "y" ]; then
-#  echo "Exiting."
-#  exit 1
-#fi
-
 # List current partitions
 echo "Current partitions on $disk:"
 fdisk -l "$disk"
 
 # Confirm deletion of existing partitions
-echo "This will delete all exisiting partitions on $disk. Proceed? (y/n)"
+echo "This will delete all existing partitions on $disk. Proceed? (Y/n)"
 read proceed
-if [ "$proceed" != "y" ]; then
+
+# Convert input to lowercase for easier comparison
+proceed=${proceed,,}
+
+# If the input is neither 'y' nor empty, exit
+if [ "$proceed" != "y" ] && [ -n "$proceed" ]; then
   echo "Exiting."
   exit 1
 fi
+
+# Confirm deletion of existing partitions
+#echo "This will delete all exisiting partitions on $disk. Proceed? (y/n)"
+#read proceed
+#if [ "$proceed" != "y" ]; then
+#  echo "Exiting."
+#  exit 1
+#fi
 
 # Remove existing partitions and clear old signatures
 echo -ne "d\nw" | fdisk "$disk" || { echo "Failed to delete partitions"; exit 1; }
