@@ -195,6 +195,10 @@ pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed ||
 # Generate fstab
 genfstab -U -p /mnt >> /mnt/etc/fstab || { echo "Failed to generate fstab"; exit 1; }
 
+# Copy timezone and locale scrtips to /mnt
+cp ./set-locale /mnt
+cp ./set-timezone /mnt
+
 # Save the functions and commands in a script file
 cat <<EOF > /mnt/chroot-setup.sh
 #!/bin/bash
@@ -316,9 +320,10 @@ echo "NetworkManager enabled"
 systemctl enable fstrim.timer || { echo "Failed to enable SSD support"; exit 1; }
 echo "SSD support enabled"
 
+bash ./set-timezone.sh
+bash ./set-locale.sh
+
 # Call defined functions
-set_timezone
-set_locale
 set_hostname
 
 # Update mkinitcpio.conf
@@ -357,7 +362,7 @@ else
 fi
 EOF
 
-chmod +x /mnt/chroot-setup.sh
+chmod +x /mnt/chroot-setup.sh /mnt/set-locale.sh /mnt/set-timezone.sh
 
 # Execute the script inside chroot
 arch-chroot /mnt ./chroot-setup.sh
