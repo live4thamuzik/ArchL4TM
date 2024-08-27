@@ -17,7 +17,8 @@ fi
 # Constants
 PAGE_SIZE=20
 COLS=4  # Number of columns to display
-COLUMN_WIDTH=35  # Width of each column
+NUMBER_WIDTH=4  # Width for number and dot
+COLUMN_WIDTH=28  # Width of each column for locales
 
 # Function to display a page of locales in columns
 display_page() {
@@ -28,8 +29,8 @@ display_page() {
   echo "Locales ($((start + 1)) to $end of ${#locales[@]}):"
 
   for ((i=start; i<end; i++)); do
-    # Print locales in columns
-    printf "%-${COLUMN_WIDTH}s" "${locales[$i]}"
+    # Print locales in columns with minimized gap
+    printf "%-${NUMBER_WIDTH}s%-${COLUMN_WIDTH}s" "${locales[$i]}" ""
     count=$((count + 1))
     
     if ((count % COLS == 0)); then
