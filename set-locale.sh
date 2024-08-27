@@ -2,7 +2,7 @@
 
 # Function to get a list of available locales from /etc/locale.gen
 get_locales() {
-  grep -v '^#' /etc/locale.gen | awk '{print NR ". " $1}'
+  cat /etc/locale.gen | awk '/^[^#]/ {print NR ". " $1}'
 }
 
 # Collect locales into an array
@@ -38,20 +38,3 @@ if [[ "$choice" -lt 1 || "$choice" -gt "${#locales[@]}" ]]; then
   echo "Invalid selection. Exiting."
   exit 1
 fi
-
-# Extract the selected locale
-selected_locale=$(echo "${locales[$((choice-1))]}" | sed 's/^[0-9]*\. //')
-
-# Uncomment the selected locale in /etc/locale.gen
-echo "Uncommenting locale: $selected_locale"
-sed -i "/^# $selected_locale/s/^# //" /etc/locale.gen
-
-# Run locale-gen to apply the changes
-locale-gen
-
-# Set the locale in /etc/locale.conf
-echo "Setting locale to $selected_locale"
-echo "LANG=$selected_locale" > /etc/locale.conf
-
-# Verify locale setting
-echo "Locale has been set to $(cat /etc/locale.conf)"
