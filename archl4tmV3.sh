@@ -41,12 +41,25 @@ if [ ! -b "$disk" ]; then
 fi
 
 # Confirm Disk Selection
-echo "You have selected $disk. Is this correct? (y/n)"
+echo "You have selected $disk. Is this correct? (Y/n)"
 read confirm
-if [ "$confirm" != "y" ]; then
+
+# Convert input to lowercase for easier comparison
+confirm=${confirm,,}
+
+# If the input is empty or 'y', proceed; otherwise, exit
+if [ "$confirm" != "y" ] && [ -n "$confirm" ]; then
   echo "Exiting."
   exit 1
 fi
+
+# Confirm Disk Selection
+#echo "You have selected $disk. Is this correct? (y/n)"
+#read confirm
+#if [ "$confirm" != "y" ]; then
+#  echo "Exiting."
+#  exit 1
+#fi
 
 # List current partitions
 echo "Current partitions on $disk:"
