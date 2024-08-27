@@ -55,4 +55,37 @@ while true; do
       # Extract the selected locale
       selected_locale=$(echo "${locales[$((choice-1))]}" | awk '{print $2}')
 
-      # Check if the selected locale is co
+      # Check if the selected locale is commented
+      if [[ "$selected_locale" == \#* ]]; then
+        # Remove the leading '#' for uncommenting
+        uncommented_locale=$(echo "$selected_locale" | sed 's/^# //')
+        echo "Uncommenting locale: $uncommented_locale"
+        sed -i "/^# $uncommented_locale/s/^# //" /etc/locale.gen
+      else
+        echo "Selected locale is already active."
+      fi
+
+      # Run locale-gen to apply the changes
+      locale-gen
+
+      # Set the locale in /etc/locale.conf
+      echo "Setting locale to $selected_locale"
+      echo "LANG=$selected_locale" > /etc/locale.conf
+
+      # Verify locale setting
+      echo "Locale has been set to $(cat /etc/locale.conf)"
+      break
+    else
+      echo "Invalid selection. Please enter a valid number from the displayed list."
+    fi
+  elif [[ -z "$choice" ]]; then
+    # Continue to the next page
+    if ((end == total_locales)); then
+      echo "No more locales to display."
+      break
+    fi
+    current_page=$((current_page + 1))
+  else
+    echo "Invalid input. Please enter a number or press Enter to continue."
+  fi
+done
