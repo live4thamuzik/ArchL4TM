@@ -70,13 +70,13 @@ selected_locale=$(echo "${locales[$((choice-1))]}" | awk '{print $2}')
 
 # Check if the selected locale is commented
 if [[ "$selected_locale" == \#* ]]; then
-  echo "Selected locale is commented out. Please select an active locale."
-  exit 1
+  # Remove the leading '#' for uncommenting
+  uncommented_locale=$(echo "$selected_locale" | sed 's/^# //')
+  echo "Uncommenting locale: $uncommented_locale"
+  sed -i "/^# $uncommented_locale/s/^# //" /etc/locale.gen
+else
+  echo "Selected locale is already active."
 fi
-
-# Uncomment the selected locale in /etc/locale.gen
-echo "Uncommenting locale: $selected_locale"
-sed -i "/^# $selected_locale/s/^# //" /etc/locale.gen
 
 # Run locale-gen to apply the changes
 locale-gen
