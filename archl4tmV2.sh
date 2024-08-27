@@ -41,9 +41,14 @@ if [ ! -b "$disk" ]; then
 fi
 
 # Confirm Disk Selection
-echo "You have selected $disk. Is this correct? (y/n)"
+echo "You have selected $disk. Is this correct? (Y/n)"
 read confirm
-if [ "$confirm" != "y" ]; then
+
+# Convert input to lowercase for easier comparison
+confirm=${confirm,,}
+
+# If the input is empty or 'y', proceed; otherwise, exit
+if [ "$confirm" != "y" ] && [ -n "$confirm" ]; then
   echo "Exiting."
   exit 1
 fi
@@ -53,9 +58,14 @@ echo "Current partitions on $disk:"
 fdisk -l "$disk"
 
 # Confirm deletion of existing partitions
-echo "This will delete all exisiting partitions on $disk. Proceed? (y/n)"
+echo "This will delete all existing partitions on $disk. Proceed? (Y/n)"
 read proceed
-if [ "$proceed" != "y" ]; then
+
+# Convert input to lowercase for easier comparison
+proceed=${proceed,,}
+
+# If the input is neither 'y' nor empty, exit
+if [ "$proceed" != "y" ] && [ -n "$proceed" ]; then
   echo "Exiting."
   exit 1
 fi
@@ -214,8 +224,16 @@ set_root_password() {
         read -s -p "Confirm root password: " confirm_root_password
         echo
 
-        if [ "\$root_password" == "\$confirm_root_password" ]; then
-            echo "\$root_password" | passwd || { echo "Failed to set root password"; exit 1; }
+        if [ "$root_password" == "$confirm_root_password" ]; then
+            # Create a temporary file
+            echo "root:$root_password" > /root_password.txt
+            
+            # Set the root password
+            chpasswd < /root_password.txt || { echo "Failed to set root password"; exit 1; }
+            
+            # Clean up temporary file
+            rm -f /root_password.txt
+            
             echo "Root password set successfully."
             break
         else
@@ -226,22 +244,22 @@ set_root_password() {
 
 add_user() {
     read -p "Enter a username: " user
-    if [ -z "\$user" ]; then
+    if [ -z "$user" ]; then
         echo "Username cannot be empty. Exiting."
         exit 1
     fi
 
-    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "\$user" || { echo "Failed to create user"; exit 1; }
+    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || { echo "Failed to create user"; exit 1; }
 
     while true; do
-        read -s -p "Set \$user password: " user_password
+        read -s -p "Set $user password: " user_password
         echo
-        read -s -p "Confirm \$user password: " confirm_user_password
+        read -s -p "Confirm $user password: " confirm_user_password
         echo
 
-        if [ "\$user_password" == "\$confirm_user_password" ]; then
-            echo "\$user_password" | passwd \$user || { echo "Failed to set \$user password"; exit 1; }
-            echo "\$user password set successfully."
+        if [ "$user_password" == "$confirm_user_password" ]; then
+            echo "$user_password" | passwd $user || { echo "Failed to set \$user password"; exit 1; }
+            echo "$user password set successfully."
             break
         else
             echo "Passwords do not match. Please try again."
