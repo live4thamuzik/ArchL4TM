@@ -187,7 +187,7 @@ echo -ne "
 "
 # Backup mirrorlist
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup || { echo "Failed to backup mirrorlist"; exit 1; }
-reflector -a 48 -c US -f 5 -l 20 --sort rate --save /etc/pacman.d/mirrorlist || { echo "Failed to setup mirrors"; exit 1; }
+reflector -a 48 -f 5 -l 20 --sort rate --save /etc/pacman.d/mirrorlist || { echo "Failed to setup mirrors"; exit 1; }
 
 # Install base packages 
 pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed || { echo "Failed to install base system"; exit 1; }
@@ -396,7 +396,7 @@ display_page() {
 
 # Display pages of locales
 total_locales=${#locales[@]}
-current_page=0
+current_page=1
 
 while true; do
   start=$((current_page * PAGE_SIZE))
