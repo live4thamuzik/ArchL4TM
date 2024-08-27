@@ -215,7 +215,7 @@ set_root_password() {
         echo
 
         if [ "$root_password" == "$confirm_root_password" ]; then
-            echo "$root_password\n$root_password" | passwd || { echo "Failed to set root password"; exit 1; }
+            echo -e "$root_password\n$root_password" | passwd || { echo "Failed to set root password"; exit 1; }
             echo "Root password set successfully."
             break
         else
