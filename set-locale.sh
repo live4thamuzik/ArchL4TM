@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # Function to get a list of locales from /etc/locale.gen
-# Simplified to only include locale numbers and names
 get_locales() {
   cat /etc/locale.gen | awk '{print NR ". " $1}'
 }
@@ -17,30 +16,20 @@ fi
 
 # Constants
 PAGE_SIZE=20
-COLS=3  # Number of columns to display
 
-# Function to display a page of locales in columns
+# Function to display a page of locales in a single line
 display_page() {
   local start=$1
   local end=$2
-  local count=0
+  local line=""
 
   echo "Locales ($((start + 1)) to $end of ${#locales[@]}):"
   
   for ((i=start; i<end; i++)); do
-    # Print locales in columns
-    printf "%-25s" "${locales[$i]}"
-    count=$((count + 1))
-    
-    if ((count % COLS == 0)); then
-      echo
-    fi
+    line+="${locales[$i]}    "  # Append each locale to the line with some spacing
   done
   
-  # Add a newline at the end if the last line isn't fully filled
-  if ((count % COLS != 0)); then
-    echo
-  fi
+  echo "$line"
 }
 
 # Display pages of locales
@@ -66,37 +55,4 @@ while true; do
       # Extract the selected locale
       selected_locale=$(echo "${locales[$((choice-1))]}" | awk '{print $2}')
 
-      # Check if the selected locale is commented
-      if [[ "$selected_locale" == \#* ]]; then
-        # Remove the leading '#' for uncommenting
-        uncommented_locale=$(echo "$selected_locale" | sed 's/^# //')
-        echo "Uncommenting locale: $uncommented_locale"
-        sed -i "/^# $uncommented_locale/s/^# //" /etc/locale.gen
-      else
-        echo "Selected locale is already active."
-      fi
-
-      # Run locale-gen to apply the changes
-      locale-gen
-
-      # Set the locale in /etc/locale.conf
-      echo "Setting locale to $selected_locale"
-      echo "LANG=$selected_locale" > /etc/locale.conf
-
-      # Verify locale setting
-      echo "Locale has been set to $(cat /etc/locale.conf)"
-      break
-    else
-      echo "Invalid selection. Please enter a valid number from the displayed list."
-    fi
-  elif [[ -z "$choice" ]]; then
-    # Continue to the next page
-    if ((end == total_locales)); then
-      echo "No more locales to display."
-      break
-    fi
-    current_page=$((current_page + 1))
-  else
-    echo "Invalid input. Please enter a number or press Enter to continue."
-  fi
-done
+      # Check if the selected locale is co
