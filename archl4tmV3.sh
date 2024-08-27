@@ -70,14 +70,6 @@ if [ "$proceed" != "y" ] && [ -n "$proceed" ]; then
   exit 1
 fi
 
-# Confirm deletion of existing partitions
-#echo "This will delete all exisiting partitions on $disk. Proceed? (y/n)"
-#read proceed
-#if [ "$proceed" != "y" ]; then
-#  echo "Exiting."
-#  exit 1
-#fi
-
 # Remove existing partitions and clear old signatures
 echo -ne "d\nw" | fdisk "$disk" || { echo "Failed to delete partitions"; exit 1; }
 dd if=/dev/zero of="$disk" bs=512 count=1 conv=notrunc || { echo "Failed to wipe disk"; exit 1; }
@@ -233,7 +225,7 @@ set_root_password() {
         echo
 
         if [ "$root_password" == "$confirm_root_password" ]; then
-            echo "$root_password" | passwd || { echo "Failed to set root password"; exit 1; }
+            echo -e "$root_password\n$confirm_root_password" | passwd || { echo "Failed to set root password"; exit 1; }
             echo "Root password set successfully."
             break
         else
