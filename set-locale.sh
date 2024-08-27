@@ -16,7 +16,7 @@ fi
 
 # Constants
 PAGE_SIZE=60
-COLS=2  # Number of columns to display
+COLS=4  # Number of columns to display
 NUMBER_WIDTH=4  # Width for number and dot
 COLUMN_WIDTH=2  # Width of each column for locales
 
