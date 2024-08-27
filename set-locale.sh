@@ -2,7 +2,7 @@
 
 # Function to get a list of locales from /etc/locale.gen
 get_locales() {
-  cat /etc/locale.gen | awk '{print NR ". " $1 " (" ($1 ~ /^# / ? "commented" : "active") ")"}'
+  cat /etc/locale.gen | awk '{print NR ". " $1}'
 }
 
 # Collect locales into an array
