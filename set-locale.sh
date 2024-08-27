@@ -56,17 +56,4 @@ while true; do
   display_page $start $end
 
   # Prompt user for selection or continue
-  echo -ne "Enter the number of your locale choice from this page, or press Enter to see more locales: "
-  read -r choice
-
-  # Check if user made a choice
-  if [[ "$choice" =~ ^[0-9]+$ ]]; then
-    if [[ "$choice" -ge 1 && "$choice" -le $total_locales ]]; then
-      # Extract the selected locale
-      selected_locale=$(echo "${locales[$((choice-1))]}" | awk '{print $2}')
-
-      # Check if the selected locale is commented
-      if [[ "$selected_locale" == \#* ]]; then
-        # Remove the leading '#' for uncommenting
-        uncommented_locale=$(echo "$selected_locale" | sed 's/^# //')
-        echo "Uncommenting locale:
+  echo -ne "Enter the number of your locale choice from this p
