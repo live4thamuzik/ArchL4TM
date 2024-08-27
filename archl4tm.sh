@@ -41,9 +41,14 @@ if [ ! -b "$disk" ]; then
 fi
 
 # Confirm Disk Selection
-echo "You have selected $disk. Is this correct? (y/n)"
+echo "You have selected $disk. Is this correct? (Y/n)"
 read confirm
-if [ "$confirm" != "y" ]; then
+
+# Convert input to lowercase for easier comparison
+confirm=${confirm,,}
+
+# If the input is empty or 'y', proceed; otherwise, exit
+if [ "$confirm" != "y" ] && [ -n "$confirm" ]; then
   echo "Exiting."
   exit 1
 fi
@@ -53,9 +58,14 @@ echo "Current partitions on $disk:"
 fdisk -l "$disk"
 
 # Confirm deletion of existing partitions
-echo "This will delete all exisiting partitions on $disk. Proceed? (y/n)"
+echo "This will delete all existing partitions on $disk. Proceed? (Y/n)"
 read proceed
-if [ "$proceed" != "y" ]; then
+
+# Convert input to lowercase for easier comparison
+proceed=${proceed,,}
+
+# If the input is neither 'y' nor empty, exit
+if [ "$proceed" != "y" ] && [ -n "$proceed" ]; then
   echo "Exiting."
   exit 1
 fi
@@ -159,9 +169,6 @@ mount /dev/volgroup0/lv_home /mnt/home || { echo "Failed to mount /home"; exit 1
 # Ensure /mnt/etc exists
 mkdir -p /mnt/etc
 
-# Generate fstab
-genfstab -U -p /mnt >> /mnt/etc/fstab || { echo "Failed to generate fstab"; exit 1; }
-
 echo "Setup completed successfully."
 
 # Install prereq packages
@@ -183,16 +190,97 @@ cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup || { echo "Failed to
 reflector -a 48 -c US -f 5 -l 20 --sort rate --save /etc/pacman.d/mirrorlist || { echo "Failed to setup mirrors"; exit 1; }
 
 # Install base packages 
-echo -ne "
-+-------------------------------------------------+
-| Install base linux linux-firmware linux-headers |
-+-------------------------------------------------+
-"
 pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed || { echo "Failed to install base system"; exit 1; }
 
-# Change root to /mnt and run further commands
-echo "Changing root directory"
-cat <<EOF | arch-chroot /mnt
+# Generate fstab
+genfstab -U -p /mnt >> /mnt/etc/fstab || { echo "Failed to generate fstab"; exit 1; }
+
+# Save the functions and commands in a script file
+cat <<EOF > /mnt/chroot-setup.sh
+#!/bin/bash
+
+set -e
+
+# Define functions
+set_timezone() {
+    ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
+    hwclock --systohc
+}
+
+set_locale() {
+    sed -i "/^#en_US.UTF-8 UTF-8/c\en_US.UTF-8 UTF-8" /etc/locale.gen
+    locale-gen
+    echo LANG=en_US.UTF-8 > /etc/locale.conf
+}
+
+set_hostname() {
+    echo archtest > /etc/hostname
+}
+
+set_root_password() {
+    while true; do
+        read -s -p "Set root password: " root_password
+        echo
+        read -s -p "Confirm root password: " confirm_root_password
+        echo
+
+        if [ "$root_password" == "$confirm_root_password" ]; then
+            # Create a temporary file
+            echo "root:$root_password" > /root_password.txt
+            
+            # Set the root password
+            chpasswd < /root_password.txt || { echo "Failed to set root password"; exit 1; }
+            
+            # Clean up temporary file
+            rm -f /root_password.txt
+            
+            echo "Root password set successfully."
+            break
+        else
+            echo "Passwords do not match. Please try again."
+        fi
+    done
+}
+
+add_user() {
+    read -p "Enter a username: " user
+    if [ -z "$user" ]; then
+        echo "Username cannot be empty. Exiting."
+        exit 1
+    fi
+
+    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || { echo "Failed to create user"; exit 1; }
+
+    while true; do
+        read -s -p "Set $user password: " user_password
+        echo
+        read -s -p "Confirm $user password: " confirm_user_password
+        echo
+
+        if [ "$user_password" == "$confirm_user_password" ]; then
+            echo "$user_password" | passwd $user || { echo "Failed to set \$user password"; exit 1; }
+            echo "$user password set successfully."
+            break
+        else
+            echo "Passwords do not match. Please try again."
+        fi
+    done
+}
+
+update_sudoers() {
+    cp /etc/sudoers /etc/sudoers.backup
+    sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/c\ %wheel ALL=(ALL:ALL) ALL' /etc/sudoers
+    echo 'Defaults targetpw' >> /etc/sudoers
+    visudo -c || { echo "Syntax error in sudoers. Restoring backup."; cp /etc/sudoers.backup /etc/sudoers; exit 1; }
+}
+
+install_grub() {
+    mkdir -p /boot/EFI
+    mount /dev/${disk}1 /boot/EFI
+    grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
+    grub-mkconfig -o /boot/grub/grub.cfg
+}
+
 # Configure pacman
 echo "Configuring pacman"
 sed -i "/^#Color/c\Color\nILoveCandy" /etc/pacman.conf
@@ -201,20 +289,9 @@ sed -i "/^#ParallelDownloads/c\ParallelDownloads = 5" /etc/pacman.conf
 sed -i '/^#\[multilib\]/,+1 s/^#//' /etc/pacman.conf
 
 # Install additional needed packages
-echo -ne "
-+---------------------+
-| Installing packages |
-+---------------------+
-"
 echo "Installing: archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python "
 pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python || { echo "Failed to install packages"; exit 1; }
 
-# Install cpu microcode
-echo -ne "
-+----------------------+
-| Installing Microcode |
-+----------------------+
-"
 # Determine processor type and install microcode
 proc_type=\$(lscpu | grep -oP '^Vendor ID:\s+\K\w+')
 if [ "\$proc_type" = "GenuineIntel" ]; then
@@ -226,179 +303,36 @@ elif [ "\$proc_type" = "AuthenticAMD" ]; then
 fi
 
 # Enable services
-echo -ne "
-+-----------------------------+
-| Enabling Essential Services |
-+-----------------------------+
-"
 systemctl enable NetworkManager.service || { echo "Failed to enable NetworkManager"; exit 1; }
 echo "NetworkManager enabled"
 systemctl enable fstrim.timer || { echo "Failed to enable SSD support"; exit 1; }
 echo "SSD support enabled"
 
-# Set timezone
-echo -ne "
-+--------------+
-| Set Timezone |
-+--------------+
-"
-ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
-hwclock --systohc
+# Call defined functions
+set_timezone
+set_locale
+set_hostname
 
-# Set locale
-echo -ne "
-+------------+
-| Set Locale |
-+------------+
-"
-sed -i "/^#en_US.UTF-8 UTF-8/c\en_US.UTF-8 UTF-8" /etc/locale.gen
-locale-gen
-echo LANG=en_US.UTF-8 > /etc/locale.conf
-
-# Set hostname
-echo -ne "
-+--------------+
-| Set Hostname |
-+--------------+
-"
-echo archtest > /etc/hostname || { echo "Failed to set hostname"; exit 1; }
-
-# Add hooks
-echo -ne "
-+-----------------------+
-| Adding hooks initrams |
-+-----------------------+
-"
 # Update mkinitcpio.conf
 sed -i "/^HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/c\HOOKS=(base udev autodetect modconf block encrypt lvm2 filesystems keyboard fsck)" /etc/mkinitcpio.conf
 mkinitcpio -p linux
 
-# Set root password
-echo -ne"
-+-------------------+
-| Set Root Password |
-+-------------------+
-"
-while true; do
-  read -s -p "Set root password: " root_password
-  echo
-  read -s -p "Confirm root password: " confirm_root_password
-  echo
+# Call defined functions
+set_root_password
+add_user
+update_sudoers
+install_grub
 
-  if [ "$root_password" == "$confirm_root_password" ]; then
-    echo "$root_password" | passwd || { echo "Failed to set root password"; exit 1; }
-    echo "root password set successfully."
-    break
-  else
-    echo "Passwords do not match. Please try again."
-  fi
-done
-
-# Add user
-echo -ne "
-+-------------+
-| Create User |
-+-------------+
-"
-read -p "Enter a username: " user
-
-if [ -z "$user" ]; then
-  echo "Username cannot be empty. Exiting."
-  exit 1
-fi
-
-useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || {echo "Failed to create user; exit 1; }
-
-# Set user password
-echo -ne "
-+------------------------+
-| Set Password for $user |
-+------------------------+
-"
-while true; do
-  read -s -p "Set $user password: " user_password
-  echo
-  read -s -p "Confirm $user password: " confirm_user_password
-  echo
-
-  if [ "$user_password" == "$confirm_user_password" ]; then
-    echo "$user_password" | passwd $user || { echo "Failed to set $user password"; exit 1; }
-    echo "$user password set successfully."
-    break
-  else
-    echo "Passwords do not match. Please try again."
-  fi
-done
-
-# Enable wheel group and enforce root password when sudo is called
-echo -ne "
-+----------------+
-| Update Sudoers |
-+----------------+
-"
-# Backup sudoers file
-cp /etc/sudoers /etc/sudoers.backup { echo "Failed to backup sudoers file."; exit 1; }
-
-# Modify sudoers file to uncomment wheel group and add line Defaults targetpw
-{
-sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/c\ %wheel ALL=(ALL:ALL) ALL' /etc/sudoers || { echo "Failed to enable wheel group"; exit 1; }
-echo 'Defaults targetpw' >> /etc/sudoers || { echo "Failed to add targetpw": exit 1; }
-}
-
-# Check for syntax errors
-visudo -c || { echo "Syntax error found. Restoring original file."; cp /etc/sudoers.backup /etc/sudoers; exit 1; }
-
-# Install and configure GRUB
-echo -ne "
-+--------------+
-| Install GRUB |
-+--------------+
-"
-# Make EFI directory
-mkdir -p /boot/EFI
-
-# Mount EFI partition
-mount /dev/${disk}1 /boot/EFI
-
-# Install GRUB to EFI system partition
-grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck || { echo "Failed to install GRUB"; exit 1; }
-
-# Add locale to GRUb for GRUB messages
-cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo || { "Failed to copy locale into grub"; exit 1; }
-
-# Update /etc/default/grub
-sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved
-/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/${disk}3:volgroup0 loglevel=3"
-/^#GRUB_ENABLE_CRYPT_DISK=y/c\GRUB_ENABLE_CRYPT_DISK=y
-/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub
-
-# Make GRUB configuration file
-grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to install GRUB"; exit 1; }
-
-# Grant User ownership of /boot/grub/themes folder
-chown "$user" -R /boot/grub/themes
-
-# Check for NVIDIA GPU
-echo -ne "
-+--------------+
-| NVIDIA Check |
-+--------------+
-"
 # Detect NVIDIA GPUs
 readarray -t dGPU < <(lspci -k | grep -E "(VGA|3D)" | grep -i nvidia)
 
 # Check if any NVIDIA GPUs were found
-if [ ${#dGPU[@]} -gt 0 ]; then
+if [ \${#dGPU[@]} -gt 0 ]; then
     echo "NVIDIA GPU(s) detected:"
-    for gpu in "${dGPU[@]}"; do
-        echo "  $gpu"
+    for gpu in "\${dGPU[@]}"; do
+        echo "  \$gpu"
     done
 
-    echo -ne "
-    +----------------+
-    | Install NVIDIA |
-    +----------------+
-    "
     # Install NVIDIA drivers and related packages
     pacman -S --noconfirm --needed nvidia-dkms libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings || { echo "Failed to install NVIDIA packages"; exit 1; }
 
@@ -413,16 +347,9 @@ if [ ${#dGPU[@]} -gt 0 ]; then
 else
     echo "No NVIDIA GPUs detected."
 fi
-
-
-# Exiting chroot
-exit
-
 EOF
 
-umount -R /mnt
+chmod +x /mnt/chroot-setup.sh
 
-echo -ne "
-+---------------------------------------------------------+
-| Installation successfull. Remove boot media and reboot. |
-+---------------------------------------------------------+
+# Execute the script inside chroot
+arch-chroot /mnt ./chroot-setup.sh
