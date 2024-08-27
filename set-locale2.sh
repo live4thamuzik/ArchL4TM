@@ -41,19 +41,16 @@ while true; do
 
   display_page $start $end
 
-  # Check if we need to prompt for more locales or exit
+  # Prompt to continue or exit
   if ((end == total_locales)); then
     echo "No more locales to display."
     break
   fi
-  echo -ne "Press Enter to see more locales or type 'exit' to finish: "
+  echo -ne "Press Enter to see more locales (or wait for the prompt to select): "
   read -r input
-  if [[ "$input" == "exit" ]]; then
-    echo "Exiting."
-    exit 1
+  if [[ -z "$input" ]]; then
+    current_page=$((current_page + 1))
   fi
-
-  current_page=$((current_page + 1))
 done
 
 # Prompt user for selection
