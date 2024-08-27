@@ -15,7 +15,7 @@ if [ ${#locales[@]} -eq 0 ]; then
 fi
 
 # Constants
-PAGE_SIZE=20
+PAGE_SIZE=50
 
 # Function to display a page of locales in a single line
 display_page() {
