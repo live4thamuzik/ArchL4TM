@@ -17,6 +17,7 @@ fi
 # Constants
 PAGE_SIZE=20
 COLS=4  # Number of columns to display
+COLUMN_WIDTH=35  # Width of each column
 
 # Function to display a page of locales in columns
 display_page() {
@@ -28,7 +29,7 @@ display_page() {
 
   for ((i=start; i<end; i++)); do
     # Print locales in columns
-    printf "%-30s" "${locales[$i]}"
+    printf "%-${COLUMN_WIDTH}s" "${locales[$i]}"
     count=$((count + 1))
     
     if ((count % COLS == 0)); then
