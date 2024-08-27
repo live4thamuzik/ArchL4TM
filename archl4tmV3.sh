@@ -233,7 +233,7 @@ set_root_password() {
         echo
 
         if [ "$root_password" == "$confirm_root_password" ]; then
-            echo -e "$root_password\n$root_password\n" | passwd || { echo "Failed to set root password"; exit 1; }
+            echo "$root_password" | passwd || { echo "Failed to set root password"; exit 1; }
             echo "Root password set successfully."
             break
         else
@@ -258,7 +258,7 @@ add_user() {
         echo
 
         if [ "$user_password" == "$confirm_user_password" ]; then
-            echo "$user_password\n$user_password\n" | passwd $user || { echo "Failed to set \$user password"; exit 1; }
+            echo "$user_password" | passwd $user || { echo "Failed to set \$user password"; exit 1; }
             echo "$user password set successfully."
             break
         else
