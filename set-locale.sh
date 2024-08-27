@@ -1,3 +1,4 @@
+cat <<EOF > /mnt/set-locale.sh
 #!/bin/bash
 
 # Function to get a list of locales from /etc/locale.gen
@@ -101,3 +102,4 @@ while true; do
     echo "Invalid input. Please enter a number or press Enter to continue."
   fi
 done
+EOF
