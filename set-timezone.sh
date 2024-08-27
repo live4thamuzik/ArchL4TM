@@ -1,3 +1,4 @@
+cat <<EOF > /mnt/set-timezone.sh
 #!/bin/bash
 
 # List of patterns to search for
@@ -51,3 +52,4 @@ ln -sf "/usr/share/zoneinfo/$selected_timezone" /etc/localtime
 
 # Verify timezone setting
 echo "Timezone has been set to $(readlink -f /etc/localtime)"
+EOF
