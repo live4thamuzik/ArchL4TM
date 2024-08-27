@@ -159,9 +159,6 @@ mount /dev/volgroup0/lv_home /mnt/home || { echo "Failed to mount /home"; exit 1
 # Ensure /mnt/etc exists
 mkdir -p /mnt/etc
 
-# Generate fstab
-genfstab -U -p /mnt >> /mnt/etc/fstab || { echo "Failed to generate fstab"; exit 1; }
-
 echo "Setup completed successfully."
 
 # Install prereq packages
@@ -182,28 +179,34 @@ echo -ne "
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup || { echo "Failed to backup mirrorlist"; exit 1; }
 reflector -a 48 -c US -f 5 -l 20 --sort rate --save /etc/pacman.d/mirrorlist || { echo "Failed to setup mirrors"; exit 1; }
 
+# Install base packages 
+pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed || { echo "Failed to install base system"; exit 1; }
 
-# Define functions for chroot tasks
+# Generate fstab
+genfstab -U -p /mnt >> /mnt/etc/fstab || { echo "Failed to generate fstab"; exit 1; }
 
-# Function to set timezone
+# Save the functions and commands in a script file
+cat <<EOF > /mnt/chroot-setup.sh
+#!/bin/bash
+
+set -e
+
+# Define functions
 set_timezone() {
     ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
     hwclock --systohc
 }
 
-# Function to set locale
 set_locale() {
     sed -i "/^#en_US.UTF-8 UTF-8/c\en_US.UTF-8 UTF-8" /etc/locale.gen
     locale-gen
     echo LANG=en_US.UTF-8 > /etc/locale.conf
 }
 
-# Function to set hostname
 set_hostname() {
     echo archtest > /etc/hostname
 }
 
-# Function to set root password
 set_root_password() {
     while true; do
         read -s -p "Set root password: " root_password
@@ -211,8 +214,8 @@ set_root_password() {
         read -s -p "Confirm root password: " confirm_root_password
         echo
 
-        if [ "$root_password" == "$confirm_root_password" ]; then
-            echo "$root_password" | passwd || { echo "Failed to set root password"; exit 1; }
+        if [ "\$root_password" == "\$confirm_root_password" ]; then
+            echo "\$root_password" | passwd || { echo "Failed to set root password"; exit 1; }
             echo "Root password set successfully."
             break
         else
@@ -221,25 +224,24 @@ set_root_password() {
     done
 }
 
-# Function to add user and set password
 add_user() {
     read -p "Enter a username: " user
-    if [ -z "$user" ]; then
+    if [ -z "\$user" ]; then
         echo "Username cannot be empty. Exiting."
         exit 1
     fi
 
-    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || { echo "Failed to create user"; exit 1; }
+    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "\$user" || { echo "Failed to create user"; exit 1; }
 
     while true; do
-        read -s -p "Set $user password: " user_password
+        read -s -p "Set \$user password: " user_password
         echo
-        read -s -p "Confirm $user password: " confirm_user_password
+        read -s -p "Confirm \$user password: " confirm_user_password
         echo
 
-        if [ "$user_password" == "$confirm_user_password" ]; then
-            echo "$user_password" | passwd $user || { echo "Failed to set $user password"; exit 1; }
-            echo "$user password set successfully."
+        if [ "\$user_password" == "\$confirm_user_password" ]; then
+            echo "\$user_password" | passwd \$user || { echo "Failed to set \$user password"; exit 1; }
+            echo "\$user password set successfully."
             break
         else
             echo "Passwords do not match. Please try again."
@@ -247,7 +249,6 @@ add_user() {
     done
 }
 
-# Function to update sudoers file
 update_sudoers() {
     cp /etc/sudoers /etc/sudoers.backup
     sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/c\ %wheel ALL=(ALL:ALL) ALL' /etc/sudoers
@@ -255,21 +256,12 @@ update_sudoers() {
     visudo -c || { echo "Syntax error in sudoers. Restoring backup."; cp /etc/sudoers.backup /etc/sudoers; exit 1; }
 }
 
-# Function to install and configure GRUB
 install_grub() {
     mkdir -p /boot/EFI
     mount /dev/${disk}1 /boot/EFI
     grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
     grub-mkconfig -o /boot/grub/grub.cfg
 }
-
-# Run functions within chroot
-echo "Changing root directory"
-arch-chroot /mnt <<EOF
-set -e
-
-# Install base packages 
-pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed || { echo "Failed to install base system"; exit 1; }
 
 # Configure pacman
 echo "Configuring pacman"
@@ -298,29 +290,29 @@ echo "NetworkManager enabled"
 systemctl enable fstrim.timer || { echo "Failed to enable SSD support"; exit 1; }
 echo "SSD support enabled"
 
+# Call defined functions
+set_timezone
+set_locale
+set_hostname
+
 # Update mkinitcpio.conf
 sed -i "/^HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/c\HOOKS=(base udev autodetect modconf block encrypt lvm2 filesystems keyboard fsck)" /etc/mkinitcpio.conf
 mkinitcpio -p linux
 
 # Call defined functions
-set_timezone
-set_locale
-set_hostname
 set_root_password
 add_user
 update_sudoers
 install_grub
 
-
-
 # Detect NVIDIA GPUs
 readarray -t dGPU < <(lspci -k | grep -E "(VGA|3D)" | grep -i nvidia)
 
 # Check if any NVIDIA GPUs were found
-if [ ${#dGPU[@]} -gt 0 ]; then
+if [ \${#dGPU[@]} -gt 0 ]; then
     echo "NVIDIA GPU(s) detected:"
-    for gpu in "${dGPU[@]}"; do
-        echo "  $gpu"
+    for gpu in "\${dGPU[@]}"; do
+        echo "  \$gpu"
     done
 
     # Install NVIDIA drivers and related packages
@@ -337,9 +329,9 @@ if [ ${#dGPU[@]} -gt 0 ]; then
 else
     echo "No NVIDIA GPUs detected."
 fi
-
-
 EOF
 
-umount -R /mnt
+chmod +x /mnt/chroot-setup.sh
 
+# Execute the script inside chroot
+arch-chroot /mnt ./chroot-setup.sh
