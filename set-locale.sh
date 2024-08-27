@@ -18,7 +18,7 @@ fi
 PAGE_SIZE=60
 COLS=2  # Number of columns to display
 NUMBER_WIDTH=4  # Width for number and dot
-COLUMN_WIDTH=5  # Width of each column for locales
+COLUMN_WIDTH=2  # Width of each column for locales
 
 # Function to display a page of locales in columns
 display_page() {
