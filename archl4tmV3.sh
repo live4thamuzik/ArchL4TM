@@ -226,14 +226,13 @@ set_root_password() {
 
         if [ "$root_password" == "$confirm_root_password" ]; then
             # Create a temporary file
-            temp_file=$(mktemp)
-            echo -e "$root_password\n$root_password" > "$temp_file"
+            echo "root:$root_password" > /root_password.txt
             
             # Set the root password
-            passwd < "$temp_file" || { echo "Failed to set root password"; exit 1; }
+            chpasswd < /root_password.txt || { echo "Failed to set root password"; exit 1; }
             
             # Clean up temporary file
-            rm -f "$temp_file"
+            rm -f /root_password.txt
             
             echo "Root password set successfully."
             break
