@@ -225,7 +225,16 @@ set_root_password() {
         echo
 
         if [ "$root_password" == "$confirm_root_password" ]; then
-            echo "root:$root_password" | chpasswd || { echo "Failed to set root password"; exit 1; }
+            # Create a temporary file
+            temp_file=$(mktemp)
+            echo -e "$root_password\n$root_password" > "$temp_file"
+            
+            # Set the root password
+            passwd < "$temp_file" || { echo "Failed to set root password"; exit 1; }
+            
+            # Clean up temporary file
+            rm -f "$temp_file"
+            
             echo "Root password set successfully."
             break
         else
