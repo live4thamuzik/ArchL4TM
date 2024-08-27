@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Function to get a list of locales from /etc/locale.gen
+# Simplified to only include locale numbers and names
 get_locales() {
   cat /etc/locale.gen | awk '{print NR ". " $1}'
 }
@@ -16,15 +17,30 @@ fi
 
 # Constants
 PAGE_SIZE=20
+COLS=3  # Number of columns to display
 
-# Function to display a page of locales
+# Function to display a page of locales in columns
 display_page() {
   local start=$1
   local end=$2
+  local count=0
+
   echo "Locales ($((start + 1)) to $end of ${#locales[@]}):"
+  
   for ((i=start; i<end; i++)); do
-    echo "${locales[$i]}"
+    # Print locales in columns
+    printf "%-25s" "${locales[$i]}"
+    count=$((count + 1))
+    
+    if ((count % COLS == 0)); then
+      echo
+    fi
   done
+  
+  # Add a newline at the end if the last line isn't fully filled
+  if ((count % COLS != 0)); then
+    echo
+  fi
 }
 
 # Display pages of locales
