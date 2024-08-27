@@ -226,22 +226,22 @@ set_root_password() {
 
 add_user() {
     read -p "Enter a username: " user
-    if [ -z "\$user" ]; then
+    if [ -z "$user" ]; then
         echo "Username cannot be empty. Exiting."
         exit 1
     fi
 
-    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "\$user" || { echo "Failed to create user"; exit 1; }
+    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || { echo "Failed to create user"; exit 1; }
 
     while true; do
-        read -s -p "Set \$user password: " user_password
+        read -s -p "Set $user password: " user_password
         echo
-        read -s -p "Confirm \$user password: " confirm_user_password
+        read -s -p "Confirm $user password: " confirm_user_password
         echo
 
-        if [ "\$user_password" == "\$confirm_user_password" ]; then
-            echo "\$user_password" | passwd \$user || { echo "Failed to set \$user password"; exit 1; }
-            echo "\$user password set successfully."
+        if [ "$user_password" == "$confirm_user_password" ]; then
+            echo "$user_password\n$user_password" | passwd $user || { echo "Failed to set \$user password"; exit 1; }
+            echo "$user password set successfully."
             break
         else
             echo "Passwords do not match. Please try again."
