@@ -225,17 +225,25 @@ set_root_password() {
         echo
 
         if [ "$root_password" == "$confirm_root_password" ]; then
-            # Create a temporary file
-            echo "root:$root_password" > /root_password.txt
-            
-            # Set the root password
-            chpasswd < /root_password.txt || { echo "Failed to set root password"; exit 1; }
-            
-            # Clean up temporary file
-            rm -f /root_password.txt
-            
-            echo "Root password set successfully."
-            break
+            # Attempt to set root password non-interactively
+            echo "Attempting to set root password..."
+            if echo "$root_password" | passwd --stdin root 2>/dev/null; then
+                echo "Root password set successfully."
+                break
+            elif echo "$root_password" | chpasswd 2>/dev/null; then
+                echo "Root password set successfully."
+                break
+            else
+                # Fallback to interactive passwd
+                echo "Non-interactive methods failed. Please set the root password interactively."
+                passwd
+                if [ $? -eq 0 ]; then
+                    echo "Root password set successfully."
+                    break
+                else
+                    echo "Failed to set root password interactively. Please try again."
+                fi
+            fi
         else
             echo "Passwords do not match. Please try again."
         fi
