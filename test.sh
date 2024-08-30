@@ -464,30 +464,17 @@ set_root_password() {
 }
 
 create_user() {
-    echo "Please enter a username: "
-    read -p "Enter a username: " user
-    echo "DEBUG: User input captured as '$user'"  # Debug line to show what is captured
+    read -s -p "Enter a username: " user
+    echo
 
-    if [ -z "$user" ]; then
-        echo "Username cannot be empty. Exiting."
-        exit 1
-    fi
-
-    if ! useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user"; then
+    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user"; then
         echo "Failed to create user $user. Exiting."
         exit 1
-    fi
-
-    echo "User $user created successfully."
+    
+    echo "$user created successfully."
 }
 
 set_user_password() {
-    read -p "Enter the username for which to set the password: " user
-    if [ -z "$user" ]; then
-        echo "Username cannot be empty. Exiting."
-        exit 1
-    fi
-
     while true; do
         read -s -p "Set $user password: " user_password
         echo
@@ -495,9 +482,25 @@ set_user_password() {
         echo
 
         if [ "$user_password" == "$confirm_user_password" ]; then
-            echo "$user:$user_password" | chpasswd || { echo "Failed to set $user password"; exit 1; }
-            echo "$user password set successfully."
-            break
+            # Attempt to set $user password non-interactively
+            echo "Attempting to set $user password..."
+            if echo "$user_password" | passwd --stdin root 2>/dev/null; then
+                echo "$user password set successfully."
+                break
+            elif echo "$user_password" | chpasswd 2>/dev/null; then
+                echo "$user password set successfully."
+                break
+            else
+                # Fallback to interactive passwd
+                echo "Non-interactive methods failed. Please set the $user password interactively."
+                passwd
+                if [ $? -eq 0 ]; then
+                    echo "$user password set successfully."
+                    break
+                else
+                    echo "Failed to set $user password interactively. Please try again."
+                fi
+            fi
         else
             echo "Passwords do not match. Please try again."
         fi
