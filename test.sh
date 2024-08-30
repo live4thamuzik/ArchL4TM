@@ -402,6 +402,7 @@ echo -ne "
 | Set hostname |
 +--------------+
 "
+
 set_hostname() {
   # Prompt user to enter hostname
   read -p "Enter your desired hostname: " hostname
@@ -417,6 +418,9 @@ set_hostname() {
 
   echo "Hostname set to $hostname"
 }
+
+# Call the function to set hostname
+set_hostname
 
 # Save the functions and commands in a script file
 cat <<EOF > /mnt/chroot-setup.sh
@@ -475,25 +479,10 @@ add_user() {
         echo
 
         if [ "$user_password" == "$confirm_user_password" ]; then
-            # Attempt to set user password non-interactively
-            echo "Attempting to set user password..."
-            if echo "$user_password" | passwd --stdin root 2>/dev/null; then
-                echo "$user password set successfully."
-                break
-            elif echo "$user_password" | chpasswd 2>/dev/null; then
-                echo "$user password set successfully."
-                break
-            else
-                # Fallback to interactive passwd
-                echo "Non-interactive methods failed. Please set the $user password interactively."
-                passwd
-                if [ $? -eq 0 ]; then
-                    echo "$user password set successfully."
-                    break
-                else
-                    echo "Failed to set $user password interactively. Please try again."
-                fi
-            fi
+            # Attempt to set user password
+            echo "$user_password" | chpasswd || { echo "Failed to set $user password"; exit 1; }
+            echo "$user password set successfully."
+            break
         else
             echo "Passwords do not match. Please try again."
         fi
