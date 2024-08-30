@@ -470,7 +470,10 @@ add_user() {
         exit 1
     fi
 
-    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || { echo "Failed to create user"; exit 1; }
+    if ! useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user"; then
+        echo "Failed to create user $user. Exiting."
+        exit 1
+    fi
 
     while true; do
         read -s -p "Set $user password: " user_password
@@ -479,8 +482,7 @@ add_user() {
         echo
 
         if [ "$user_password" == "$confirm_user_password" ]; then
-            # Attempt to set user password
-            echo "$user_password" | chpasswd || { echo "Failed to set $user password"; exit 1; }
+            echo "$user:$user_password" | chpasswd || { echo "Failed to set $user password"; exit 1; }
             echo "$user password set successfully."
             break
         else
