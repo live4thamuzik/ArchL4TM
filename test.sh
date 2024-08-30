@@ -43,7 +43,11 @@ fi
 # Confirm Disk Selection
 echo "You have selected $disk. Is this correct? (Y/n)"
 read confirm
+
+# Convert input to lowercase for easier comparison
 confirm=${confirm,,}
+
+# If the input is empty or 'y', proceed; otherwise, exit
 if [ "$confirm" != "y" ] && [ -n "$confirm" ]; then
   echo "Exiting."
   exit 1
@@ -56,7 +60,11 @@ fdisk -l "$disk"
 # Confirm deletion of existing partitions
 echo "This will delete all existing partitions on $disk. Proceed? (Y/n)"
 read proceed
+
+# Convert input to lowercase for easier comparison
 proceed=${proceed,,}
+
+# If the input is neither 'y' nor empty, exit
 if [ "$proceed" != "y" ] && [ -n "$proceed" ]; then
   echo "Exiting."
   exit 1
@@ -82,6 +90,7 @@ echo ""        # Default to first sector
 echo "+5G"     # Partition 2 size 5GB
 echo "n"       # Add new partition
 echo ""        # Default to partition number 3
+echo ""        # Default to first sector
 echo ""        # Use remaining space
 echo "t"       # Change partition type
 echo "3"       # Partition 3
@@ -104,8 +113,12 @@ mkfs.ext4 "${disk}2" || { echo "Failed to format ${disk}2"; exit 1; }
 # Ask user to set encryption password
 read -s -p "Enter encryption password: " password
 echo
+
+# Confirm encryption password
 read -s -p "Confirm encryption password: " confirm_password
 echo
+
+# Check if passwords match
 if [ "$password" != "$confirm_password" ]; then
   echo "Passwords do not match. Exiting."
   exit 1
