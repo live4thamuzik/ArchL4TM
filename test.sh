@@ -464,7 +464,10 @@ set_root_password() {
 }
 
 create_user() {
+    echo "Please enter a username: "
     read -p "Enter a username: " user
+    echo "DEBUG: User input captured as '$user'"  # Debug line to show what is captured
+
     if [ -z "$user" ]; then
         echo "Username cannot be empty. Exiting."
         exit 1
