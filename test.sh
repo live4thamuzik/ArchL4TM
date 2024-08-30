@@ -463,7 +463,7 @@ set_root_password() {
     done
 }
 
-add_user() {
+create_user() {
     read -p "Enter a username: " user
     if [ -z "$user" ]; then
         echo "Username cannot be empty. Exiting."
@@ -472,6 +472,16 @@ add_user() {
 
     if ! useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user"; then
         echo "Failed to create user $user. Exiting."
+        exit 1
+    fi
+
+    echo "User $user created successfully."
+}
+
+set_user_password() {
+    read -p "Enter the username for which to set the password: " user
+    if [ -z "$user" ]; then
+        echo "Username cannot be empty. Exiting."
         exit 1
     fi
 
@@ -490,6 +500,10 @@ add_user() {
         fi
     done
 }
+
+# Example of calling the functions
+create_user
+set_user_password
 
 update_sudoers() {
     cp /etc/sudoers /etc/sudoers.backup
