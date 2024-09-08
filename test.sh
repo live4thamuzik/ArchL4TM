@@ -463,7 +463,6 @@ set_root_password() {
     done
 }
 
-# Function to create a user
 create_user() {
     # Prompt user for a username
     read -p "Enter a username: " user
@@ -478,7 +477,6 @@ create_user() {
     useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || { echo "Failed to create user $user. Exiting."; exit 1; }
     echo "$user created successfully."
 }
-
 # Function to set the user password
 set_user_password() {
     # Use a predefined password from a file
