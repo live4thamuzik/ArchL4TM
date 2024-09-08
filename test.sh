@@ -463,51 +463,40 @@ set_root_password() {
     done
 }
 
+# Function to create a user
 create_user() {
-    read -s -p "Enter a username: " user
-    echo
+    # Use a predefined username from a file
+    local user
+    user=$(cat /tmp/username.txt)
 
-    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user"; then
-        echo "Failed to create user $user. Exiting."
+    if [ -z "$user" ]; then
+        echo "No username found. Exiting."
         exit 1
-    
+    fi
+
+    # Create the user
+    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || { echo "Failed to create user $user. Exiting."; exit 1; }
     echo "$user created successfully."
 }
 
+# Function to set the user password
 set_user_password() {
-    while true; do
-        read -s -p "Set $user password: " user_password
-        echo
-        read -s -p "Confirm $user password: " confirm_user_password
-        echo
+    # Use a predefined password from a file
+    local user_password
+    user_password=$(cat /tmp/userpassword.txt)
 
-        if [ "$user_password" == "$confirm_user_password" ]; then
-            # Attempt to set $user password non-interactively
-            echo "Attempting to set $user password..."
-            if echo "$user_password" | passwd --stdin root 2>/dev/null; then
-                echo "$user password set successfully."
-                break
-            elif echo "$user_password" | chpasswd 2>/dev/null; then
-                echo "$user password set successfully."
-                break
-            else
-                # Fallback to interactive passwd
-                echo "Non-interactive methods failed. Please set the $user password interactively."
-                passwd
-                if [ $? -eq 0 ]; then
-                    echo "$user password set successfully."
-                    break
-                else
-                    echo "Failed to set $user password interactively. Please try again."
-                fi
-            fi
-        else
-            echo "Passwords do not match. Please try again."
-        fi
-    done
+    if [ -z "$user_password" ]; then
+        echo "No password found. Exiting."
+        exit 1
+    fi
+
+    # Use chpasswd to set the user's password
+    echo "$user:$user_password" | chpasswd || { echo "Failed to set $user password. Exiting."; exit 1; }
+    echo "$user password set successfully."
 }
 
 # Example of calling the functions
+set_root_password
 create_user
 set_user_password
 
