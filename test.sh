@@ -465,12 +465,12 @@ set_root_password() {
 
 # Function to create a user
 create_user() {
-    # Use a predefined username from a file
-    local user
-    user=$(cat /tmp/username.txt)
+    # Prompt user for a username
+    read -p "Enter a username: " user
 
+    # Ensure username is not empty
     if [ -z "$user" ]; then
-        echo "No username found. Exiting."
+        echo "No username provided. Exiting."
         exit 1
     fi
 
