@@ -422,22 +422,39 @@ set_hostname() {
 # Call the function to set hostname
 set_hostname
 
-# Collect user input before chroot
-read -p "Enter a username: " user
-echo "$user" > /mnt/tmp/username.txt
-
-read -s -p "Enter user password: " user_password
-echo "$user_password" > /mnt/tmp/userpassword.txt
-
-# Set proper permissions
-chmod 600 /mnt/tmp/username.txt /mnt/tmp/userpassword.txt
-
 #!/bin/bash
+
+# Exit on any command failure
+set -e
+
+# Log all output to a log file
+exec > >(tee -a /var/log/arch_install.log) 2>&1
+
+echo -ne "
++--------------------------------+
+| Automated Arch Linux Installer |
++--------------------------------+
+"
+
+# Drive Preparation
+# [Insert the drive preparation code here]
+
+# Install prerequisites
+echo -ne "
++---------------------------
+| Installing Prerequisites |
++--------------------------+
+"
+pacman -S --noconfirm pacman-contrib reflector rsync || { echo "Failed to install prerequisites"; exit 1; }
+
+# Enter the chroot environment
+arch-chroot /mnt /bin/bash <<'EOF'
+
+# Inside chroot
 
 set -e
 
 # Define functions
-
 set_root_password() {
     while true; do
         read -s -p "Set root password: " root_password
@@ -446,7 +463,6 @@ set_root_password() {
         echo
 
         if [ "$root_password" == "$confirm_root_password" ]; then
-            # Attempt to set root password non-interactively
             echo "Attempting to set root password..."
             if echo "$root_password" | passwd --stdin root 2>/dev/null; then
                 echo "Root password set successfully."
@@ -455,7 +471,6 @@ set_root_password() {
                 echo "Root password set successfully."
                 break
             else
-                # Fallback to interactive passwd
                 echo "Non-interactive methods failed. Please set the root password interactively."
                 passwd
                 if [ $? -eq 0 ]; then
@@ -472,7 +487,6 @@ set_root_password() {
 }
 
 create_user() {
-    # Read the username from a file
     local user=$(cat /tmp/username.txt)
 
     if [ -z "$user" ]; then
@@ -482,13 +496,11 @@ create_user() {
 
     echo "Username set to $user"
 
-    # Create the user
     useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || { echo "Failed to create user $user. Exiting."; exit 1; }
     echo "$user created successfully."
 }
 
 set_user_password() {
-    # Use a predefined password from a file
     local user_password
     user_password=$(cat /tmp/userpassword.txt)
 
@@ -497,10 +509,8 @@ set_user_password() {
         exit 1
     fi
 
-    # Read the username from a file
     local user=$(cat /tmp/username.txt)
 
-    # Use chpasswd to set the user's password
     echo "$user:$user_password" | chpasswd || { echo "Failed to set $user password. Exiting."; exit 1; }
     echo "$user password set successfully."
 }
@@ -562,24 +572,24 @@ install_grub
 # Detect NVIDIA GPUs
 readarray -t dGPU < <(lspci -k | grep -E "(VGA|3D)" | grep -i nvidia)
 
-# Check if any NVIDIA GPUs were found
 if [ ${#dGPU[@]} -gt 0 ]; then
     echo "NVIDIA GPU(s) detected:"
     for gpu in "${dGPU[@]}"; do
         echo "  $gpu"
     done
 
-    # Install NVIDIA drivers and related packages
     pacman -S --noconfirm --needed nvidia-dkms libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings || { echo "Failed to install NVIDIA packages"; exit 1; }
 
-    # Add NVIDIA modules to initramfs
     sed -i '/^MODULES=()/c\MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)' /etc/mkinitcpio.conf || { echo "Failed to add NVIDIA modules to initramfs"; exit 1; }
     mkinitcpio -p linux || { echo "Failed to regenerate initramfs"; exit 1; }
 
-    # Update GRUB configuration
     sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT=/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
     grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
 
 else
     echo "No NVIDIA GPUs detected."
 fi
+
+EOF
+
+echo "Setup completed successfully."
