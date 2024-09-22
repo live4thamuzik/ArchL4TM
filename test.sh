@@ -574,13 +574,13 @@ echo "Installing: archlinux-keyring base-devel networkmanager lvm2 pipewire btop
 pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod || { echo "Failed to install packages"; exit 1; }
 
 # Determine processor type and install microcode
-proc_type=\<span class="math-inline">\(lscpu \| grep \-oP '^Vendor ID\:\\s\+\\K\\w\+'\)
-if \[ "\\$proc\_type" \= "GenuineIntel" \]; then
-echo "Installing Intel microcode"
-pacman \-S \-\-noconfirm \-\-needed intel\-ucode \|\| \{ echo "Failed to install Intel microcode"; exit 1; \}
-elif \[ "\\$proc\_type" \= "AuthenticAMD" \]; then
-echo "Installing AMD microcode"
-pacman \-S \-\-noconfirm \-\-needed amd\-ucode \|\| \{ echo "Failed to install AMD microcode"; exit 1; \}
+proc_type=\$(lscpu | grep -oP '^Vendor ID:\s+\K\w+')
+if [ "\$proc_type" = "GenuineIntel" ]; then
+    echo "Installing Intel microcode"
+    pacman -S --noconfirm --needed intel-ucode || { echo "Failed to install Intel microcode"; exit 1; }
+elif [ "\$proc_type" = "AuthenticAMD" ]; then
+    echo "Installing AMD microcode"
+    pacman -S --noconfirm --needed amd-ucode || { echo "Failed to install AMD microcode"; exit 1; }
 fi
 
 # Enable services
@@ -641,19 +641,8 @@ read -p "
 Do you want to install a GUI?
 1. Server (No GUI)
 2. GNOME
-3. KDE Plasma
-4. XFCE
-5. LXQt
-6. MATE
-7. Cinnamon
-8. Deepin
-9. Budgie
-10. Enlightenment
-11. Hyprland
-12. i3
-13. Awesome
-14. bspwm
-Enter your choice (1-14): " gui_choice
+3. KDE (Plasma)
+Enter your choice (1-3): " gui_choice
 
 # Validate input and perform actions based on choice
 case "$gui_choice" in
@@ -674,143 +663,20 @@ case "$gui_choice" in
         echo "GNOME installed and gdm enabled."
         ;;
     kde)
-    echo "Installing KDE Plasma desktop environment..."
-    pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance # Add other necessary packages here
+        echo "Installing KDE Plasma desktop environment..."
+        pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
+            echo "Failed to install GNOME packages. Exiting."
+            exit 1
+        }
     
-    systemctl enable sddm.service || {
-        echo "Failed to enable sddm service. Exiting."
-        exit 1
-    }
-    echo "KDE Plasma installed and sddm enabled."
-    ;;
-xfce)
-        echo "Installing XFCE desktop environment..."
-        pacman -S --noconfirm --needed xorg xfce4 xfce4-goodies lightdm lightdm-gtk-greeter firefox thunar xfce4-settings-manager || {
-            echo "Failed to install XFCE packages. Exiting."
-            exit 1
-        }
-
-        systemctl enable lightdm.service || {
-            echo "Failed to enable lightdm service. Exiting."
-            exit 1
-        }
-        echo "XFCE installed and lightdm enabled."
-        ;;
-    *)
-        echo "Invalid choice. Please enter 'server', 'gnome', 'kde', or 'xfce'." # Updated prompt
-        exit 1
-        ;;
-lxqt)
-        echo "Installing LXQt desktop environment..."
-        pacman -S --noconfirm --needed xorg lxqt sddm lxqt-common firefox pcmanfm-qt lxappearance || {
-            echo "Failed to install LXQt packages. Exiting."
-            exit 1
-        }
         systemctl enable sddm.service || {
             echo "Failed to enable sddm service. Exiting."
             exit 1
         }
-        echo "LXQt installed and sddm enabled."
-        ;;
-    mate)
-        echo "Installing MATE desktop environment..."
-        pacman -S --noconfirm --needed xorg mate mate-extra lightdm lightdm-gtk-greeter firefox caja mate-tweak || {
-            echo "Failed to install MATE packages. Exiting."
-            exit 1
-        }
-        systemctl enable lightdm.service || {
-            echo "Failed to enable lightdm service. Exiting."
-            exit 1
-        }
-        echo "MATE installed and lightdm enabled."
-        ;;
-    cinnamon)
-        echo "Installing Cinnamon desktop environment..."
-        pacman -S --noconfirm --needed xorg cinnamon nemo lightdm lightdm-gtk-greeter firefox cinnamon-settings || {
-            echo "Failed to install Cinnamon packages. Exiting."
-            exit 1
-        }
-        systemctl enable lightdm.service || {
-            echo "Failed to enable lightdm service. Exiting."
-            exit 1
-        }
-        echo "Cinnamon installed and lightdm enabled."
-        ;;
-    deepin)
-        echo "Installing Deepin desktop environment..."
-        pacman -S --noconfirm --needed xorg deepin deepin-extra lightdm lightdm-deepin-greeter firefox dde-file-manager deepin-system-settings || {
-            echo "Failed to install Deepin packages. Exiting."
-            exit 1
-        }
-        systemctl enable lightdm.service || {
-            echo "Failed to enable lightdm service. Exiting."
-            exit 1
-        }
-        echo "Deepin installed and lightdm enabled."
-        ;;
-    budgie)
-        echo "Installing Budgie desktop environment..."
-        pacman -S --noconfirm --needed xorg budgie-desktop lightdm lightdm-gtk-greeter firefox nemo budgie-control-center || {
-            echo "Failed to install Budgie packages. Exiting."
-            exit 1
-        }
-        systemctl enable lightdm.service || {
-            echo "Failed to enable lightdm service. Exiting."
-            exit 1
-        }
-        echo "Budgie installed and lightdm enabled."
-        ;;
-    enlightenment)
-        echo "Installing Enlightenment desktop environment..."
-        pacman -S --noconfirm --needed xorg enlightenment terminology efl firefox fileman terminology-wallpaper enlightenment-themes || {
-            echo "Failed to install Enlightenment packages. Exiting."
-            exit 1
-        }
-        # Enlightenment doesn't typically use a display manager, so we won't enable one here
-        echo "Enlightenment installed."
-        ;;
-    hyprland)
-        echo "Installing Hyprland window manager..."
-        pacman -S --noconfirm --needed xorg hyprland-git kitty firefox pcmanfm-qt lxappearance || {
-            echo "Failed to install Hyprland packages. Exiting."
-            exit 1
-        }
-        # Hyprland doesn't use a display manager, so we won't enable one here
-        echo "Hyprland installed."
+        echo "KDE Plasma installed and sddm enabled."
         ;;
     *)
-        echo "Invalid choice. Please enter 'server', 'gnome', 'kde', 'xfce', 'lxqt', 'mate', 'cinnamon', 'deepin', 'budgie', 'enlightenment', or 'hyprland'."
-        exit 1
-        ;;
-i3)
-        echo "Installing i3 window manager..."
-        pacman -S --noconfirm --needed xorg i3-wm i3status dmenu i3lock firefox thunar lxappearance || {
-            echo "Failed to install i3 packages. Exiting."
-            exit 1
-        }
-        # i3 doesn't use a display manager, so we won't enable one here
-        echo "i3 installed."
-        ;;
-    awesome)
-        echo "Installing Awesome window manager..."
-        pacman -S --noconfirm --needed xorg awesome firefox thunar lxappearance || {
-            echo "Failed to install Awesome packages. Exiting."
-            exit 1
-        }
-        # Awesome doesn't use a display manager, so we won't enable one here
-        echo "Awesome installed."
-        ;;
-    bspwm)
-        echo "Installing bspwm window manager..."
-        pacman -S --noconfirm --needed xorg bspwm sxhkd dmenu firefox thunar lxappearance || {
-            echo "Failed to install bspwm packages. Exiting."
-            exit 1
-        }
-        # bspwm doesn't use a display manager, so we won't enable one here
-        echo "bspwm installed."
-        ;;
-    *)
-        echo "Invalid choice. Please enter 'server', 'gnome', 'kde', 'xfce', 'lxqt', 'mate', 'cinnamon', 'deepin', 'budgie', 'enlightenment', 'hyprland', 'i3', 'awesome', or 'bspwm'."
+        echo "Invalid choice. Please enter 'server', 'gnome', 'kde'."
         exit 1
         ;;
 esac
@@ -833,13 +699,14 @@ if [ \${#dGPU[@]} -gt 0 ]; then
     mkinitcpio -p linux || { echo "Failed to regenerate initramfs"; exit 1; }
 
     # Update GRUB configuration
-sed \-i '/^GRUB\_CMDLINE\_LINUX\_DEFAULT\=/c\\GRUB\_CMDLINE\_LINUX\_DEFAULT\="quiet cryptdevice\=/dev/'</span>{disk}'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
-    grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
+    sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT=/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
+    grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
 
 else
     echo "No NVIDIA GPUs detected."
 fi
-EOF  # This EOF marks the end of the heredoc for 'cat'
+
+EOF
 
 chmod +x /mnt/chroot-setup.sh
 
@@ -847,8 +714,8 @@ chmod +x /mnt/chroot-setup.sh
 arch-chroot /mnt ./chroot-setup.sh
 
 # Exit chroot, unmount partitions, and reboot (within the script)
-echo "Exiting chroot..."
-umount -R /mnt
+#echo "Exiting chroot..."
+#umount -R /mnt
 
-echo "Rebooting..."
-reboot
+#echo "Rebooting..."
+#reboot
