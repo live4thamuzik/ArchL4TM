@@ -700,7 +700,7 @@ case "$gui_choice" in
         echo "KDE Plasma installed and sddm enabled."
         ;;
     *)
-        echo "Invalid choice. Please enter 'server', 'gnome', 'kde'."
+        echo "Invalid choice. Please enter 1, 2, or 3." 
         exit 1
         ;;
 esac
