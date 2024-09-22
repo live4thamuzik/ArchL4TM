@@ -606,13 +606,17 @@ echo -ne "
 
 # Ask the user which AUR helper they want
 read -r -p "
-Which AUR helper do you want to install? 
+Which AUR helper do you want to install? 
 1. Yay
 2. Paru
-Enter your choice (1-2): " aur_helper | head -n 1  # Pipe to head -n 1
+Enter your choice (1-2): " aur_helper_input | head -n 1
+
+# Trim any leading/trailing whitespace and convert to lowercase for easier comparison
+aur_helper=$(echo "$aur_helper_input" | xargs | tr '[:upper:]' '[:lower:]')
+
 # Validate input and perform actions based on choice
 case "$aur_helper" in
-    1) # Yay
+    1 | yay)
         echo "Installing Yay"
         # Clone the repo
         if ! git clone https://aur.archlinux.org/yay.git /tmp/yay; then 
@@ -630,7 +634,7 @@ case "$aur_helper" in
         cd ~ && rm -rf /tmp/yay
         echo "Yay installed successfully! You can now use yay to install packages from the AUR."
         ;;
-    2) # Paru
+    2 | paru)
         echo "Installing Paru"
         # Clone the repo
         if ! git clone https://aur.archlinux.org/paru.git /tmp/paru; then 
@@ -649,7 +653,7 @@ case "$aur_helper" in
         echo "Paru installed successfully! You can now use paru to install packages from the AUR."
         ;;
     *)
-        echo "Invalid choice. Please enter 1 or 2."
+        echo "Invalid choice. Please enter 1 or 2 (or 'yay' or 'paru')."
         exit 1
         ;;
 esac
