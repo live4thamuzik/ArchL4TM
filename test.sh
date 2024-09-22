@@ -605,30 +605,53 @@ echo -ne "
 "
 
 # Ask the user which AUR helper they want
-read -p "Which AUR helper do you want to install (yay/paru)? " aur_helper
+read -p "
+Which AUR helper do you want to install? 
+1. Yay
+2. Paru
+Enter your choice (1-2): " aur_helper
 
-# Validate input
-if [[ "$aur_helper" != "yay" && "$aur_helper" != "paru" ]]; then
-    echo "Invalid choice. Please enter either 'yay' or 'paru'."
-    exit 1
-fi
+# Validate input and perform actions based on choice
+case "$aur_helper" in
+    1) # Yay
+       echo "Installing Yay"
+       # Clone the repo
+       git clone https://aur.archlinux.org/yay.git /tmp/yay || { 
+           echo "Failed to clone Yay repository. Exiting."
+           exit 1
+       }
 
-# Clone the repo
-git clone https://aur.archlinux.org/$aur_helper.git /tmp/$aur_helper || { 
-    echo "Failed to clone $aur_helper repository. Exiting."
-    exit 1
-}
+       # Build and install the AUR helper
+       cd /tmp/yay && makepkg -si --noconfirm || {
+           echo "Failed to build and install Yay. Exiting."
+           exit 1
+       }
 
-# Build and install the AUR helper
-cd /tmp/$aur_helper && makepkg -si --noconfirm || {
-    echo "Failed to build and install $aur_helper. Exiting."
-    exit 1
-}
+      # Clean up
+      cd ~ && rm -rf /tmp/yay
+      ;;
+    2) # Paru
+       echo "Installing Paru"
+       # Clone the repo
+       git clone https://aur.archlinux.org/paru.git /tmp/paru || { 
+           echo "Failed to clone Paru repository. Exiting."
+           exit 1
+       }
 
-# Clean up
-cd ~ && rm -rf /tmp/$aur_helper
+       # Build and install the AUR helper
+       cd /tmp/paru && makepkg -si --noconfirm || {
+           echo "Failed to build and install Paru. Exiting."
+           exit 1
+       }
 
-echo "$aur_helper installed successfully!"
+       # Clean up
+       cd ~ && rm -rf /tmp/paru
+       ;;
+    *)
+       echo "Invalid choice. Please enter 'server', 'gnome', 'kde'."
+       exit 1
+       ;;
+esac
 
 echo -ne "
 +-----------------------+
