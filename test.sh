@@ -658,12 +658,15 @@ case "$gui_choice" in
         echo "GNOME installed and gdm enabled."
         ;;
     kde)
-        echo "KDE Plasma installation will be added in the future." # Placeholder for KDE installation
-        ;;
-    *)
-        echo "Invalid choice. Please enter 'server', 'gnome', or 'kde'."
+    echo "Installing KDE Plasma desktop environment..."
+    pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications firefox # Add other necessary packages here
+    
+    systemctl enable sddm.service || {
+        echo "Failed to enable sddm service. Exiting."
         exit 1
-        ;;
+    }
+    echo "KDE Plasma installed and sddm enabled."
+    ;;
 esac
 
 # Detect NVIDIA GPUs
