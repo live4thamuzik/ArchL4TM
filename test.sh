@@ -823,7 +823,17 @@ if [ \${#dGPU[@]} -gt 0 ]; then
 else
     echo "No NVIDIA GPUs detected."
 fi
-EOF
+
+# Exit chroot, unmount partitions, and reboot (within the script)
+echo "Exiting chroot..."
+exit
+
+umount -R /mnt
+
+echo "Rebooting..."
+reboot
+
+EOF  # This EOF marks the end of the heredoc for 'cat'
 
 chmod +x /mnt/chroot-setup.sh
 
