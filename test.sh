@@ -601,5 +601,8 @@ EOF
 
 chmod +x /mnt/chroot-setup.sh
 
+# Export the disk variable before chroot
+export disk
+
 # Execute the script inside chroot
-arch-chroot /mnt /bin/bash -c "disk='$disk'; ./chroot-setup.sh"
+arch-chroot /mnt ./chroot-setup.sh
