@@ -55,6 +55,6 @@ git clone https://github.com/live4thamuzik/ArchL4TM.git
 Run script:
 ```
 cd ArchL4TM/
-chmod +x archl4tm
+chmod +x archl4tm.sh
 ./archl4tm.sh
 ```
