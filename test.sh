@@ -637,7 +637,23 @@ echo -ne "
 "
 
 # Ask the user if they want to install a GUI
-read -p "Do you want to install a GUI (server/gnome/kde)? " gui_choice
+read -p "
+Do you want to install a GUI?
+1. Server (No GUI)
+2. GNOME
+3. KDE Plasma
+4. XFCE
+5. LXQt
+6. MATE
+7. Cinnamon
+8. Deepin
+9. Budgie
+10. Enlightenment
+11. Hyprland
+12. i3
+13. Awesome
+14. bspwm
+Enter your choice (1-14): " gui_choice
 
 # Validate input and perform actions based on choice
 case "$gui_choice" in
