@@ -648,7 +648,7 @@ case "$aur_helper" in
        cd ~ && rm -rf /tmp/paru
        ;;
     *)
-       echo "Invalid choice. Please enter 'server', 'gnome', 'kde'."
+       echo "Invalid choice. Please enter 1 or 2."
        exit 1
        ;;
 esac
