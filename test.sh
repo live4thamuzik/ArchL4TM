@@ -607,8 +607,8 @@ echo -ne "
 # Ask the user which AUR helper they want
 read -r -p "
 Which AUR helper do you want to install? 
-1. Yay
-2. Paru
+1. yay
+2. paru
 Enter your choice (1-2): " aur_helper_input | head -n 1
 
 # Trim any leading/trailing whitespace and convert to lowercase for easier comparison
