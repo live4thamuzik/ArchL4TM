@@ -646,10 +646,10 @@ Enter your choice (1-3): " gui_choice
 
 # Validate input and perform actions based on choice
 case "$gui_choice" in
-    server)
+    1)  # Server
         echo "Skipping GUI installation. System will be set up as a server."
         ;;
-    gnome)
+    2)  # GNOME
         echo "Installing GNOME desktop environment..."
         pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
             echo "Failed to install GNOME packages. Exiting."
@@ -662,13 +662,13 @@ case "$gui_choice" in
         }
         echo "GNOME installed and gdm enabled."
         ;;
-    kde)
+    3)  # KDE Plasma
         echo "Installing KDE Plasma desktop environment..."
         pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
-            echo "Failed to install GNOME packages. Exiting."
+            echo "Failed to install KDE Plasma packages. Exiting."
             exit 1
         }
-    
+
         systemctl enable sddm.service || {
             echo "Failed to enable sddm service. Exiting."
             exit 1
