@@ -574,13 +574,13 @@ echo "Installing: archlinux-keyring base-devel networkmanager lvm2 pipewire btop
 pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod || { echo "Failed to install packages"; exit 1; }
 
 # Determine processor type and install microcode
-proc_type=\$(lscpu | grep -oP '^Vendor ID:\s+\K\w+')
-if [ "\$proc_type" = "GenuineIntel" ]; then
-    echo "Installing Intel microcode"
-    pacman -S --noconfirm --needed intel-ucode || { echo "Failed to install Intel microcode"; exit 1; }
-elif [ "\$proc_type" = "AuthenticAMD" ]; then
-    echo "Installing AMD microcode"
-    pacman -S --noconfirm --needed amd-ucode || { echo "Failed to install AMD microcode"; exit 1; }
+proc_type=\<span class="math-inline">\(lscpu \| grep \-oP '^Vendor ID\:\\s\+\\K\\w\+'\)
+if \[ "\\$proc\_type" \= "GenuineIntel" \]; then
+echo "Installing Intel microcode"
+pacman \-S \-\-noconfirm \-\-needed intel\-ucode \|\| \{ echo "Failed to install Intel microcode"; exit 1; \}
+elif \[ "\\$proc\_type" \= "AuthenticAMD" \]; then
+echo "Installing AMD microcode"
+pacman \-S \-\-noconfirm \-\-needed amd\-ucode \|\| \{ echo "Failed to install AMD microcode"; exit 1; \}
 fi
 
 # Enable services
@@ -833,8 +833,8 @@ if [ \${#dGPU[@]} -gt 0 ]; then
     mkinitcpio -p linux || { echo "Failed to regenerate initramfs"; exit 1; }
 
     # Update GRUB configuration
-    sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT=/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
-    grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
+sed \-i '/^GRUB\_CMDLINE\_LINUX\_DEFAULT\=/c\\GRUB\_CMDLINE\_LINUX\_DEFAULT\="quiet cryptdevice\=/dev/'</span>{disk}'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
+    grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
 
 else
     echo "No NVIDIA GPUs detected."
