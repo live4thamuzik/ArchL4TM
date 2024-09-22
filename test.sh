@@ -532,9 +532,11 @@ update_sudoers() {
 
 install_grub() {
     mkdir -p /boot/EFI
-    mount "/dev/${disk}1" /boot/EFI  # Explicitly construct the path
+    mknod /dev/"$disk"1 b $major_minor  # Use major_minor here
+    mount /dev/"$disk"1 /boot/EFI 
     grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
-    grub-mkconfig -o /boot/grub/grub.cfg
+    grub-mkconfig -o /boot/grub/grub.cfg   
+
 }
 
 # Configure pacman
@@ -601,8 +603,11 @@ EOF
 
 chmod +x /mnt/chroot-setup.sh
 
-# Export the disk variable before chroot
-export disk
+# Manually Create the Device Node
+efi_partition="${disk}1"
+
+# Retrieve Major/Minor Numbers from Host
+major_minor=$(ls -l "$efi_partition" | awk '{print $5, $6}')
 
 # Execute the script inside chroot
-arch-chroot /mnt ./chroot-setup.sh
+arch-chroot /mnt /bin/bash -c "major_minor=$major_minor ./chroot-setup.sh"
