@@ -602,4 +602,4 @@ EOF
 chmod +x /mnt/chroot-setup.sh
 
 # Execute the script inside chroot
-arch-chroot /mnt ./chroot-setup.sh
+arch-chroot /mnt /bin/bash -c "disk='$disk'; ./chroot-setup.sh"
