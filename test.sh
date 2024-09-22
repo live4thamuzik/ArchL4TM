@@ -280,15 +280,23 @@ while true; do
                 echo "Selected locale is already active."
             fi
 
-            # Run locale-gen to apply the changes
-            locale-gen
+            # Run locale-gen to apply the changes and capture output
+            locale_gen_output=$(locale-gen 2>&1)
+
+            # Check if locale-gen was successful
+            if [[ $? -ne 0 ]]; then
+                echo "Error running locale-gen: $locale_gen_output"
+                exit 1
+            fi
 
             # Set the locale in /etc/locale.conf
-            echo "Setting locale to \"$selected_locale\""  # Use double quotes here
-            echo "LANG=\"$selected_locale\"" > /mnt/etc/locale.conf  # Use double quotes here
+            echo "LANG=\"$selected_locale\"" > /mnt/etc/locale.conf
+
+            # Re-evaluate locale variables after locale-gen
+            . /mnt/etc/locale.conf
 
             # Verify locale setting
-            echo "Locale has been set to $(cat /mnt/etc/locale.conf)"
+            echo "Locale has been set to $LANG"
             break
         else
             echo "Invalid selection. Please enter a valid number from the displayed list."
@@ -541,20 +549,29 @@ update_sudoers() {
 #}
 
 install_grub() {
-    mkdir -p /boot/EFI
+    # Find and mount ESP
+    esp_path=$(efibootmgr | awk -F' ' '/EFI/ {print $1}')
+    if [ -z "$esp_path" ]; then
+        echo "Error: Could not find EFI System Partition."
+        exit 1
+    fi
+    mkdir -p /boot/efi
+    mount "$esp_path" /boot/efi
 
-    # Calculate major and minor numbers within chroot
-    major_minor=$(stat -c '%t %T' /dev/"$disk"1)
+    # Mount /boot if separate (adjust as needed)
+    # ...
 
-    # Check if device file exists, create if not
-    if [ ! -b "/dev/${disk}1" ]; then
-        mknod /dev/"$disk"1 b $major_minor
+    # Install GRUB (UEFI first, fallback to BIOS if needed)
+    if ! grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck; then
+        echo "UEFI GRUB installation failed. Attempting BIOS installation..."
+        if ! grub-install --target=i386-pc "$disk"; then  # Replace $disk with the actual disk
+            echo "Error: GRUB installation failed."
+            exit 1
+        fi
     fi
 
-    mount /dev/"$disk"1 /boot/EFI
-    grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
-    grub-mkconfig -o /boot/grub/grub.cfg   
-
+    # Generate GRUB configuration
+    grub-mkconfig -o /boot/grub/grub.cfg
 }
 
 # Configure pacman
@@ -565,7 +582,7 @@ sed -i "/^#ParallelDownloads/c\ParallelDownloads = 5" /etc/pacman.conf
 sed -i '/^#\[multilib\]/,+1 s/^#//' /etc/pacman.conf
 
 # Install additional needed packages
-echo "Installing: archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python parted "
+echo "Installing: archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python "
 pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python || { echo "Failed to install packages"; exit 1; }
 
 # Determine processor type and install microcode
@@ -620,9 +637,6 @@ fi
 EOF
 
 chmod +x /mnt/chroot-setup.sh
-
-# Export the disk variable before chroot
-export disk
 
 # Execute the script inside chroot
 arch-chroot /mnt ./chroot-setup.sh
