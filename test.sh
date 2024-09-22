@@ -659,7 +659,7 @@ case "$gui_choice" in
         ;;
     kde)
     echo "Installing KDE Plasma desktop environment..."
-    pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications firefox # Add other necessary packages here
+    pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance # Add other necessary packages here
     
     systemctl enable sddm.service || {
         echo "Failed to enable sddm service. Exiting."
