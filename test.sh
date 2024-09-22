@@ -525,7 +525,7 @@ set_root_password() {
 
 update_sudoers() {
     cp /etc/sudoers /etc/sudoers.backup
-    sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/c\\ %wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
+    sed -i 's/^# *%wheel ALL=(ALL:ALL) ALL/c\\ %wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
     echo 'Defaults targetpw' >> /etc/sudoers
     visudo -c || { echo "Syntax error in sudoers. Restoring backup."; cp /etc/sudoers.backup /etc/sudoers; exit 1; }
 }
