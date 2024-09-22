@@ -605,52 +605,53 @@ echo -ne "
 "
 
 # Ask the user which AUR helper they want
-read -p "
-Which AUR helper do you want to install? 
+read -r -p "
+Which AUR helper do you want to install? 
 1. Yay
 2. Paru
-Enter your choice (1-2): " aur_helper
-
+Enter your choice (1-2): " aur_helper | head -n 1  # Pipe to head -n 1
 # Validate input and perform actions based on choice
 case "$aur_helper" in
     1) # Yay
-       echo "Installing Yay"
-       # Clone the repo
-       git clone https://aur.archlinux.org/yay.git /tmp/yay || { 
-           echo "Failed to clone Yay repository. Exiting."
-           exit 1
-       }
+        echo "Installing Yay"
+        # Clone the repo
+        if ! git clone https://aur.archlinux.org/yay.git /tmp/yay; then 
+            echo "Failed to clone Yay repository. Please check your internet connection and try again."
+            exit 1
+        fi
 
-       # Build and install the AUR helper
-       cd /tmp/yay && makepkg -si --noconfirm || {
-           echo "Failed to build and install Yay. Exiting."
-           exit 1
-       }
+        # Build and install the AUR helper
+        cd /tmp/yay && makepkg -si --noconfirm || {
+            echo "Failed to build and install Yay. Check the installation logs for more details."
+            exit 1
+        }
 
-      # Clean up
-      cd ~ && rm -rf /tmp/yay
-      ;;
+        # Clean up
+        cd ~ && rm -rf /tmp/yay
+        echo "Yay installed successfully! You can now use yay to install packages from the AUR."
+        ;;
     2) # Paru
-       echo "Installing Paru"
-       # Clone the repo
-       git clone https://aur.archlinux.org/paru.git /tmp/paru || { 
-           echo "Failed to clone Paru repository. Exiting."
-           exit 1
-       }
+        echo "Installing Paru"
+        # Clone the repo
+        if ! git clone https://aur.archlinux.org/paru.git /tmp/paru; then 
+            echo "Failed to clone Paru repository. Please check your internet connection and try again."
+            exit 1
+        fi
 
-       # Build and install the AUR helper
-       cd /tmp/paru && makepkg -si --noconfirm || {
-           echo "Failed to build and install Paru. Exiting."
-           exit 1
-       }
+        # Build and install the AUR helper
+        cd /tmp/paru && makepkg -si --noconfirm || {
+            echo "Failed to build and install Paru. Check the installation logs for more details."
+            exit 1
+        }
 
-       # Clean up
-       cd ~ && rm -rf /tmp/paru
-       ;;
+        # Clean up
+        cd ~ && rm -rf /tmp/paru
+        echo "Paru installed successfully! You can now use paru to install packages from the AUR."
+        ;;
     *)
-       echo "Invalid choice. Please enter 1 or 2."
-       exit 1
-       ;;
+        echo "Invalid choice. Please enter 1 or 2."
+        exit 1
+        ;;
 esac
 
 echo -ne "
@@ -665,7 +666,7 @@ Do you want to install a GUI?
 1. Server (No GUI)
 2. GNOME
 3. KDE (Plasma)
-Enter your choice (1-3): " gui_choice
+Enter your choice (1-3): " gui_choice | head -n 1  # Pipe to head -n 1
 
 # Validate input and perform actions based on choice
 case "$gui_choice" in
