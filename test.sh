@@ -523,9 +523,6 @@ set_root_password() {
     done
 }
 
-# Example of calling the functions
-set_root_password
-
 update_sudoers() {
     cp /etc/sudoers /etc/sudoers.backup
     sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/c\ %wheel ALL=(ALL:ALL) ALL' /etc/sudoers
@@ -572,6 +569,7 @@ sed -i "/^HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/c
 mkinitcpio -p linux
 
 # Call defined functions
+set_root_password
 update_sudoers
 install_grub
 
