@@ -159,6 +159,10 @@ mount /dev/volgroup0/lv_root /mnt || { echo "Failed to mount root volume"; exit 
 mkdir -p /mnt/boot
 mount "${disk}2" /mnt/boot || { echo "Failed to mount /boot"; exit 1; }
 
+# Creat /boot/EFI directory and mount partition 1
+mkdir -p /mnt/boot/EFI
+mount "${disk}1" /mnt/boot/EFI || { echo "Failed to mount /boot"; exit 1; }
+
 # Format home volume
 mkfs.ext4 /dev/volgroup0/lv_home || { echo "Failed to format home volume"; exit 1; }
 
@@ -541,37 +545,15 @@ update_sudoers() {
     visudo -c || { echo "Syntax error in sudoers. Restoring backup."; cp /etc/sudoers.backup /etc/sudoers; exit 1; }
 }
 
-#install_grub() {
-#    mkdir -p /boot/EFI
-#    mount /dev/"$disk"1 /boot/EFI 
-#    grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
-#    grub-mkconfig -o /boot/grub/grub.cfg   
-#}
-
 install_grub() {
-    # Find and mount ESP
-    esp_path=$(efibootmgr | awk -F' ' '/EFI/ {print $1}')
-    if [ -z "$esp_path" ]; then
-        echo "Error: Could not find EFI System Partition."
+    grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck || {
+        echo "Failed to install GRUB. Exiting."
         exit 1
-    fi
-    mkdir -p /boot/efi
-    mount "$esp_path" /boot/efi
-
-    # Mount /boot if separate (adjust as needed)
-    # ...
-
-    # Install GRUB (UEFI first, fallback to BIOS if needed)
-    if ! grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --recheck; then
-        echo "UEFI GRUB installation failed. Attempting BIOS installation..."
-        if ! grub-install --target=i386-pc "$disk"; then  # Replace $disk with the actual disk
-            echo "Error: GRUB installation failed."
-            exit 1
-        fi
-    fi
-
-    # Generate GRUB configuration
-    grub-mkconfig -o /boot/grub/grub.cfg
+    }
+    grub-mkconfig -o /boot/grub/grub.cfg || {
+        echo "Failed to generate GRUB configuration. Exiting."
+        exit 1
+    }
 }
 
 # Configure pacman
