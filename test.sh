@@ -667,6 +667,136 @@ case "$gui_choice" in
     }
     echo "KDE Plasma installed and sddm enabled."
     ;;
+xfce)
+        echo "Installing XFCE desktop environment..."
+        pacman -S --noconfirm --needed xorg xfce4 xfce4-goodies lightdm lightdm-gtk-greeter firefox thunar xfce4-settings-manager || {
+            echo "Failed to install XFCE packages. Exiting."
+            exit 1
+        }
+
+        systemctl enable lightdm.service || {
+            echo "Failed to enable lightdm service. Exiting."
+            exit 1
+        }
+        echo "XFCE installed and lightdm enabled."
+        ;;
+    *)
+        echo "Invalid choice. Please enter 'server', 'gnome', 'kde', or 'xfce'." # Updated prompt
+        exit 1
+        ;;
+lxqt)
+        echo "Installing LXQt desktop environment..."
+        pacman -S --noconfirm --needed xorg lxqt sddm lxqt-common firefox pcmanfm-qt lxappearance || {
+            echo "Failed to install LXQt packages. Exiting."
+            exit 1
+        }
+        systemctl enable sddm.service || {
+            echo "Failed to enable sddm service. Exiting."
+            exit 1
+        }
+        echo "LXQt installed and sddm enabled."
+        ;;
+    mate)
+        echo "Installing MATE desktop environment..."
+        pacman -S --noconfirm --needed xorg mate mate-extra lightdm lightdm-gtk-greeter firefox caja mate-tweak || {
+            echo "Failed to install MATE packages. Exiting."
+            exit 1
+        }
+        systemctl enable lightdm.service || {
+            echo "Failed to enable lightdm service. Exiting."
+            exit 1
+        }
+        echo "MATE installed and lightdm enabled."
+        ;;
+    cinnamon)
+        echo "Installing Cinnamon desktop environment..."
+        pacman -S --noconfirm --needed xorg cinnamon nemo lightdm lightdm-gtk-greeter firefox cinnamon-settings || {
+            echo "Failed to install Cinnamon packages. Exiting."
+            exit 1
+        }
+        systemctl enable lightdm.service || {
+            echo "Failed to enable lightdm service. Exiting."
+            exit 1
+        }
+        echo "Cinnamon installed and lightdm enabled."
+        ;;
+    deepin)
+        echo "Installing Deepin desktop environment..."
+        pacman -S --noconfirm --needed xorg deepin deepin-extra lightdm lightdm-deepin-greeter firefox dde-file-manager deepin-system-settings || {
+            echo "Failed to install Deepin packages. Exiting."
+            exit 1
+        }
+        systemctl enable lightdm.service || {
+            echo "Failed to enable lightdm service. Exiting."
+            exit 1
+        }
+        echo "Deepin installed and lightdm enabled."
+        ;;
+    budgie)
+        echo "Installing Budgie desktop environment..."
+        pacman -S --noconfirm --needed xorg budgie-desktop lightdm lightdm-gtk-greeter firefox nemo budgie-control-center || {
+            echo "Failed to install Budgie packages. Exiting."
+            exit 1
+        }
+        systemctl enable lightdm.service || {
+            echo "Failed to enable lightdm service. Exiting."
+            exit 1
+        }
+        echo "Budgie installed and lightdm enabled."
+        ;;
+    enlightenment)
+        echo "Installing Enlightenment desktop environment..."
+        pacman -S --noconfirm --needed xorg enlightenment terminology efl firefox fileman terminology-wallpaper enlightenment-themes || {
+            echo "Failed to install Enlightenment packages. Exiting."
+            exit 1
+        }
+        # Enlightenment doesn't typically use a display manager, so we won't enable one here
+        echo "Enlightenment installed."
+        ;;
+    hyprland)
+        echo "Installing Hyprland window manager..."
+        pacman -S --noconfirm --needed xorg hyprland-git kitty firefox pcmanfm-qt lxappearance || {
+            echo "Failed to install Hyprland packages. Exiting."
+            exit 1
+        }
+        # Hyprland doesn't use a display manager, so we won't enable one here
+        echo "Hyprland installed."
+        ;;
+    *)
+        echo "Invalid choice. Please enter 'server', 'gnome', 'kde', 'xfce', 'lxqt', 'mate', 'cinnamon', 'deepin', 'budgie', 'enlightenment', or 'hyprland'."
+        exit 1
+        ;;
+i3)
+        echo "Installing i3 window manager..."
+        pacman -S --noconfirm --needed xorg i3-wm i3status dmenu i3lock firefox thunar lxappearance || {
+            echo "Failed to install i3 packages. Exiting."
+            exit 1
+        }
+        # i3 doesn't use a display manager, so we won't enable one here
+        echo "i3 installed."
+        ;;
+    awesome)
+        echo "Installing Awesome window manager..."
+        pacman -S --noconfirm --needed xorg awesome firefox thunar lxappearance || {
+            echo "Failed to install Awesome packages. Exiting."
+            exit 1
+        }
+        # Awesome doesn't use a display manager, so we won't enable one here
+        echo "Awesome installed."
+        ;;
+    bspwm)
+        echo "Installing bspwm window manager..."
+        pacman -S --noconfirm --needed xorg bspwm sxhkd dmenu firefox thunar lxappearance || {
+            echo "Failed to install bspwm packages. Exiting."
+            exit 1
+        }
+        # bspwm doesn't use a display manager, so we won't enable one here
+        echo "bspwm installed."
+        ;;
+    *)
+        echo "Invalid choice. Please enter 'server', 'gnome', 'kde', 'xfce', 'lxqt', 'mate', 'cinnamon', 'deepin', 'budgie', 'enlightenment', 'hyprland', 'i3', 'awesome', or 'bspwm'."
+        exit 1
+        ;;
 esac
 
 # Detect NVIDIA GPUs
