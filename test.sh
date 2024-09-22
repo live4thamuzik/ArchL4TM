@@ -482,12 +482,6 @@ if ! create_user; then
     exit 1
 fi
 
-# Call the function to create the user
-if ! create_user; then
-    echo "User creation failed. Exiting."
-    exit 1
-fi
-
 # Save the functions and commands in a script file
 cat <<EOF > /mnt/chroot-setup.sh
 #!/bin/bash
