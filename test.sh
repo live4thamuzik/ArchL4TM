@@ -532,11 +532,9 @@ update_sudoers() {
 
 install_grub() {
     mkdir -p /boot/EFI
-    partprobe  # Re-read partition table
-    mount /dev/"$disk"1 /boot/EFI 
+    mount "/dev/${disk}1" /boot/EFI  # Explicitly construct the path
     grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
-    grub-mkconfig -o /boot/grub/grub.cfg   
-
+    grub-mkconfig -o /boot/grub/grub.cfg
 }
 
 # Configure pacman
