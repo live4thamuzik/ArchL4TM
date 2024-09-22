@@ -28,6 +28,7 @@ echo -ne "
 | Drive Preparation  |
 +--------------------+
 "
+
 # List Disks
 fdisk -l
 
@@ -104,6 +105,7 @@ echo -ne "
 | Perform LVM setup |
 +-------------------+
 "
+
 # Format partition 1 as FAT32
 mkfs.fat -F32 "${disk}1" || { echo "Failed to format ${disk}1"; exit 1; }
 
@@ -181,6 +183,7 @@ echo -ne "
 | Installing Prerequisites |
 +--------------------------+
 "
+
 pacman -S --noconfirm pacman-contrib reflector rsync || { echo "Failed to install prerequisites"; exit 1; }
 
 # Configure pacman for faster downloads
@@ -189,6 +192,7 @@ echo -ne "
 | Setting up mirrors for faster downloads |
 +-----------------------------------------+
 "
+
 # Backup mirrorlist
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup || { echo "Failed to backup mirrorlist"; exit 1; }
 reflector -a 48 -f 5 -l 20 --sort rate --save /etc/pacman.d/mirrorlist || { echo "Failed to setup mirrors"; exit 1; }
@@ -204,6 +208,7 @@ echo -ne "
 | Setting locale |
 +----------------+
 "
+
 # Function to get a list of locales from /etc/locale.gen
 get_locales() {
     awk '{print NR ". " $1}' /mnt/etc/locale.gen
@@ -322,6 +327,7 @@ echo -ne "
 | Setting timezone |
 +------------------+
 "
+
 # Function to get a list of timezones
 get_timezones() {
   local count=1
@@ -564,8 +570,8 @@ sed -i "/^#ParallelDownloads/c\ParallelDownloads = 5" /etc/pacman.conf
 sed -i '/^#\[multilib\]/,+1 s/^#//' /etc/pacman.conf
 
 # Install additional needed packages
-echo "Installing: archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python libkmod "
-pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python libkmod || { echo "Failed to install packages"; exit 1; }
+echo "Installing: archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod "
+pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod || { echo "Failed to install packages"; exit 1; }
 
 # Determine processor type and install microcode
 proc_type=\$(lscpu | grep -oP '^Vendor ID:\s+\K\w+')
@@ -591,6 +597,74 @@ mkinitcpio -p linux
 set_root_password
 update_sudoers
 install_grub
+
+echo -ne "
++-----------------------+
+| Install AUR Helper    |
++-----------------------+
+"
+
+# Ask the user which AUR helper they want
+read -p "Which AUR helper do you want to install (yay/paru)? " aur_helper
+
+# Validate input
+if [[ "$aur_helper" != "yay" && "$aur_helper" != "paru" ]]; then
+    echo "Invalid choice. Please enter either 'yay' or 'paru'."
+    exit 1
+fi
+
+# Clone the repo
+git clone https://aur.archlinux.org/$aur_helper.git /tmp/$aur_helper || { 
+    echo "Failed to clone $aur_helper repository. Exiting."
+    exit 1
+}
+
+# Build and install the AUR helper
+cd /tmp/$aur_helper && makepkg -si --noconfirm || {
+    echo "Failed to build and install $aur_helper. Exiting."
+    exit 1
+}
+
+# Clean up
+cd ~ && rm -rf /tmp/$aur_helper
+
+echo "$aur_helper installed successfully!"
+
+echo -ne "
++-----------------------+
+| Select GUI (Optional) |
++-----------------------+
+"
+
+# Ask the user if they want to install a GUI
+read -p "Do you want to install a GUI (server/gnome/kde)? " gui_choice
+
+# Validate input and perform actions based on choice
+case "$gui_choice" in
+    server)
+        echo "Skipping GUI installation. System will be set up as a server."
+        ;;
+    gnome)
+        echo "Installing GNOME desktop environment..."
+        pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
+            echo "Failed to install GNOME packages. Exiting."
+            exit 1
+        }
+
+        systemctl enable gdm.service || {
+            echo "Failed to enable gdm service. Exiting."
+            exit 1
+        }
+        echo "GNOME installed and gdm enabled."
+        ;;
+    kde)
+        echo "KDE Plasma installation will be added in the future." # Placeholder for KDE installation
+        ;;
+    *)
+        echo "Invalid choice. Please enter 'server', 'gnome', or 'kde'."
+        exit 1
+        ;;
+esac
 
 # Detect NVIDIA GPUs
 readarray -t dGPU < <(lspci -k | grep -E "(VGA|3D)" | grep -i nvidia)
