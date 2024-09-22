@@ -422,6 +422,72 @@ set_hostname() {
 # Call the function to set hostname
 set_hostname
 
+echo -ne "
++----------------+
+| Create new user |
++----------------+
+"
+
+create_user() {
+    # Prompt for username
+    read -p "Enter a username: " user
+
+    # Validate username (non-empty, doesn't already exist)
+    if [ -z "$user" ]; then
+        echo "Username cannot be empty. Please try again."
+        return 1  # Indicate failure to the calling script
+    elif id "$user" &>/dev/null; then
+        echo "User '$user' already exists. Please choose a different username."
+        return 1
+    fi
+
+    # Create user on the host system
+    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || {
+        echo "Failed to create user '$user' on the host system."
+        return 1
+    }
+
+    # Prompt for and set password (with confirmation)
+    while true; do
+        read -s -p "Enter password for '$user': " password
+        echo
+        read -s -p "Confirm password: " confirm_password
+        echo
+
+        if [ "$password" == "$confirm_password" ]; then
+            echo "$password" | passwd --stdin "$user" || {
+                echo "Failed to set password for '$user'."
+                return 1
+            }
+            break  # Exit the loop if passwords match and are set successfully
+        else
+            echo "Passwords do not match. Please try again."
+        fi
+    done
+
+    # Ensure home directory exists within the new system
+    mkdir -p /mnt/home/"$user"
+
+    # Set ownership and permissions for the home directory within the new system
+    chown -R "$user":"$user" /mnt/home/"$user"
+    chmod 700 /mnt/home/"$user"
+
+    echo "User '$user' created successfully with password set."
+    return 0  # Indicate success
+}
+
+# Call the function to create the user
+if ! create_user; then
+    echo "User creation failed. Exiting."
+    exit 1
+fi
+
+# Call the function to create the user
+if ! create_user; then
+    echo "User creation failed. Exiting."
+    exit 1
+fi
+
 # Save the functions and commands in a script file
 cat <<EOF > /mnt/chroot-setup.sh
 #!/bin/bash
@@ -463,40 +529,8 @@ set_root_password() {
     done
 }
 
-create_user() {
-    # Prompt user for a username
-    read -p "Enter a username: " user
-
-    # Ensure username is not empty
-    if [ -z "$user" ]; then
-        echo "No username provided. Exiting."
-        exit 1
-    fi
-
-    # Create the user
-    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || { echo "Failed to create user $user. Exiting."; exit 1; }
-    echo "$user created successfully."
-}
-# Function to set the user password
-set_user_password() {
-    # Use a predefined password from a file
-    local user_password
-    user_password=$(cat /tmp/userpassword.txt)
-
-    if [ -z "$user_password" ]; then
-        echo "No password found. Exiting."
-        exit 1
-    fi
-
-    # Use chpasswd to set the user's password
-    echo "$user:$user_password" | chpasswd || { echo "Failed to set $user password. Exiting."; exit 1; }
-    echo "$user password set successfully."
-}
-
 # Example of calling the functions
 set_root_password
-create_user
-set_user_password
 
 update_sudoers() {
     cp /etc/sudoers /etc/sudoers.backup
@@ -544,8 +578,6 @@ sed -i "/^HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/c
 mkinitcpio -p linux
 
 # Call defined functions
-set_root_password
-add_user
 update_sudoers
 install_grub
 
