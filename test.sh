@@ -511,6 +511,9 @@ set -e
 
 # Define functions
 
+# Get disk value from the first command-line argument
+disk="$1" 
+
 set_root_password() {
     while true; do
         read -s -p "Set root password: " root_password
@@ -562,6 +565,11 @@ install_grub() {
     }
 }
 
+# Update GRUB configuration with cryptdevice
+    sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
+    grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
+
+
 # Configure pacman
 echo "Configuring pacman"
 sed -i "/^#Color/c\Color\nILoveCandy" /etc/pacman.conf
@@ -602,10 +610,10 @@ install_grub
 readarray -t dGPU < <(lspci -k | grep -E "(VGA|3D)" | grep -i nvidia)
 
 # Check if any NVIDIA GPUs were found
-if [ \${#dGPU[@]} -gt 0 ]; then
+if [ ${#dGPU[@]} -gt 0 ]; then
     echo "NVIDIA GPU(s) detected:"
-    for gpu in "\${dGPU[@]}"; do
-        echo "  \$gpu"
+    for gpu in "${dGPU[@]}"; do
+        echo "  $gpu"
     done
 
     # Install NVIDIA drivers and related packages
@@ -615,20 +623,24 @@ if [ \${#dGPU[@]} -gt 0 ]; then
     sed -i '/^MODULES=()/c\MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)' /etc/mkinitcpio.conf || { echo "Failed to add NVIDIA modules to initramfs"; exit 1; }
     mkinitcpio -p linux || { echo "Failed to regenerate initramfs"; exit 1; }
 
-    # Update GRUB configuration
-    sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT=/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
+    # Update GRUB configuration with NVIDIA settings
+    sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 loglevel=3"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
     grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
 
 else
-    echo "No NVIDIA GPUs detected."
+    echo "No NVIDIA GPUs detected. Skipping NVIDIA-related actions."
+
+    # Update GRUB configuration without NVIDIA settings (if needed)
+    sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT=/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
+    grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
 fi
 
 EOF
 
 chmod +x /mnt/chroot-setup.sh
 
-# Execute the script inside chroot
-arch-chroot /mnt ./chroot-setup.sh
+# Execute the script inside chroot, passing $disk as an argument
+arch-chroot /mnt ./chroot-setup.sh "$disk"
 
 # Install AUR Helper    
 echo -ne "
