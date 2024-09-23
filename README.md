@@ -12,77 +12,75 @@ The script will install Arch Linux on EFI systems with minimal config and packag
 - lv_home = 100%FREE
 
 # Bootloader
--GRUB
+- GRUB
 
 # Packages:
-```
-pacman-contrib
-reflector
-rsync
-base
-linux
-linux-headers
-linux-firmware
-archlinux-keyring
-base-devel
-networkmanager
-lvm2
-pipewire
-btop
-man-db
-man-pages
-texinfo
-tldr
-bash-completion
-openssh
-git
-parallel
-neovim
-grub
-efibootmgr
-dosfstools
-os-prober
-mtools
-python
-kmod
-debugedit
-kmod
-fakeroot
-```
+- pacman-contrib
+- reflector
+- rsync
+- base
+- linux
+- linux-headers
+- linux-firmware
+- archlinux-keyring
+- base-devel
+- networkmanager
+- lvm2
+- pipewire
+- btop
+- man-db
+- man-pages
+- texinfo
+- tldr
+- bash-completion
+- openssh
+- git
+- parallel
+- neovim
+- grub
+- efibootmgr
+- dosfstools
+- os-prober
+- mtools
+- python
+- kmod
+- debugedit
+- kmod
+- fakeroot
 
 # Microcode detection for AMD and Intel processors
-Script will use lscpu to detect and install the correct microcode needed
+- Script will use lscpu to detect and install the correct microcode needed
 
 # User can set Timezone and Locale from numbered lists
 
 # Mirrorlist is updated with reflector
 
 # Pacman Configuration - The following settings are enabled in /etc/pacman.conf
-```
-ILoveCandy
-Color
-VerbosePkgLists
-parallelDownloads
-MultiLib support
-```
+- ILoveCandy
+- Color
+- VerbosePkgLists
+- ParallelDownloads
+- MultiLib
 
 # AUR Helper Options:
-```
-Yay
-Paru
-```
+- Yay
+- Paru
 
 # Detection for NVIDIA GPU
 Script will use lspci to detect and install NVIDIA drivers (If you want LTS drivers just swap out the package names) See Lines 611-612
-```
-NVIDIA PKGS = nvidia-dkms libglnvd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings
-```
+- nvidia-dkms
+- libglnvd
+- nvidia-utils
+- opencl-nvidia
+- lib32-libglvnd
+- lib32-nvidia-utils
+- lib32-opencl-nvidia
+- nvidia-settings
+
 # Desktop Environment Options:
-```
-Server = No DE, only installs packages listed above
-GNOME
-KDE (Plasma)
-```
+- Server = No DE, only installs packages listed above
+- GNOME
+- KDE (Plasma)
 
 # Window Manager Options (Coming soon!)
 
