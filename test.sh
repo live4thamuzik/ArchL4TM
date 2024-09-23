@@ -570,8 +570,8 @@ sed -i "/^#ParallelDownloads/c\ParallelDownloads = 5" /etc/pacman.conf
 sed -i '/^#\[multilib\]/,+1 s/^#//' /etc/pacman.conf
 
 # Install additional needed packages
-echo "Installing: archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod "
-pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod || { echo "Failed to install packages"; exit 1; }
+echo "Installing: archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot "
+pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot || { echo "Failed to install packages"; exit 1; }
 
 # Determine processor type and install microcode
 proc_type=\$(lscpu | grep -oP '^Vendor ID:\s+\K\w+')
