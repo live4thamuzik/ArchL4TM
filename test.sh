@@ -24,9 +24,9 @@ echo -ne "
 "
 
 echo -ne "
-+--------------------+
-| Drive Preparation  |
-+--------------------+
++-------------------+
+| Drive Preparation |
++-------------------+
 "
 
 # List Disks
@@ -179,7 +179,7 @@ echo "Setup completed successfully."
 
 # Install prereq packages
 echo -ne "
-+---------------------------
++--------------------------+
 | Installing Prerequisites |
 +--------------------------+
 "
@@ -444,9 +444,9 @@ set_hostname() {
 set_hostname
 
 echo -ne "
-+----------------+
++-----------------+
 | Create new user |
-+----------------+
++-----------------+
 "
 
 create_user() {
@@ -567,9 +567,9 @@ install_grub() {
 
 
 echo -ne "
-+---------------------+
-| Configuring Pacman  |
-+---------------------+
++--------------------+
+| Configuring Pacman |
++--------------------+
 "
 # Configure pacman
 echo "Configuring pacman"
@@ -579,9 +579,9 @@ sed -i "/^#ParallelDownloads/c\ParallelDownloads = 5" /etc/pacman.conf
 sed -i '/^#\[multilib\]/,+1 s/^#//' /etc/pacman.conf
 
 echo -ne "
-+----------------------+
-| Installing Packages  |
-+----------------------+
++---------------------+
+| Installing Packages |
++---------------------+
 "
 # Install additional needed packages
 echo "Installing: archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot "
@@ -589,9 +589,9 @@ pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2
 
 
 echo -ne "
-+-----------------------+
-| Installing Microcode  |
-+-----------------------+
++----------------------+
+| Installing Microcode |
++----------------------+
 "
 # Determine processor type and install microcode
 proc_type=\$(lscpu | grep -oP '^Vendor ID:\s+\K\w+')
@@ -605,9 +605,9 @@ fi
 
 
 echo -ne "
-+--------------------+
-| Enabling Services  |
-+--------------------+
++-------------------+
+| Enabling Services |
++-------------------+
 "
 # Enable services
 systemctl enable NetworkManager.service || { echo "Failed to enable NetworkManager"; exit 1; }
@@ -617,42 +617,48 @@ echo "SSD support enabled"
 
 
 echo -ne "
-+-------------------+
-| Update Initramfs  |
-+-------------------+
++------------------+
+| Update Initramfs |
++------------------+
 "
 # Update mkinitcpio.conf
 sed -i "/^HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/c\HOOKS=(base udev autodetect modconf block encrypt lvm2 filesystems keyboard fsck)" /etc/mkinitcpio.conf
 mkinitcpio -p linux
 
 echo -ne "
-+------------------+
-| Installing GRUB  |
-+------------------+
++-----------------+
+| Installing GRUB |
++-----------------+
 "
 # Call defined functions
 set_root_password
 update_sudoers
+echo -ne "
++-----------------+
+| Installing GRUB |
++-----------------+
+"
 install_grub
 
 
 echo -ne "
-+-----------------------+
-| Updating GRUB Config  |
-+-----------------------+
++----------------------+
+| Updating GRUB Config |
++----------------------+
 "
 # Update GRUB configuration: /etc/default/grub
 sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved' /etc/default/grub || { echo "Failed to update GRUB_DEFAULT"; exit 1; }
-sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB_CMDLINE_LINUX_DEFAULT"; exit 1; }
+sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'\$disk'3:volgroup0 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB_CMDLINE_LINUX_DEFAULT"; exit 1; }
 sed -i '/^#GRUB_ENABLE_CRYPTODISK=y/c\GRUB_ENABLE_CRYPTODISK=y' /etc/default/grub || { echo "Failed to update GRUB_ENABLE_CRYPTODISK"; exit 1; }
-sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true /etc/default/grub || { echo "Failed to update GRUB_SAVEDEFAULT"; exit 1; }
+sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub || { echo "Failed to update GRUB_SAVEDEFAULT"; exit 1; }
 grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
 
 
+
 echo -ne "
-+-------------------+
-| Detecting NVIDIA  |
-+-------------------+
++------------------+
+| Detecting NVIDIA |
++------------------+
 "
 # Detect NVIDIA GPUs
 readarray -t dGPU < <(lspci -k | grep -E "(VGA|3D)" | grep -i nvidia)
@@ -664,6 +670,11 @@ if [ ${#dGPU[@]} -gt 0 ]; then
         echo "  $gpu"
     done
 
+echo -ne "
++-------------------+
+| Installing NVIDIA |
++-------------------+
+"
     # Install NVIDIA drivers and related packages
     pacman -S --noconfirm --needed nvidia-dkms libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings || { echo "Failed to install NVIDIA packages"; exit 1; }
 
@@ -672,9 +683,8 @@ if [ ${#dGPU[@]} -gt 0 ]; then
     mkinitcpio -p linux || { echo "Failed to regenerate initramfs"; exit 1; }
 
     # Update GRUB configuration with NVIDIA settings
-    sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 loglevel=3"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
-    grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
-
+sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'\$disk'3:volgroup0 loglevel=3"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'\$disk'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
+grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
 else
     echo "No NVIDIA GPUs detected. Skipping NVIDIA-related actions."
 fi
@@ -688,9 +698,9 @@ arch-chroot /mnt ./chroot-setup.sh "$disk"
 
 # Install AUR Helper    
 echo -ne "
-+-----------------------+
-| Install AUR Helper    |
-+-----------------------+
++--------------------+
+| Install AUR Helper |
++--------------------+
 "
 
 # Create a temporary user for building AUR packages
@@ -812,9 +822,9 @@ echo -ne "
 ██║  ██║██║  ██║╚██████╗██║  ██║    ███████╗██║   ██║   ██║ ╚═╝ ██║
 ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝    ╚══════╝╚═╝   ╚═╝   ╚═╝     ╚═╝
                                                                
-+------------------------+
-| Installation Complete  |
-+------------------------+
++-----------------------+
+| Installation Complete |
++-----------------------+
 "
 
 # Unmount all partitions under /mnt
