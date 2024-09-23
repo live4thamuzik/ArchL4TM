@@ -565,11 +565,6 @@ install_grub() {
     }
 }
 
-# Update GRUB configuration with cryptdevice
-    sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
-    grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
-
-
 # Configure pacman
 echo "Configuring pacman"
 sed -i "/^#Color/c\Color\nILoveCandy" /etc/pacman.conf
@@ -580,6 +575,10 @@ sed -i '/^#\[multilib\]/,+1 s/^#//' /etc/pacman.conf
 # Install additional needed packages
 echo "Installing: archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot "
 pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot || { echo "Failed to install packages"; exit 1; }
+
+# Update GRUB configuration with cryptdevice
+sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
+grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
 
 # Determine processor type and install microcode
 proc_type=\$(lscpu | grep -oP '^Vendor ID:\s+\K\w+')
@@ -605,6 +604,10 @@ mkinitcpio -p linux
 set_root_password
 update_sudoers
 install_grub
+
+# Update GRUB configuration with cryptdevice
+sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
+grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
 
 # Detect NVIDIA GPUs
 readarray -t dGPU < <(lspci -k | grep -E "(VGA|3D)" | grep -i nvidia)
