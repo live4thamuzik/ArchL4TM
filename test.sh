@@ -8,7 +8,7 @@ exec > >(tee -a /var/log/arch_install.log) 2>&1
 
 echo -ne "
 +--------------------------------+
-| Automated Arch Linux Installer |
+| Arch Linux Installation Script |
 +--------------------------------+
 "
 
