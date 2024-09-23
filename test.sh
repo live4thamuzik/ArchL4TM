@@ -643,7 +643,7 @@ echo -ne "
 "
 # Update GRUB configuration: /etc/default/grub
 sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved' /etc/default/grub || { echo "Failed to update GRUB_DEFAULT"; exit 1; }
-sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'\$disk'3:volgroup0 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB_CMDLINE_LINUX_DEFAULT"; exit 1; }
+sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'"$disk"'3:volgroup0 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB_CMDLINE_LINUX_DEFAULT"; exit 1; }
 sed -i '/^#GRUB_ENABLE_CRYPTODISK=y/c\GRUB_ENABLE_CRYPTODISK=y' /etc/default/grub || { echo "Failed to update GRUB_ENABLE_CRYPTODISK"; exit 1; }
 sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub || { echo "Failed to update GRUB_SAVEDEFAULT"; exit 1; }
 grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
@@ -684,194 +684,12 @@ else
     echo "No NVIDIA GPUs detected. Skipping NVIDIA-related actions."
 fi
 
-# Install AUR Helper    
-echo -ne "
-+--------------------+
-| Install AUR Helper |
-+--------------------+
-"
-
-# Create a temporary user for building AUR packages
-useradd -m -G wheel -s /bin/bash temp_aur_user
-
-# Ask the user which AUR helper they want
-options=("Yay" "Paru")
-select aur_helper in "${options[@]}"; do
-    case $aur_helper in
-        "Yay")
-            echo "Installing Yay"
-            # Switch to the temporary user and build/install Yay
-            su - temp_aur_user -c '
-                # Clone the repo
-                if ! git clone https://aur.archlinux.org/yay.git /mnt/tmp/yay; then 
-                    echo "Failed to clone Yay repository. Please check your internet connection and try again."
-                    exit 1
-                fi
-
-                # Build and install the AUR helper
-                cd /mnt/tmp/yay && makepkg -si --noconfirm || {
-                    echo "Failed to build and install Yay. Check the installation logs for more details."
-                    exit 1
-                }
-
-                # Clean up
-                cd ~ && rm -rf /mnt/tmp/yay
-                echo "Yay installed successfully! You can now use yay to install packages from the AUR."
-            '
-            break  # Exit the select loop after successful installation
-            ;;
-        "Paru")
-            echo "Installing Paru"
-            # Switch to the temporary user and build/install Paru
-            su - temp_aur_user -c '
-                # Clone the repo
-                if ! git clone https://aur.archlinux.org/paru.git /mnt/tmp/paru; then 
-                    echo "Failed to clone Paru repository. Please check your internet connection and try again."
-                    exit 1
-                fi
-
-                # Build and install the AUR helper
-                cd /mnt/tmp/paru && makepkg -si --noconfirm || {
-                    echo "Failed to build and install Paru. Check the installation logs for more details."
-                    exit 1
-                }
-
-                # Clean up
-                cd ~ && rm -rf /mnt/tmp/paru
-                echo "Paru installed successfully! You can now use paru to install packages from the AUR."
-            '
-            break  # Exit the select loop after successful installation
-            ;;
-        *) echo "Invalid option";;
-    esac
-done
-
-# Remove the temporary user
-userdel -r temp_aur_user
-
 EOF
 
 chmod +x /mnt/chroot-setup.sh
 
 # Execute the script inside chroot, passing $disk as an argument
 arch-chroot /mnt ./chroot-setup.sh "$disk"
-
-# Install AUR Helper    
-echo -ne "
-+--------------------+
-| Install AUR Helper |
-+--------------------+
-"
-
-# Create a temporary user for building AUR packages
-useradd -m -G wheel -s /bin/bash temp_aur_user
-
-# Ask the user which AUR helper they want
-options=("Yay" "Paru")
-select aur_helper in "${options[@]}"; do
-    case $aur_helper in
-        "Yay")
-            echo "Installing Yay"
-            # Switch to the temporary user and build/install Yay
-            su - temp_aur_user -c '
-                # Clone the repo
-                if ! git clone https://aur.archlinux.org/yay.git /mnt/tmp/yay; then 
-                    echo "Failed to clone Yay repository. Please check your internet connection and try again."
-                    exit 1
-                fi
-
-                # Build and install the AUR helper
-                cd /mnt/tmp/yay && makepkg -si --noconfirm || {
-                    echo "Failed to build and install Yay. Check the installation logs for more details."
-                    exit 1
-                }
-
-                # Clean up
-                cd ~ && rm -rf /mnt/tmp/yay
-                echo "Yay installed successfully! You can now use yay to install packages from the AUR."
-            '
-            break  # Exit the select loop after successful installation
-            ;;
-        "Paru")
-            echo "Installing Paru"
-            # Switch to the temporary user and build/install Paru
-            su - temp_aur_user -c '
-                # Clone the repo
-                if ! git clone https://aur.archlinux.org/paru.git /mnt/tmp/paru; then 
-                    echo "Failed to clone Paru repository. Please check your internet connection and try again."
-                    exit 1
-                fi
-
-                # Build and install the AUR helper
-                cd /mnt/tmp/paru && makepkg -si --noconfirm || {
-                    echo "Failed to build and install Paru. Check the installation logs for more details."
-                    exit 1
-                }
-
-                # Clean up
-                cd ~ && rm -rf /mnt/tmp/paru
-                echo "Paru installed successfully! You can now use paru to install packages from the AUR."
-            '
-            break  # Exit the select loop after successful installation
-            ;;
-        *) echo "Invalid option";;
-    esac
-done
-
-# Remove the temporary user
-userdel -r temp_aur_user
-
-# Select GUI (Optional) 
-echo -ne "
-+-----------------------+
-| Select GUI (Optional) |
-+-----------------------+
-"
-
-# Ask the user if they want to install a GUI
-read -p "
-Do you want to install a GUI?
-1. Server (No GUI)
-2. GNOME
-3. KDE (Plasma)
-Enter your choice (1-3): " gui_choice | head -n 1  # Pipe to head -n 1
-
-# Validate input and perform actions based on choice
-case "$gui_choice" in
-    1)  # Server
-        echo "Skipping GUI installation. System will be set up as a server."
-        ;;
-    2)  # GNOME
-        echo "Installing GNOME desktop environment..."
-        pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
-            echo "Failed to install GNOME packages. Exiting."
-            exit 1
-        }
-
-        systemctl enable gdm.service || {
-            echo "Failed to enable gdm service. Exiting."
-            exit 1
-        }
-        echo "GNOME installed and gdm enabled."
-        ;;
-    3)  # KDE Plasma
-        echo "Installing KDE Plasma desktop environment..."
-        pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
-            echo "Failed to install KDE Plasma packages. Exiting."
-            exit 1
-        }
-
-        systemctl enable sddm.service || {
-            echo "Failed to enable sddm service. Exiting."
-            exit 1
-        }
-        echo "KDE Plasma installed and sddm enabled."
-        ;;
-    *)
-        echo "Invalid choice. Please enter 1, 2, or 3." 
-        exit 1
-        ;;
-esac
 
 echo -ne "
 
