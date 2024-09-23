@@ -5,16 +5,14 @@ This is a semi-interactive Arch Linux installation bash script.
 The script will install Arch Linux on EFI systems with minimal config and packages using LVM, LUKS and ext4. (no swap)
 
 # Drive layout: (these can be modified in the script before running as needed under see lines 78-101)
-```
-Partition 1 - 2GB (EFI)
-Partition 2 - 5GB (boot) GRUB is installed here
-Partition 3 - 100%Free (LVM) "volgroup0"
-lv_root = 100GB
-lv_home = 100%FREE
-```
+- Partition 1 - 2GB (EFI)
+- Partition 2 - 5GB (boot) GRUB is installed here
+- Partition 3 - 100%Free (LVM) "volgroup0"
+- lv_root = 100GB
+- lv_home = 100%FREE
 
 # Bootloader
-GRUB
+-GRUB
 
 # Packages:
 ```
