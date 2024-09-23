@@ -598,23 +598,51 @@ set_root_password
 update_sudoers
 install_grub
 
+# Detect NVIDIA GPUs
+readarray -t dGPU < <(lspci -k | grep -E "(VGA|3D)" | grep -i nvidia)
+
+# Check if any NVIDIA GPUs were found
+if [ \${#dGPU[@]} -gt 0 ]; then
+    echo "NVIDIA GPU(s) detected:"
+    for gpu in "\${dGPU[@]}"; do
+        echo "  \$gpu"
+    done
+
+    # Install NVIDIA drivers and related packages
+    pacman -S --noconfirm --needed nvidia-dkms libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings || { echo "Failed to install NVIDIA packages"; exit 1; }
+
+    # Add NVIDIA modules to initramfs
+    sed -i '/^MODULES=()/c\MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)' /etc/mkinitcpio.conf || { echo "Failed to add NVIDIA modules to initramfs"; exit 1; }
+    mkinitcpio -p linux || { echo "Failed to regenerate initramfs"; exit 1; }
+
+    # Update GRUB configuration
+    sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT=/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
+    grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
+
+else
+    echo "No NVIDIA GPUs detected."
+fi
+
+EOF
+
+chmod +x /mnt/chroot-setup.sh
+
+# Execute the script inside chroot
+arch-chroot /mnt ./chroot-setup.sh
+
+# Install AUR Helper    
 echo -ne "
 +-----------------------+
 | Install AUR Helper    |
 +-----------------------+
 "
 
-# Define the AUR helper options
+# Ask the user which AUR helper they want
 options=("Yay" "Paru")
-
-# Use select to create a numbered menu
-PS3="Which AUR helper do you want to install? "
 select aur_helper in "${options[@]}"; do
-    # Check if a valid option was selected
-    if [[ -n $aur_helper ]]; then
-        case $aur_helper in
-            "Yay")
-                echo "Installing Yay"
+    case $aur_helper in
+        "Yay")
+            echo "Installing Yay"
             # Clone the repo
             if ! git clone https://aur.archlinux.org/yay.git /tmp/yay; then 
                 echo "Failed to clone Yay repository. Please check your internet connection and try again."
@@ -653,94 +681,64 @@ select aur_helper in "${options[@]}"; do
             ;;
         *) echo "Invalid option";;
     esac
-    else
-        echo "Invalid option. Please enter a number between 1 and ${#options[@]}."
-    fi
 done
 
+# Select GUI (Optional) 
 echo -ne "
 +-----------------------+
 | Select GUI (Optional) |
 +-----------------------+
 "
 
-# Define the GUI options
-options=("Server (No GUI)" "GNOME" "KDE Plasma")
+# Ask the user if they want to install a GUI
+read -p "
+Do you want to install a GUI?
+1. Server (No GUI)
+2. GNOME
+3. KDE (Plasma)
+Enter your choice (1-3): " gui_choice | head -n 1  # Pipe to head -n 1
 
-# Use select to create a numbered menu
-select gui_choice in "${options[@]}"; do
-    case $gui_choice in
-        "Server (No GUI)")
-            echo "Skipping GUI installation. System will be set up as a server."
-            break 
-            ;;
-        "GNOME")
-            echo "Installing GNOME desktop environment..."
-            pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
-                echo "Failed to install GNOME packages. Exiting."
-                exit 1
-            }
+# Validate input and perform actions based on choice
+case "$gui_choice" in
+    1)  # Server
+        echo "Skipping GUI installation. System will be set up as a server."
+        ;;
+    2)  # GNOME
+        echo "Installing GNOME desktop environment..."
+        pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
+            echo "Failed to install GNOME packages. Exiting."
+            exit 1
+        }
 
-            systemctl enable gdm.service || {
-                echo "Failed to enable gdm service. Exiting."
-                exit 1
-            }
-            echo "GNOME installed and gdm enabled."
-            break
-            ;;
-        "KDE (Plasma)")
-            echo "Installing KDE Plasma desktop environment..."
-            pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
-                echo "Failed to install KDE Plasma packages. Exiting."
-                exit 1
-            }
+        systemctl enable gdm.service || {
+            echo "Failed to enable gdm service. Exiting."
+            exit 1
+        }
+        echo "GNOME installed and gdm enabled."
+        ;;
+    3)  # KDE Plasma
+        echo "Installing KDE Plasma desktop environment..."
+        pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
+            echo "Failed to install KDE Plasma packages. Exiting."
+            exit 1
+        }
 
-            systemctl enable sddm.service || {
-                echo "Failed to enable sddm service. Exiting."
-                exit 1
-            }
-            echo "KDE Plasma installed and sddm enabled."
-            break
-            ;;
-        *) echo "Invalid option";;
-    esac
-done
+        systemctl enable sddm.service || {
+            echo "Failed to enable sddm service. Exiting."
+            exit 1
+        }
+        echo "KDE Plasma installed and sddm enabled."
+        ;;
+    *)
+        echo "Invalid choice. Please enter 1, 2, or 3." 
+        exit 1
+        ;;
+esac
 
-# Detect NVIDIA GPUs
-readarray -t dGPU < <(lspci -k | grep -E "(VGA|3D)" | grep -i nvidia)
+# Unmount all partitions under /mnt
+echo "Unmounting partitions..."
+umount -R /mnt
 
-# Check if any NVIDIA GPUs were found
-if [ \${#dGPU[@]} -gt 0 ]; then
-    echo "NVIDIA GPU(s) detected:"
-    for gpu in "\${dGPU[@]}"; do
-        echo "  \$gpu"
-    done
-
-    # Install NVIDIA drivers and related packages
-    pacman -S --noconfirm --needed nvidia-dkms libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings || { echo "Failed to install NVIDIA packages"; exit 1; }
-
-    # Add NVIDIA modules to initramfs
-    sed -i '/^MODULES=()/c\MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)' /etc/mkinitcpio.conf || { echo "Failed to add NVIDIA modules to initramfs"; exit 1; }
-    mkinitcpio -p linux || { echo "Failed to regenerate initramfs"; exit 1; }
-
-    # Update GRUB configuration
-    sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT=/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
-    grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
-
-else
-    echo "No NVIDIA GPUs detected."
-fi
-
-EOF
-
-chmod +x /mnt/chroot-setup.sh
-
-# Execute the script inside chroot
-arch-chroot /mnt ./chroot-setup.sh
-
-# Exit chroot, unmount partitions, and reboot (within the script)
-#echo "Exiting chroot..."
-#umount -R /mnt
-
-#echo "Rebooting..."
-#reboot
+# Reboot the system
+echo "Rebooting..."
+reboot
