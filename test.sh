@@ -565,6 +565,12 @@ install_grub() {
     }
 }
 
+
+echo -ne "
++---------------------+
+| Configuring Pacman  |
++---------------------+
+"
 # Configure pacman
 echo "Configuring pacman"
 sed -i "/^#Color/c\Color\nILoveCandy" /etc/pacman.conf
@@ -572,10 +578,21 @@ sed -i "/^#VerbosePkgLists/c\VerbosePkgLists" /etc/pacman.conf
 sed -i "/^#ParallelDownloads/c\ParallelDownloads = 5" /etc/pacman.conf
 sed -i '/^#\[multilib\]/,+1 s/^#//' /etc/pacman.conf
 
+echo -ne "
++----------------------+
+| Installing Packages  |
++----------------------+
+"
 # Install additional needed packages
 echo "Installing: archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot "
 pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot || { echo "Failed to install packages"; exit 1; }
 
+
+echo -ne "
++-----------------------+
+| Installing Microcode  |
++-----------------------+
+"
 # Determine processor type and install microcode
 proc_type=\$(lscpu | grep -oP '^Vendor ID:\s+\K\w+')
 if [ "\$proc_type" = "GenuineIntel" ]; then
@@ -586,21 +603,44 @@ elif [ "\$proc_type" = "AuthenticAMD" ]; then
     pacman -S --noconfirm --needed amd-ucode || { echo "Failed to install AMD microcode"; exit 1; }
 fi
 
+
+echo -ne "
++--------------------+
+| Enabling Services  |
++--------------------+
+"
 # Enable services
 systemctl enable NetworkManager.service || { echo "Failed to enable NetworkManager"; exit 1; }
 echo "NetworkManager enabled"
 systemctl enable fstrim.timer || { echo "Failed to enable SSD support"; exit 1; }
 echo "SSD support enabled"
 
+
+echo -ne "
++-------------------+
+| Update Initramfs  |
++-------------------+
+"
 # Update mkinitcpio.conf
 sed -i "/^HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/c\HOOKS=(base udev autodetect modconf block encrypt lvm2 filesystems keyboard fsck)" /etc/mkinitcpio.conf
 mkinitcpio -p linux
 
+echo -ne "
++------------------+
+| Installing GRUB  |
++------------------+
+"
 # Call defined functions
 set_root_password
 update_sudoers
 install_grub
 
+
+echo -ne "
++-----------------------+
+| Updating GRUB Config  |
++-----------------------+
+"
 # Update GRUB configuration: /etc/default/grub
 sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved' /etc/default/grub || { echo "Failed to update GRUB_DEFAULT"; exit 1; }
 sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB_CMDLINE_LINUX_DEFAULT"; exit 1; }
@@ -608,6 +648,12 @@ sed -i '/^#GRUB_ENABLE_CRYPTODISK=y/c\GRUB_ENABLE_CRYPTODISK=y' /etc/default/gru
 sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true /etc/default/grub || { echo "Failed to update GRUB_SAVEDEFAULT"; exit 1; }
 grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
 
+
+echo -ne "
++-------------------+
+| Detecting NVIDIA  |
++-------------------+
+"
 # Detect NVIDIA GPUs
 readarray -t dGPU < <(lspci -k | grep -E "(VGA|3D)" | grep -i nvidia)
 
@@ -756,6 +802,20 @@ case "$gui_choice" in
         exit 1
         ;;
 esac
+
+echo -ne "
+
+ █████╗ ██████╗  ██████╗██╗  ██╗    ██╗██╗  ██╗████████╗███╗   ███╗
+██╔══██╗██╔══██╗██╔════╝██║  ██║    ██║██║  ██║╚══██╔══╝████╗ ████║
+███████║██████╔╝██║     ███████║    ██║███████║   ██║   ██╔████╔██║
+██╔══██║██╔══██╗██║     ██╔══██║    ██║╚════██║   ██║   ██║╚██╔╝██║
+██║  ██║██║  ██║╚██████╗██║  ██║    ███████╗██║   ██║   ██║ ╚═╝ ██║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝    ╚══════╝╚═╝   ╚═╝   ╚═╝     ╚═╝
+                                                               
++------------------------+
+| Installation Complete  |
++------------------------+
+"
 
 # Unmount all partitions under /mnt
 echo "Unmounting partitions..."
