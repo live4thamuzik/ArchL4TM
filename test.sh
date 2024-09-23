@@ -630,12 +630,15 @@ chmod +x /mnt/chroot-setup.sh
 # Execute the script inside chroot
 arch-chroot /mnt ./chroot-setup.sh
 
-# Install AUR Helper    
+# Install AUR Helper    
 echo -ne "
 +-----------------------+
 | Install AUR Helper    |
 +-----------------------+
 "
+
+# Create a temporary user for building AUR packages
+useradd -m -G wheel -s /bin/bash temp_aur_user
 
 # Ask the user which AUR helper they want
 options=("Yay" "Paru")
@@ -643,45 +646,54 @@ select aur_helper in "${options[@]}"; do
     case $aur_helper in
         "Yay")
             echo "Installing Yay"
-            # Clone the repo
-            if ! git clone https://aur.archlinux.org/yay.git /tmp/yay; then 
-                echo "Failed to clone Yay repository. Please check your internet connection and try again."
-                exit 1
-            fi
+            # Switch to the temporary user and build/install Yay
+            su - temp_aur_user -c '
+                # Clone the repo
+                if ! git clone https://aur.archlinux.org/yay.git /tmp/yay; then 
+                    echo "Failed to clone Yay repository. Please check your internet connection and try again."
+                    exit 1
+                fi
 
-            # Build and install the AUR helper
-            cd /tmp/yay && makepkg -si --noconfirm || {
-                echo "Failed to build and install Yay. Check the installation logs for more details."
-                exit 1
-            }
+                # Build and install the AUR helper
+                cd /tmp/yay && makepkg -si --noconfirm || {
+                    echo "Failed to build and install Yay. Check the installation logs for more details."
+                    exit 1
+                }
 
-            # Clean up
-            cd ~ && rm -rf /tmp/yay
-            echo "Yay installed successfully! You can now use yay to install packages from the AUR."
+                # Clean up
+                cd ~ && rm -rf /tmp/yay
+                echo "Yay installed successfully! You can now use yay to install packages from the AUR."
+            '
             break  # Exit the select loop after successful installation
             ;;
         "Paru")
             echo "Installing Paru"
-            # Clone the repo
-            if ! git clone https://aur.archlinux.org/paru.git /tmp/paru; then 
-                echo "Failed to clone Paru repository. Please check your internet connection and try again."
-                exit 1
-            fi
+            # Switch to the temporary user and build/install Paru
+            su - temp_aur_user -c '
+                # Clone the repo
+                if ! git clone https://aur.archlinux.org/paru.git /tmp/paru; then 
+                    echo "Failed to clone Paru repository. Please check your internet connection and try again."
+                    exit 1
+                fi
 
-            # Build and install the AUR helper
-            cd /tmp/paru && makepkg -si --noconfirm || {
-                echo "Failed to build and install Paru. Check the installation logs for more details."
-                exit 1
-            }
+                # Build and install the AUR helper
+                cd /tmp/paru && makepkg -si --noconfirm || {
+                    echo "Failed to build and install Paru. Check the installation logs for more details."
+                    exit 1
+                }
 
-            # Clean up
-            cd ~ && rm -rf /tmp/paru
-            echo "Paru installed successfully! You can now use paru to install packages from the AUR."
+                # Clean up
+                cd ~ && rm -rf /tmp/paru
+                echo "Paru installed successfully! You can now use paru to install packages from the AUR."
+            '
             break  # Exit the select loop after successful installation
             ;;
         *) echo "Invalid option";;
     esac
 done
+
+# Remove the temporary user
+userdel -r temp_aur_user
 
 # Select GUI (Optional) 
 echo -ne "
