@@ -161,7 +161,7 @@ mount /dev/volgroup0/lv_root /mnt || { echo "Failed to mount root volume"; exit 
 mkdir -p /mnt/boot
 mount "${disk}2" /mnt/boot || { echo "Failed to mount /boot"; exit 1; }
 
-# Creat /boot/EFI directory and mount partition 1
+# Create /boot/EFI directory and mount partition 1
 mkdir -p /mnt/boot/EFI
 mount "${disk}1" /mnt/boot/EFI || { echo "Failed to mount /boot"; exit 1; }
 
