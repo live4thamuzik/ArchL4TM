@@ -8,7 +8,7 @@ exec > >(tee -a /var/log/arch_install.log) 2>&1
 
 echo -ne "
 +--------------------------------+
-| Automated Arch Linux Installer |
+| Arch Linux Installation Script |
 +--------------------------------+
 "
 
@@ -24,10 +24,11 @@ echo -ne "
 "
 
 echo -ne "
-+--------------------+
-| Drive Preparation  |
-+--------------------+
++-------------------+
+| Drive Preparation |
++-------------------+
 "
+
 # List Disks
 fdisk -l
 
@@ -104,6 +105,7 @@ echo -ne "
 | Perform LVM setup |
 +-------------------+
 "
+
 # Format partition 1 as FAT32
 mkfs.fat -F32 "${disk}1" || { echo "Failed to format ${disk}1"; exit 1; }
 
@@ -159,6 +161,10 @@ mount /dev/volgroup0/lv_root /mnt || { echo "Failed to mount root volume"; exit 
 mkdir -p /mnt/boot
 mount "${disk}2" /mnt/boot || { echo "Failed to mount /boot"; exit 1; }
 
+# Create /boot/EFI directory and mount partition 1
+mkdir -p /mnt/boot/EFI
+mount "${disk}1" /mnt/boot/EFI || { echo "Failed to mount /boot"; exit 1; }
+
 # Format home volume
 mkfs.ext4 /dev/volgroup0/lv_home || { echo "Failed to format home volume"; exit 1; }
 
@@ -173,10 +179,11 @@ echo "Setup completed successfully."
 
 # Install prereq packages
 echo -ne "
-+---------------------------
++--------------------------+
 | Installing Prerequisites |
 +--------------------------+
 "
+
 pacman -S --noconfirm pacman-contrib reflector rsync || { echo "Failed to install prerequisites"; exit 1; }
 
 # Configure pacman for faster downloads
@@ -185,15 +192,316 @@ echo -ne "
 | Setting up mirrors for faster downloads |
 +-----------------------------------------+
 "
+
 # Backup mirrorlist
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup || { echo "Failed to backup mirrorlist"; exit 1; }
-reflector -a 48 -c US -f 5 -l 20 --sort rate --save /etc/pacman.d/mirrorlist || { echo "Failed to setup mirrors"; exit 1; }
+reflector -a 48 -f 5 -l 20 --sort rate --save /etc/pacman.d/mirrorlist || { echo "Failed to setup mirrors"; exit 1; }
 
 # Install base packages 
 pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed || { echo "Failed to install base system"; exit 1; }
 
 # Generate fstab
 genfstab -U -p /mnt >> /mnt/etc/fstab || { echo "Failed to generate fstab"; exit 1; }
+
+echo -ne "
++----------------+
+| Setting locale |
++----------------+
+"
+
+# Function to get a list of locales from /etc/locale.gen
+get_locales() {
+    awk '{print NR ". " $1}' /mnt/etc/locale.gen
+}
+
+# Collect locales into an array
+locales=($(get_locales))
+
+# Check if locales were collected
+if [ ${#locales[@]} -eq 0 ]; then
+    echo "No locales found in /etc/locale.gen. Please add some locales and try again."
+    exit 1
+fi
+
+# Constants
+PAGE_SIZE=80
+COLS=2        # Number of columns to display
+NUMBER_WIDTH=4 # Width for number and dot
+COLUMN_WIDTH=2 # Width of each column for locales
+
+# Function to display a page of locales in columns
+display_page() {
+    local start=$1
+    local end=$2
+    local count=0
+
+    echo "Locales ($((start + 1)) to $end of ${#locales[@]}):"
+
+    for ((i=start; i<end; i++)); do
+        # Print locales in columns with minimized gap
+        printf "%-${NUMBER_WIDTH}s%-${COLUMN_WIDTH}s" "${locales[$i]}" ""
+        count=$((count + 1))
+
+        if ((count % COLS == 0)); then
+            echo
+        fi
+    done
+
+    # Add a newline at the end if the last line isn't fully filled
+    if ((count % COLS != 0)); then
+        echo
+    fi
+}
+
+# Display pages of locales
+total_locales=${#locales[@]}
+current_page=0
+
+# Declare selected_locale outside the loop
+selected_locale=""
+
+while true; do
+    start=$((current_page * PAGE_SIZE))
+    end=$((start + PAGE_SIZE))
+    if ((end > total_locales)); then
+        end=$total_locales
+    fi
+
+    display_page $start $end
+
+    # Prompt user for selection or continue
+    echo -ne "Enter the number of your locale choice from this page, or press Enter to see more locales: "
+    read -r choice
+
+    # Check if user made a choice
+    if [[ "$choice" =~ ^[0-9]+$ ]]; then
+        if [[ "$choice" -ge 1 && "$choice" -le $total_locales ]]; then
+            # Extract the selected locale
+            selected_locale=$(echo "${locales[$((choice-1))]}" | awk '{print $2}')
+
+            # Check if the selected locale is commented
+            if [[ "$selected_locale" == \#* ]]; then
+                # Remove the leading '#' for uncommenting
+                uncommented_locale=$(echo "$selected_locale" | sed 's/^# //')
+                echo "Uncommenting locale: $uncommented_locale"
+                sed -i "/^# $uncommented_locale/s/^# //" /mnt/etc/locale.gen
+            else
+                echo "Selected locale is already active."
+            fi
+
+            # Run locale-gen to apply the changes and capture output
+            locale_gen_output=$(locale-gen 2>&1)
+
+            # Check if locale-gen was successful
+            if [[ $? -ne 0 ]]; then
+                echo "Error running locale-gen: $locale_gen_output"
+                exit 1
+            fi
+
+            # Set the locale in /etc/locale.conf
+            echo "LANG=\"$selected_locale\"" > /mnt/etc/locale.conf
+
+            # Re-evaluate locale variables after locale-gen
+            . /mnt/etc/locale.conf
+
+            # Verify locale setting
+            echo "Locale has been set to $selected_locale"
+            break
+        else
+            echo "Invalid selection. Please enter a valid number from the displayed list."
+        fi
+    elif [[ -z "$choice" ]]; then
+        # Continue to the next page
+        if ((end == total_locales)); then
+            echo "No more locales to display."
+            break
+        fi
+        current_page=$((current_page + 1))
+    else
+        echo "Invalid input. Please enter a number or press Enter to continue."
+    fi
+done
+
+echo -ne "
++------------------+
+| Setting timezone |
++------------------+
+"
+
+# Function to get a list of timezones
+get_timezones() {
+  local count=1
+  find /mnt/usr/share/zoneinfo -type f | sed 's|/mnt/usr/share/zoneinfo/||' | awk -v cnt=$count '{print cnt". "$0; cnt++}'
+}
+
+# Collect timezones into an array
+mapfile -t timezones < <(get_timezones)
+
+# Check if timezones were collected
+if [ ${#timezones[@]} -eq 0 ]; then
+  echo "No timezones found. Please check the timezone directory and try again."
+  exit 1
+fi
+
+# Constants
+PAGE_SIZE=40
+COLS=1  # Number of columns to display
+NUMBER_WIDTH=4  # Width for number and dot
+COLUMN_WIDTH=2  # Width of each column for timezones
+
+# Function to display a page of timezones in columns
+display_page() {
+  local start=$1
+  local end=$2
+  local count=0
+
+  echo "Timezones ($((start + 1)) to $end of ${#timezones[@]}):"
+
+  for ((i=start; i<end; i++)); do
+    # Print timezones in columns with minimized gap
+    printf "%-${NUMBER_WIDTH}s%-${COLUMN_WIDTH}s" "${timezones[$i]}" ""
+    count=$((count + 1))
+    
+    if ((count % COLS == 0)); then
+      echo
+    fi
+  done
+
+  # Add a newline at the end if the last line isn't fully filled
+  if ((count % COLS != 0)); then
+    echo
+  fi
+}
+
+# Display pages of timezones
+total_timezones=${#timezones[@]}
+current_page=0
+
+while true; do
+  start=$((current_page * PAGE_SIZE))
+  end=$((start + PAGE_SIZE))
+  if ((end > total_timezones)); then
+    end=$total_timezones
+  fi
+
+  display_page $start $end
+
+  # Prompt user for selection or continue
+  echo -ne "Enter the number of your timezone choice from this page, or press Enter to see more timezones: "
+  read -r choice
+
+  # Check if user made a choice
+  if [[ "$choice" =~ ^[0-9]+$ ]]; then
+    if [[ "$choice" -ge 1 && "$choice" -le $total_timezones ]]; then
+      # Extract the selected timezone
+      selected_timezone=$(echo "${timezones[$((choice-1))]}" | awk '{print $2}')
+
+      # Set timezone
+      echo "Setting timezone to $selected_timezone"
+      ln -sf "/mnt/usr/share/zoneinfo/$selected_timezone" /mnt/etc/localtime
+
+      # Verify timezone setting
+      echo "Timezone has been set to $(readlink -f /mnt/etc/localtime)"
+      break
+    else
+      echo "Invalid selection. Please enter a valid number from the displayed list."
+    fi
+  elif [[ -z "$choice" ]]; then
+    # Continue to the next page
+    if ((end == total_timezones)); then
+      echo "No more timezones to display."
+      break
+    fi
+    current_page=$((current_page + 1))
+  else
+    echo "Invalid input. Please enter a number or press Enter to continue."
+  fi
+done
+
+echo -ne "
++--------------+
+| Set hostname |
++--------------+
+"
+
+set_hostname() {
+  # Prompt user to enter hostname
+  read -p "Enter your desired hostname: " hostname
+
+  # Ensure hostname is not empty
+  if [ -z "$hostname" ]; then
+    echo "Hostname cannot be empty. Exiting."
+    exit 1
+  fi
+
+  # Write the hostname to /mnt/etc/hostname
+  echo "$hostname" > /mnt/etc/hostname || { echo "Failed to set hostname"; exit 1; }
+
+  echo "Hostname set to $hostname"
+}
+
+# Call the function to set hostname
+set_hostname
+
+echo -ne "
++-----------------+
+| Create new user |
++-----------------+
+"
+
+create_user() {
+    # Prompt for username
+    read -p "Enter a username: " user
+
+    # Validate username (non-empty, doesn't already exist)
+    if [ -z "$user" ]; then
+        echo "Username cannot be empty. Please try again."
+        return 1  # Indicate failure to the calling script
+    elif id "$user" &>/dev/null; then
+        echo "User '$user' already exists. Please choose a different username."
+        return 1
+    fi
+
+    # Create user on the host system
+    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || {
+        echo "Failed to create user '$user' on the host system."
+        return 1
+    }
+
+    # Prompt for and set password (with confirmation)
+    while true; do
+        read -s -p "Enter password for '$user': " password
+        echo
+        read -s -p "Confirm password: " confirm_password
+        echo
+
+        if [ "$password" == "$confirm_password" ]; then
+            echo "$password" | passwd --stdin "$user" || {
+                echo "Failed to set password for '$user'."
+                return 1
+            }
+            break  # Exit the loop if passwords match and are set successfully
+        else
+            echo "Passwords do not match. Please try again."
+        fi
+    done
+
+    # Ensure home directory exists within the new system
+    mkdir -p /mnt/home/"$user"
+
+    # Set ownership and permissions for the home directory within the new system
+    chown -R "$user":"$user" /mnt/home/"$user"
+    chmod 700 /mnt/home/"$user"
+
+    echo "User '$user' created successfully with password set."
+    return 0  # Indicate success
+}
+
+# Call the function to create the user
+if ! create_user; then
+    echo "User creation failed. Exiting."
+    exit 1
+fi
 
 # Save the functions and commands in a script file
 cat <<EOF > /mnt/chroot-setup.sh
@@ -202,20 +510,9 @@ cat <<EOF > /mnt/chroot-setup.sh
 set -e
 
 # Define functions
-set_timezone() {
-    ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
-    hwclock --systohc
-}
 
-set_locale() {
-    sed -i "/^#en_US.UTF-8 UTF-8/c\en_US.UTF-8 UTF-8" /etc/locale.gen
-    locale-gen
-    echo LANG=en_US.UTF-8 > /etc/locale.conf
-}
-
-set_hostname() {
-    echo archtest > /etc/hostname
-}
+# Get disk value from the first command-line argument
+disk="$1" 
 
 set_root_password() {
     while true; do
@@ -250,45 +547,30 @@ set_root_password() {
     done
 }
 
-add_user() {
-    read -p "Enter a username: " user
-    if [ -z "$user" ]; then
-        echo "Username cannot be empty. Exiting."
-        exit 1
-    fi
-
-    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || { echo "Failed to create user"; exit 1; }
-
-    while true; do
-        read -s -p "Set $user password: " user_password
-        echo
-        read -s -p "Confirm $user password: " confirm_user_password
-        echo
-
-        if [ "$user_password" == "$confirm_user_password" ]; then
-            echo "$user_password" | passwd $user || { echo "Failed to set \$user password"; exit 1; }
-            echo "$user password set successfully."
-            break
-        else
-            echo "Passwords do not match. Please try again."
-        fi
-    done
-}
-
 update_sudoers() {
     cp /etc/sudoers /etc/sudoers.backup
-    sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/c\ %wheel ALL=(ALL:ALL) ALL' /etc/sudoers
+    sed -i 's/^# *%wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
     echo 'Defaults targetpw' >> /etc/sudoers
     visudo -c || { echo "Syntax error in sudoers. Restoring backup."; cp /etc/sudoers.backup /etc/sudoers; exit 1; }
 }
 
 install_grub() {
-    mkdir -p /boot/EFI
-    mount /dev/${disk}1 /boot/EFI
-    grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
-    grub-mkconfig -o /boot/grub/grub.cfg
+    grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck || {
+        echo "Failed to install GRUB. Exiting."
+        exit 1
+    }
+    grub-mkconfig -o /boot/grub/grub.cfg || {
+        echo "Failed to generate GRUB configuration. Exiting."
+        exit 1
+    }
 }
 
+
+echo -ne "
++--------------------+
+| Configuring Pacman |
++--------------------+
+"
 # Configure pacman
 echo "Configuring pacman"
 sed -i "/^#Color/c\Color\nILoveCandy" /etc/pacman.conf
@@ -296,10 +578,21 @@ sed -i "/^#VerbosePkgLists/c\VerbosePkgLists" /etc/pacman.conf
 sed -i "/^#ParallelDownloads/c\ParallelDownloads = 5" /etc/pacman.conf
 sed -i '/^#\[multilib\]/,+1 s/^#//' /etc/pacman.conf
 
+echo -ne "
++---------------------+
+| Installing Packages |
++---------------------+
+"
 # Install additional needed packages
-echo "Installing: archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python "
-pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python || { echo "Failed to install packages"; exit 1; }
+echo "Installing: archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot "
+pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot || { echo "Failed to install packages"; exit 1; }
 
+
+echo -ne "
++----------------------+
+| Installing Microcode |
++----------------------+
+"
 # Determine processor type and install microcode
 proc_type=\$(lscpu | grep -oP '^Vendor ID:\s+\K\w+')
 if [ "\$proc_type" = "GenuineIntel" ]; then
@@ -310,37 +603,73 @@ elif [ "\$proc_type" = "AuthenticAMD" ]; then
     pacman -S --noconfirm --needed amd-ucode || { echo "Failed to install AMD microcode"; exit 1; }
 fi
 
+
+echo -ne "
++-------------------+
+| Enabling Services |
++-------------------+
+"
 # Enable services
 systemctl enable NetworkManager.service || { echo "Failed to enable NetworkManager"; exit 1; }
 echo "NetworkManager enabled"
 systemctl enable fstrim.timer || { echo "Failed to enable SSD support"; exit 1; }
 echo "SSD support enabled"
 
-# Call defined functions
-set_timezone
-set_locale
-set_hostname
 
+echo -ne "
++------------------+
+| Update Initramfs |
++------------------+
+"
 # Update mkinitcpio.conf
 sed -i "/^HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/c\HOOKS=(base udev autodetect modconf block encrypt lvm2 filesystems keyboard fsck)" /etc/mkinitcpio.conf
 mkinitcpio -p linux
 
 # Call defined functions
 set_root_password
-add_user
 update_sudoers
+echo -ne "
++-----------------+
+| Installing GRUB |
++-----------------+
+"
 install_grub
 
+
+echo -ne "
++----------------------+
+| Updating GRUB Config |
++----------------------+
+"
+# Update GRUB configuration: /etc/default/grub
+sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved' /etc/default/grub || { echo "Failed to update GRUB_DEFAULT"; exit 1; }
+sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'"$disk"'3:volgroup0 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB_CMDLINE_LINUX_DEFAULT"; exit 1; }
+sed -i '/^#GRUB_ENABLE_CRYPTODISK=y/c\GRUB_ENABLE_CRYPTODISK=y' /etc/default/grub || { echo "Failed to update GRUB_ENABLE_CRYPTODISK"; exit 1; }
+sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub || { echo "Failed to update GRUB_SAVEDEFAULT"; exit 1; }
+grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
+
+
+
+echo -ne "
++------------------+
+| Detecting NVIDIA |
++------------------+
+"
 # Detect NVIDIA GPUs
 readarray -t dGPU < <(lspci -k | grep -E "(VGA|3D)" | grep -i nvidia)
 
 # Check if any NVIDIA GPUs were found
-if [ \${#dGPU[@]} -gt 0 ]; then
+if [ ${#dGPU[@]} -gt 0 ]; then
     echo "NVIDIA GPU(s) detected:"
-    for gpu in "\${dGPU[@]}"; do
-        echo "  \$gpu"
+    for gpu in "${dGPU[@]}"; do
+        echo "  $gpu"
     done
 
+echo -ne "
++-------------------+
+| Installing NVIDIA |
++-------------------+
+"
     # Install NVIDIA drivers and related packages
     pacman -S --noconfirm --needed nvidia-dkms libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings || { echo "Failed to install NVIDIA packages"; exit 1; }
 
@@ -348,16 +677,155 @@ if [ \${#dGPU[@]} -gt 0 ]; then
     sed -i '/^MODULES=()/c\MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)' /etc/mkinitcpio.conf || { echo "Failed to add NVIDIA modules to initramfs"; exit 1; }
     mkinitcpio -p linux || { echo "Failed to regenerate initramfs"; exit 1; }
 
-    # Update GRUB configuration
-    sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT=/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'${disk}'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
-    grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
-
+    # Update GRUB configuration with NVIDIA settings
+sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'\$disk'3:volgroup0 loglevel=3"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=/dev/'\$disk'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB configuration"; exit 1; }
+grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
 else
-    echo "No NVIDIA GPUs detected."
+    echo "No NVIDIA GPUs detected. Skipping NVIDIA-related actions."
 fi
+
 EOF
 
 chmod +x /mnt/chroot-setup.sh
 
-# Execute the script inside chroot
-arch-chroot /mnt ./chroot-setup.sh
+# Execute the script inside chroot, passing $disk as an argument
+arch-chroot /mnt ./chroot-setup.sh "$disk"
+
+# Install AUR Helper    
+echo -ne "
++--------------------+
+| Install AUR Helper |
++--------------------+
+"
+
+# Create a temporary user for building AUR packages
+useradd -m -G wheel -s /bin/bash temp_aur_user
+
+# Ask the user which AUR helper they want
+options=("Yay" "Paru")
+select aur_helper in "${options[@]}"; do
+    case $aur_helper in
+        "Yay")
+            echo "Installing Yay"
+            # Switch to the temporary user and build/install Yay
+            su - temp_aur_user -c '
+                # Clone the repo
+                if ! git clone https://aur.archlinux.org/yay.git /mnt/tmp/yay; then 
+                    echo "Failed to clone Yay repository. Please check your internet connection and try again."
+                    exit 1
+                fi
+
+                # Build and install the AUR helper
+                cd /mnt/tmp/yay && makepkg -si --noconfirm || {
+                    echo "Failed to build and install Yay. Check the installation logs for more details."
+                    exit 1
+                }
+
+                # Clean up
+                cd ~ && rm -rf /mnt/tmp/yay
+                echo "Yay installed successfully! You can now use yay to install packages from the AUR."
+            '
+            break  # Exit the select loop after successful installation
+            ;;
+        "Paru")
+            echo "Installing Paru"
+            # Switch to the temporary user and build/install Paru
+            su - temp_aur_user -c '
+                # Clone the repo
+                if ! git clone https://aur.archlinux.org/paru.git /mnt/tmp/paru; then 
+                    echo "Failed to clone Paru repository. Please check your internet connection and try again."
+                    exit 1
+                fi
+
+                # Build and install the AUR helper
+                cd /mnt/tmp/paru && makepkg -si --noconfirm || {
+                    echo "Failed to build and install Paru. Check the installation logs for more details."
+                    exit 1
+                }
+
+                # Clean up
+                cd ~ && rm -rf /mnt/tmp/paru
+                echo "Paru installed successfully! You can now use paru to install packages from the AUR."
+            '
+            break  # Exit the select loop after successful installation
+            ;;
+        *) echo "Invalid option";;
+    esac
+done
+
+# Remove the temporary user
+userdel -r temp_aur_user
+
+# Select GUI (Optional) 
+echo -ne "
++-----------------------+
+| Select GUI (Optional) |
++-----------------------+
+"
+
+# Ask the user if they want to install a GUI
+read -p "
+Do you want to install a GUI?
+1. Server (No GUI)
+2. GNOME
+3. KDE (Plasma)
+Enter your choice (1-3): " gui_choice | head -n 1  # Pipe to head -n 1
+
+# Validate input and perform actions based on choice
+case "$gui_choice" in
+    1)  # Server
+        echo "Skipping GUI installation. System will be set up as a server."
+        ;;
+    2)  # GNOME
+        echo "Installing GNOME desktop environment..."
+        pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
+            echo "Failed to install GNOME packages. Exiting."
+            exit 1
+        }
+
+        systemctl enable gdm.service || {
+            echo "Failed to enable gdm service. Exiting."
+            exit 1
+        }
+        echo "GNOME installed and gdm enabled."
+        ;;
+    3)  # KDE Plasma
+        echo "Installing KDE Plasma desktop environment..."
+        pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
+            echo "Failed to install KDE Plasma packages. Exiting."
+            exit 1
+        }
+
+        systemctl enable sddm.service || {
+            echo "Failed to enable sddm service. Exiting."
+            exit 1
+        }
+        echo "KDE Plasma installed and sddm enabled."
+        ;;
+    *)
+        echo "Invalid choice. Please enter 1, 2, or 3." 
+        exit 1
+        ;;
+esac
+
+echo -ne "
+
+ █████╗ ██████╗  ██████╗██╗  ██╗    ██╗██╗  ██╗████████╗███╗   ███╗
+██╔══██╗██╔══██╗██╔════╝██║  ██║    ██║██║  ██║╚══██╔══╝████╗ ████║
+███████║██████╔╝██║     ███████║    ██║███████║   ██║   ██╔████╔██║
+██╔══██║██╔══██╗██║     ██╔══██║    ██║╚════██║   ██║   ██║╚██╔╝██║
+██║  ██║██║  ██║╚██████╗██║  ██║    ███████╗██║   ██║   ██║ ╚═╝ ██║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝    ╚══════╝╚═╝   ╚═╝   ╚═╝     ╚═╝
+                                                               
++-----------------------+
+| Installation Complete |
++-----------------------+
+"
+
+# Unmount all partitions under /mnt
+echo "Unmounting partitions..."
+umount -R /mnt
+
+# Reboot the system
+echo "Rebooting..."
+reboot
