@@ -625,11 +625,6 @@ echo -ne "
 sed -i "/^HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/c\HOOKS=(base udev autodetect modconf block encrypt lvm2 filesystems keyboard fsck)" /etc/mkinitcpio.conf
 mkinitcpio -p linux
 
-echo -ne "
-+-----------------+
-| Installing GRUB |
-+-----------------+
-"
 # Call defined functions
 set_root_password
 update_sudoers
