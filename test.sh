@@ -608,10 +608,13 @@ echo -ne "
 options=("Yay" "Paru")
 
 # Use select to create a numbered menu
+PS3="Which AUR helper do you want to install? "
 select aur_helper in "${options[@]}"; do
-    case $aur_helper in
-        "Yay")
-            echo "Installing Yay"
+    # Check if a valid option was selected
+    if [[ -n $aur_helper ]]; then
+        case $aur_helper in
+            "Yay")
+                echo "Installing Yay"
             # Clone the repo
             if ! git clone https://aur.archlinux.org/yay.git /tmp/yay; then 
                 echo "Failed to clone Yay repository. Please check your internet connection and try again."
@@ -650,6 +653,9 @@ select aur_helper in "${options[@]}"; do
             ;;
         *) echo "Invalid option";;
     esac
+    else
+        echo "Invalid option. Please enter a number between 1 and ${#options[@]}."
+    fi
 done
 
 echo -ne "
