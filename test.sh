@@ -604,59 +604,53 @@ echo -ne "
 +-----------------------+
 "
 
-# Ask the user which AUR helper they want
-read -r -p "
-Which AUR helper do you want to install? 
-1. yay
-2. paru
-Enter your choice (1-2): " aur_helper_input | head -n 1
+# Define the AUR helper options
+options=("Yay" "Paru")
 
-# Trim any leading/trailing whitespace and convert to lowercase for easier comparison
-aur_helper=$(echo "$aur_helper_input" | xargs | tr '[:upper:]' '[:lower:]')
+# Use select to create a numbered menu
+select aur_helper in "${options[@]}"; do
+    case $aur_helper in
+        Yay)
+            echo "Installing Yay"
+            # Clone the repo
+            if ! git clone https://aur.archlinux.org/yay.git /tmp/yay; then 
+                echo "Failed to clone Yay repository. Please check your internet connection and try again."
+                exit 1
+            fi
 
-# Validate input and perform actions based on choice
-case "$aur_helper" in
-    1 | yay)
-        echo "Installing Yay"
-        # Clone the repo
-        if ! git clone https://aur.archlinux.org/yay.git /tmp/yay; then 
-            echo "Failed to clone Yay repository. Please check your internet connection and try again."
-            exit 1
-        fi
+            # Build and install the AUR helper
+            cd /tmp/yay && makepkg -si --noconfirm || {
+                echo "Failed to build and install Yay. Check the installation logs for more details."
+                exit 1
+            }
 
-        # Build and install the AUR helper
-        cd /tmp/yay && makepkg -si --noconfirm || {
-            echo "Failed to build and install Yay. Check the installation logs for more details."
-            exit 1
-        }
+            # Clean up
+            cd ~ && rm -rf /tmp/yay
+            echo "Yay installed successfully! You can now use yay to install packages from the AUR."
+            break  # Exit the select loop after successful installation
+            ;;
+        Paru)
+            echo "Installing Paru"
+            # Clone the repo
+            if ! git clone https://aur.archlinux.org/paru.git /tmp/paru; then 
+                echo "Failed to clone Paru repository. Please check your internet connection and try again."
+                exit 1
+            fi
 
-        # Clean up
-        cd ~ && rm -rf /tmp/yay
-        echo "Yay installed successfully! You can now use yay to install packages from the AUR."
-        ;;
-    2 | paru)
-        echo "Installing Paru"
-        # Clone the repo
-        if ! git clone https://aur.archlinux.org/paru.git /tmp/paru; then 
-            echo "Failed to clone Paru repository. Please check your internet connection and try again."
-            exit 1
-        fi
+            # Build and install the AUR helper
+            cd /tmp/paru && makepkg -si --noconfirm || {
+                echo "Failed to build and install Paru. Check the installation logs for more details."
+                exit 1
+            }
 
-        # Build and install the AUR helper
-        cd /tmp/paru && makepkg -si --noconfirm || {
-            echo "Failed to build and install Paru. Check the installation logs for more details."
-            exit 1
-        }
-
-        # Clean up
-        cd ~ && rm -rf /tmp/paru
-        echo "Paru installed successfully! You can now use paru to install packages from the AUR."
-        ;;
-    *)
-        echo "Invalid choice. Please enter 1 or 2 (or 'yay' or 'paru')."
-        exit 1
-        ;;
-esac
+            # Clean up
+            cd ~ && rm -rf /tmp/paru
+            echo "Paru installed successfully! You can now use paru to install packages from the AUR."
+            break  # Exit the select loop after successful installation
+            ;;
+        *) echo "Invalid option";;
+    esac
+done
 
 echo -ne "
 +-----------------------+
@@ -664,50 +658,47 @@ echo -ne "
 +-----------------------+
 "
 
-# Ask the user if they want to install a GUI
-read -p "
-Do you want to install a GUI?
-1. Server (No GUI)
-2. GNOME
-3. KDE (Plasma)
-Enter your choice (1-3): " gui_choice | head -n 1  # Pipe to head -n 1
+# Define the GUI options
+options=("Server (No GUI)" "GNOME" "KDE Plasma")
 
-# Validate input and perform actions based on choice
-case "$gui_choice" in
-    1)  # Server
-        echo "Skipping GUI installation. System will be set up as a server."
-        ;;
-    2)  # GNOME
-        echo "Installing GNOME desktop environment..."
-        pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
-            echo "Failed to install GNOME packages. Exiting."
-            exit 1
-        }
+# Use select to create a numbered menu
+select gui_choice in "${options[@]}"; do
+    case $gui_choice in
+        "Server (No GUI)")
+            echo "Skipping GUI installation. System will be set up as a server."
+            break 
+            ;;
+        "GNOME")
+            echo "Installing GNOME desktop environment..."
+            pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
+                echo "Failed to install GNOME packages. Exiting."
+                exit 1
+            }
 
-        systemctl enable gdm.service || {
-            echo "Failed to enable gdm service. Exiting."
-            exit 1
-        }
-        echo "GNOME installed and gdm enabled."
-        ;;
-    3)  # KDE Plasma
-        echo "Installing KDE Plasma desktop environment..."
-        pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
-            echo "Failed to install KDE Plasma packages. Exiting."
-            exit 1
-        }
+            systemctl enable gdm.service || {
+                echo "Failed to enable gdm service. Exiting."
+                exit 1
+            }
+            echo "GNOME installed and gdm enabled."
+            break
+            ;;
+        "KDE (Plasma)")
+            echo "Installing KDE Plasma desktop environment..."
+            pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
+                echo "Failed to install KDE Plasma packages. Exiting."
+                exit 1
+            }
 
-        systemctl enable sddm.service || {
-            echo "Failed to enable sddm service. Exiting."
-            exit 1
-        }
-        echo "KDE Plasma installed and sddm enabled."
-        ;;
-    *)
-        echo "Invalid choice. Please enter 1, 2, or 3." 
-        exit 1
-        ;;
-esac
+            systemctl enable sddm.service || {
+                echo "Failed to enable sddm service. Exiting."
+                exit 1
+            }
+            echo "KDE Plasma installed and sddm enabled."
+            break
+            ;;
+        *) echo "Invalid option";;
+    esac
+done
 
 # Detect NVIDIA GPUs
 readarray -t dGPU < <(lspci -k | grep -E "(VGA|3D)" | grep -i nvidia)
