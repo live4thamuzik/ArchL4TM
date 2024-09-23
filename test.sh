@@ -305,7 +305,7 @@ while true; do
             . /mnt/etc/locale.conf
 
             # Verify locale setting
-            echo "Locale has been set to $LANG"
+            echo "Locale has been set to $selected_locale"
             break
         else
             echo "Invalid selection. Please enter a valid number from the displayed list."
