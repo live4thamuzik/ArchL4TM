@@ -610,7 +610,7 @@ options=("Yay" "Paru")
 # Use select to create a numbered menu
 select aur_helper in "${options[@]}"; do
     case $aur_helper in
-        Yay)
+        "Yay")
             echo "Installing Yay"
             # Clone the repo
             if ! git clone https://aur.archlinux.org/yay.git /tmp/yay; then 
@@ -629,7 +629,7 @@ select aur_helper in "${options[@]}"; do
             echo "Yay installed successfully! You can now use yay to install packages from the AUR."
             break  # Exit the select loop after successful installation
             ;;
-        Paru)
+        "Paru")
             echo "Installing Paru"
             # Clone the repo
             if ! git clone https://aur.archlinux.org/paru.git /tmp/paru; then 
