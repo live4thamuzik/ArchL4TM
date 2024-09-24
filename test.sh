@@ -752,7 +752,7 @@ install_aur_helper() {
     su - temp_aur_user -c "
         # Clone the repo
         if ! git clone $repo_url $temp_dir; then 
-            echo \"Failed to clone $aur_helper repository. Please check your internet connection and try again.\""
+            echo \"Failed to clone $aur_helper repository. Please check your internet connection and try again.\"
             exit 1
         fi
 
