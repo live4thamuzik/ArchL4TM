@@ -645,7 +645,7 @@ echo -ne "
 "
 
 # Update mkinitcpio.conf
-sed -i "/^HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/c\HOOKS=(base udev autodetect modconf block encrypt lvm2 filesystems keyboard fsck)" /etc/mkinitcpio.conf
+sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev autodetect modconf block encrypt lvm2 filesystems keyboard fsck)/' /etc/mkinitcpio.conf
 mkinitcpio -p linux
 
 # Call defined functions
@@ -724,8 +724,8 @@ echo -ne "
 +--------------------+
 "
 
-# Install dependancies for makepkg
-pacman -Sy fakeroot debugedit
+# Install dependencies for makepkg
+pacman -Sy --noconfirm --needed fakeroot debugedit
 
 # Create a temporary user for building AUR packages
 useradd -m -G wheel -s /bin/bash temp_aur_user
@@ -744,7 +744,7 @@ select aur_helper in "${options[@]}"; do
                     exit 1
                 fi
 
-                # Build and install the AUR helper
+                # Build and install the AUR helper (with --noconfirm)
                 cd /mnt/tmp/yay && makepkg -si --noconfirm || {
                     echo "Failed to build and install Yay. Check the installation logs for more details."
                     exit 1
@@ -758,15 +758,15 @@ select aur_helper in "${options[@]}"; do
             ;;
         "Paru")
             echo "Installing Paru"
-            # Switch to the temporary user and build/install Paru
-            su - temp_aur_user -c '
+            # Switch to the temporary user and build/install Paru (using sudo)
+            sudo -u temp_aur_user bash -c '
                 # Clone the repo
                 if ! git clone https://aur.archlinux.org/paru.git /mnt/tmp/paru; then 
                     echo "Failed to clone Paru repository. Please check your internet connection and try again."
                     exit 1
                 fi
 
-                # Build and install the AUR helper
+                # Build and install the AUR helper (with --noconfirm)
                 cd /mnt/tmp/paru && makepkg -si --noconfirm || {
                     echo "Failed to build and install Paru. Check the installation logs for more details."
                     exit 1
@@ -785,7 +785,10 @@ done
 # Remove the temporary user
 userdel -r temp_aur_user
 
-# Select GUI (Optional) 
+# Remove the temporary user
+userdel -r temp_aur_user
+
+# Select GUI (Optional) 
 echo -ne "
 +-----------------------+
 | Select GUI (Optional) |
@@ -793,49 +796,44 @@ echo -ne "
 "
 
 # Ask the user if they want to install a GUI
-read -p "
-Do you want to install a GUI?
-1. Server (No GUI)
-2. GNOME
-3. KDE (Plasma)
-Enter your choice (1-3): " gui_choice | head -n 1  # Pipe to head -n 1
+options=("Server (No GUI)" "GNOME" "KDE Plasma")
+select gui_choice in "${options[@]}"; do
+    case $gui_choice in
+        "Server (No GUI)")
+            echo "Skipping GUI installation. System will be set up as a server."
+            break 
+            ;;
+        "GNOME")
+            echo "Installing GNOME desktop environment..."
+            pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
+                echo "Failed to install GNOME packages. Exiting."
+                exit 1
+            }
 
-# Validate input and perform actions based on choice
-case "$gui_choice" in
-    1)  # Server
-        echo "Skipping GUI installation. System will be set up as a server."
-        ;;
-    2)  # GNOME
-        echo "Installing GNOME desktop environment..."
-        pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
-            echo "Failed to install GNOME packages. Exiting."
-            exit 1
-        }
+            systemctl enable gdm.service || {
+                echo "Failed to enable gdm service. Exiting."
+                exit 1
+            }
+            echo "GNOME installed and gdm enabled."
+            break
+            ;;
+        "KDE Plasma")
+            echo "Installing KDE Plasma desktop environment..."
+            pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
+                echo "Failed to install KDE Plasma packages. Exiting."
+                exit 1
+            }
 
-        systemctl enable gdm.service || {
-            echo "Failed to enable gdm service. Exiting."
-            exit 1
-        }
-        echo "GNOME installed and gdm enabled."
-        ;;
-    3)  # KDE Plasma
-        echo "Installing KDE Plasma desktop environment..."
-        pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
-            echo "Failed to install KDE Plasma packages. Exiting."
-            exit 1
-        }
-
-        systemctl enable sddm.service || {
-            echo "Failed to enable sddm service. Exiting."
-            exit 1
-        }
-        echo "KDE Plasma installed and sddm enabled."
-        ;;
-    *)
-        echo "Invalid choice. Please enter 1, 2, or 3." 
-        exit 1
-        ;;
-esac
+            systemctl enable sddm.service || {
+                echo "Failed to enable sddm service. Exiting."
+                exit 1
+            }
+            echo "KDE Plasma installed and sddm enabled."
+            break
+            ;;
+        *) echo "Invalid option";;
+    esac
+done
 
 echo -ne "
 
