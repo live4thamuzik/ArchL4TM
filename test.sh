@@ -465,19 +465,27 @@ create_user() {
     # Prompt for username
     read -p "Enter a username: " user
 
-    # Validate username (non-empty, doesn't already exist)
+    # Validate username (non-empty) 
     if [ -z "$user" ]; then
         echo "Username cannot be empty. Please try again."
-        return 1  # Indicate failure to the calling script
-    elif id "$user" &>/dev/null; then
-        echo "User '$user' already exists. Please choose a different username."
-        return 1
+        return 1 
     fi
 
-    # Create user on the host system
+    # Save the user creation commands in a script file to be executed in chroot
+    cat <<EOF > /mnt/create-user.sh
+    #!/bin/bash
+
+    set -e
+
+    # Check if the user already exists within the chroot
+    if id "$user" &>/dev/null; then
+        echo "User '$user' already exists. Please choose a different username."
+        exit 1
+    fi
+
     useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || {
-        echo "Failed to create user '$user' on the host system."
-        return 1
+        echo "Failed to create user '$user'."
+        exit 1
     }
 
     # Prompt for and set password (with confirmation)
@@ -488,25 +496,34 @@ create_user() {
         echo
 
         if [ "$password" == "$confirm_password" ]; then
-            echo "$password" | passwd --stdin "$user" || {
-                echo "Failed to set password for '$user'."
-                return 1
-            }
-            break  # Exit the loop if passwords match and are set successfully
+            passwd "$user"  # Use interactive passwd directly
+            if [ $? -eq 0 ]; then
+                echo "Password for '$user' set successfully."
+                break
+            else
+                echo "Failed to set password for '$user'. Please try again."
+            fi
         else
             echo "Passwords do not match. Please try again."
         fi
     done
 
-    # Ensure home directory exists within the new system
-    mkdir -p /mnt/home/"$user"
-
-    # Set ownership and permissions for the home directory within the new system
-    chown -R "$user":"$user" /mnt/home/"$user"
-    chmod 700 /mnt/home/"$user"
+    # Set ownership and permissions for the home directory (within chroot)
+    chown -R "$user":"$user" /home/"$user"
+    chmod 700 /home/"$user"
 
     echo "User '$user' created successfully with password set."
-    return 0  # Indicate success
+EOF
+
+    chmod +x /mnt/create-user.sh
+
+    # Execute the user creation script inside chroot
+    if ! arch-chroot /mnt ./create-user.sh; then
+        echo "User creation failed within the chroot environment. Exiting."
+        exit 1
+    fi
+
+    echo "User '$user' created successfully."
 }
 
 # Call the function to create the user
@@ -514,6 +531,8 @@ if ! create_user; then
     echo "User creation failed. Exiting."
     exit 1
 fi
+
+
 
 echo -ne "
 +----------------+
@@ -540,24 +559,12 @@ set_root_password() {
         echo
 
         if [ "$root_password" == "$confirm_root_password" ]; then
-            # Attempt to set root password non-interactively
-            echo "Attempting to set root password..."
-            if echo "$root_password" | passwd --stdin root 2>/dev/null; then
-                echo "Root password set successfully."
-                break
-            elif echo "$root_password" | chpasswd 2>/dev/null; then
+            passwd  # Use interactive passwd directly
+            if [ $? -eq 0 ]; then
                 echo "Root password set successfully."
                 break
             else
-                # Fallback to interactive passwd
-                echo "Non-interactive methods failed. Please set the root password interactively."
-                passwd
-                if [ $? -eq 0 ]; then
-                    echo "Root password set successfully."
-                    break
-                else
-                    echo "Failed to set root password interactively. Please try again."
-                fi
+                echo "Failed to set root password. Please try again."
             fi
         else
             echo "Passwords do not match. Please try again."
