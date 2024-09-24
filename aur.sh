@@ -51,7 +51,8 @@ select aur_helper in "${options[@]}"; do
             install_aur_helper "Yay" "https://aur.archlinux.org/yay.git"
             ;;
         "Paru")
-            install_aur_helper "Paru" "https://aur.archlinux.org/paru.git"
+            # Explicitly provide the repo URL for Paru
+            install_aur_helper "Paru" "https://aur.archlinux.org/paru.git" 
             ;;
         *) echo "Invalid option";;
     esac
