@@ -724,7 +724,7 @@ chmod +x /mnt/chroot-setup.sh
 # Execute the script inside chroot, passing $disk as an argument
 arch-chroot /mnt ./chroot-setup.sh "$disk"
 
-# Install AUR Helper 
+# Install AUR Helper 
 echo -ne "
 +--------------------+
 | Install AUR Helper |
@@ -734,8 +734,7 @@ echo -ne "
 install_aur_helper() {
     local aur_helper="$1"
     local repo_url="$2"
-    local dependency="$3"  # Add dependency as an argument
-    local temp_dir="/tmp/$aur_helper"
+    local dependency="$3" 
 
     echo "Installing $aur_helper"
 
@@ -751,7 +750,7 @@ install_aur_helper() {
         pacman -Sy --noconfirm --needed fakeroot debugedit $dependency
 
         # Switch to the temporary user 
-        su - temp_aur_user -c \" # Use double quotes here
+        su - temp_aur_user -c \" 
 
             # Clone the repo
             if ! git clone $repo_url $temp_dir; then 
@@ -768,26 +767,15 @@ install_aur_helper() {
             # Clean up
             cd ~ && rm -rf $temp_dir
             echo '$aur_helper installed successfully! You can now use $aur_helper to install packages from the AUR.'
-        \" # Close the double quotes
+        \" 
 
         # Remove the temporary user
         userdel -r temp_aur_user
     "
 }
 
-# Ask the user which AUR helper they want
-options=("Yay" "Paru")
-select aur_helper in "${options[@]}"; do
-    case $aur_helper in
-        "Yay")
-            install_aur_helper "Yay" "https://aur.archlinux.org/yay.git" "go"
-            ;;
-        "Paru")
-            install_aur_helper "Paru" "https://aur.archlinux.org/paru.git" "cargo"
-            ;;
-        *) echo "Invalid option";;
-    esac
-done
+# Directly install Paru
+install_aur_helper "Paru" "https://aur.archlinux.org/paru.git" "cargo"
 
 
 # Select GUI (Optional) 
