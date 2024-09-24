@@ -742,7 +742,7 @@ install_aur_helper() {
     local aur_helper="$1"
     local repo_url="$2"
     local temp_dir="/mnt/tmp/$aur_helper"
-
+}
     echo "Installing $aur_helper"
 
     # Add the temporary user to the wheel group (needed for Yay)
@@ -760,12 +760,11 @@ install_aur_helper() {
         cd "$temp_dir" && makepkg -si --noconfirm || {
             echo "Failed to build and install $aur_helper. Check the installation logs for more details."
             exit 1
-        }
+        } '
 
         # Clean up
         cd ~ && rm -rf "$temp_dir"
         echo "$aur_helper installed successfully! You can now use $aur_helper to install packages from the AUR."
-    '
 }
 
 
