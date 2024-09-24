@@ -197,8 +197,20 @@ echo -ne "
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup || { echo "Failed to backup mirrorlist"; exit 1; }
 reflector -a 48 -f 5 -l 20 --sort rate --save /etc/pacman.d/mirrorlist || { echo "Failed to setup mirrors"; exit 1; }
 
+echo -ne "
++------------------+
+| Running Pacstrap |
++------------------+
+"
+
 # Install base packages 
 pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed || { echo "Failed to install base system"; exit 1; }
+
+echo -ne "
++----------------+
+| Generate fstab |
++----------------+
+"
 
 # Generate fstab
 genfstab -U -p /mnt >> /mnt/etc/fstab || { echo "Failed to generate fstab"; exit 1; }
@@ -453,19 +465,27 @@ create_user() {
     # Prompt for username
     read -p "Enter a username: " user
 
-    # Validate username (non-empty, doesn't already exist)
+    # Validate username (non-empty) 
     if [ -z "$user" ]; then
         echo "Username cannot be empty. Please try again."
-        return 1  # Indicate failure to the calling script
-    elif id "$user" &>/dev/null; then
-        echo "User '$user' already exists. Please choose a different username."
-        return 1
+        return 1 
     fi
 
-    # Create user on the host system
+    # Save the user creation commands in a script file to be executed in chroot
+    cat <<EOF > /mnt/create-user.sh
+    #!/bin/bash
+
+    set -e
+
+    # Check if the user already exists within the chroot
+    if id "$user" &>/dev/null; then
+        echo "User '$user' already exists. Please choose a different username."
+        exit 1
+    fi
+
     useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || {
-        echo "Failed to create user '$user' on the host system."
-        return 1
+        echo "Failed to create user '$user'."
+        exit 1
     }
 
     # Prompt for and set password (with confirmation)
@@ -476,25 +496,34 @@ create_user() {
         echo
 
         if [ "$password" == "$confirm_password" ]; then
-            echo "$password" | passwd --stdin "$user" || {
-                echo "Failed to set password for '$user'."
-                return 1
-            }
-            break  # Exit the loop if passwords match and are set successfully
+            passwd "$user"  # Use interactive passwd directly
+            if [ $? -eq 0 ]; then
+                echo "Password for '$user' set successfully."
+                break
+            else
+                echo "Failed to set password for '$user'. Please try again."
+            fi
         else
             echo "Passwords do not match. Please try again."
         fi
     done
 
-    # Ensure home directory exists within the new system
-    mkdir -p /mnt/home/"$user"
-
-    # Set ownership and permissions for the home directory within the new system
-    chown -R "$user":"$user" /mnt/home/"$user"
-    chmod 700 /mnt/home/"$user"
+    # Set ownership and permissions for the home directory (within chroot)
+    chown -R "$user":"$user" /home/"$user"
+    chmod 700 /home/"$user"
 
     echo "User '$user' created successfully with password set."
-    return 0  # Indicate success
+EOF
+
+    chmod +x /mnt/create-user.sh
+
+    # Execute the user creation script inside chroot
+    if ! arch-chroot /mnt ./create-user.sh; then
+        echo "User creation failed within the chroot environment. Exiting."
+        exit 1
+    fi
+
+    echo "User '$user' created successfully."
 }
 
 # Call the function to create the user
@@ -502,6 +531,14 @@ if ! create_user; then
     echo "User creation failed. Exiting."
     exit 1
 fi
+
+
+
+echo -ne "
++----------------+
+| Running chroot |
++----------------+
+"
 
 # Save the functions and commands in a script file
 cat <<EOF > /mnt/chroot-setup.sh
@@ -522,24 +559,12 @@ set_root_password() {
         echo
 
         if [ "$root_password" == "$confirm_root_password" ]; then
-            # Attempt to set root password non-interactively
-            echo "Attempting to set root password..."
-            if echo "$root_password" | passwd --stdin root 2>/dev/null; then
-                echo "Root password set successfully."
-                break
-            elif echo "$root_password" | chpasswd 2>/dev/null; then
+            passwd  # Use interactive passwd directly
+            if [ $? -eq 0 ]; then
                 echo "Root password set successfully."
                 break
             else
-                # Fallback to interactive passwd
-                echo "Non-interactive methods failed. Please set the root password interactively."
-                passwd
-                if [ $? -eq 0 ]; then
-                    echo "Root password set successfully."
-                    break
-                else
-                    echo "Failed to set root password interactively. Please try again."
-                fi
+                echo "Failed to set root password. Please try again."
             fi
         else
             echo "Passwords do not match. Please try again."
@@ -571,6 +596,7 @@ echo -ne "
 | Configuring Pacman |
 +--------------------+
 "
+
 # Configure pacman
 echo "Configuring pacman"
 sed -i "/^#Color/c\Color\nILoveCandy" /etc/pacman.conf
@@ -583,8 +609,9 @@ echo -ne "
 | Installing Packages |
 +---------------------+
 "
+
 # Install additional needed packages
-echo "Installing: archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot "
+echo "Installing Packages"
 pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot || { echo "Failed to install packages"; exit 1; }
 
 
@@ -593,6 +620,7 @@ echo -ne "
 | Installing Microcode |
 +----------------------+
 "
+
 # Determine processor type and install microcode
 proc_type=\$(lscpu | grep -oP '^Vendor ID:\s+\K\w+')
 if [ "\$proc_type" = "GenuineIntel" ]; then
@@ -609,6 +637,7 @@ echo -ne "
 | Enabling Services |
 +-------------------+
 "
+
 # Enable services
 systemctl enable NetworkManager.service || { echo "Failed to enable NetworkManager"; exit 1; }
 echo "NetworkManager enabled"
@@ -621,8 +650,9 @@ echo -ne "
 | Update Initramfs |
 +------------------+
 "
+
 # Update mkinitcpio.conf
-sed -i "/^HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)/c\HOOKS=(base udev autodetect modconf block encrypt lvm2 filesystems keyboard fsck)" /etc/mkinitcpio.conf
+sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev autodetect modconf block encrypt lvm2 filesystems keyboard fsck)/' /etc/mkinitcpio.conf
 mkinitcpio -p linux
 
 # Call defined functions
@@ -633,6 +663,7 @@ echo -ne "
 | Installing GRUB |
 +-----------------+
 "
+
 install_grub
 
 
@@ -641,6 +672,7 @@ echo -ne "
 | Updating GRUB Config |
 +----------------------+
 "
+
 # Update GRUB configuration: /etc/default/grub
 sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved' /etc/default/grub || { echo "Failed to update GRUB_DEFAULT"; exit 1; }
 sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice='"$disk"'3:volgroup0 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB_CMDLINE_LINUX_DEFAULT"; exit 1; }
@@ -670,6 +702,7 @@ echo -ne "
 | Installing NVIDIA |
 +-------------------+
 "
+
     # Install NVIDIA drivers and related packages
     pacman -S --noconfirm --needed nvidia-dkms libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings || { echo "Failed to install NVIDIA packages"; exit 1; }
 
@@ -691,123 +724,6 @@ chmod +x /mnt/chroot-setup.sh
 # Execute the script inside chroot, passing $disk as an argument
 arch-chroot /mnt ./chroot-setup.sh "$disk"
 
-# Install AUR Helper    
-echo -ne "
-+--------------------+
-| Install AUR Helper |
-+--------------------+
-"
-
-# Create a temporary user for building AUR packages
-useradd -m -G wheel -s /bin/bash temp_aur_user
-
-# Ask the user which AUR helper they want
-options=("Yay" "Paru")
-select aur_helper in "${options[@]}"; do
-    case $aur_helper in
-        "Yay")
-            echo "Installing Yay"
-            # Switch to the temporary user and build/install Yay
-            su - temp_aur_user -c '
-                # Clone the repo
-                if ! git clone https://aur.archlinux.org/yay.git /mnt/tmp/yay; then 
-                    echo "Failed to clone Yay repository. Please check your internet connection and try again."
-                    exit 1
-                fi
-
-                # Build and install the AUR helper
-                cd /mnt/tmp/yay && makepkg -si --noconfirm || {
-                    echo "Failed to build and install Yay. Check the installation logs for more details."
-                    exit 1
-                }
-
-                # Clean up
-                cd ~ && rm -rf /mnt/tmp/yay
-                echo "Yay installed successfully! You can now use yay to install packages from the AUR."
-            '
-            break  # Exit the select loop after successful installation
-            ;;
-        "Paru")
-            echo "Installing Paru"
-            # Switch to the temporary user and build/install Paru
-            su - temp_aur_user -c '
-                # Clone the repo
-                if ! git clone https://aur.archlinux.org/paru.git /mnt/tmp/paru; then 
-                    echo "Failed to clone Paru repository. Please check your internet connection and try again."
-                    exit 1
-                fi
-
-                # Build and install the AUR helper
-                cd /mnt/tmp/paru && makepkg -si --noconfirm || {
-                    echo "Failed to build and install Paru. Check the installation logs for more details."
-                    exit 1
-                }
-
-                # Clean up
-                cd ~ && rm -rf /mnt/tmp/paru
-                echo "Paru installed successfully! You can now use paru to install packages from the AUR."
-            '
-            break  # Exit the select loop after successful installation
-            ;;
-        *) echo "Invalid option";;
-    esac
-done
-
-# Remove the temporary user
-userdel -r temp_aur_user
-
-# Select GUI (Optional) 
-echo -ne "
-+-----------------------+
-| Select GUI (Optional) |
-+-----------------------+
-"
-
-# Ask the user if they want to install a GUI
-read -p "
-Do you want to install a GUI?
-1. Server (No GUI)
-2. GNOME
-3. KDE (Plasma)
-Enter your choice (1-3): " gui_choice | head -n 1  # Pipe to head -n 1
-
-# Validate input and perform actions based on choice
-case "$gui_choice" in
-    1)  # Server
-        echo "Skipping GUI installation. System will be set up as a server."
-        ;;
-    2)  # GNOME
-        echo "Installing GNOME desktop environment..."
-        pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
-            echo "Failed to install GNOME packages. Exiting."
-            exit 1
-        }
-
-        systemctl enable gdm.service || {
-            echo "Failed to enable gdm service. Exiting."
-            exit 1
-        }
-        echo "GNOME installed and gdm enabled."
-        ;;
-    3)  # KDE Plasma
-        echo "Installing KDE Plasma desktop environment..."
-        pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
-            echo "Failed to install KDE Plasma packages. Exiting."
-            exit 1
-        }
-
-        systemctl enable sddm.service || {
-            echo "Failed to enable sddm service. Exiting."
-            exit 1
-        }
-        echo "KDE Plasma installed and sddm enabled."
-        ;;
-    *)
-        echo "Invalid choice. Please enter 1, 2, or 3." 
-        exit 1
-        ;;
-esac
-
 echo -ne "
 
  █████╗ ██████╗  ██████╗██╗  ██╗    ██╗██╗  ██╗████████╗███╗   ███╗
@@ -821,6 +737,9 @@ echo -ne "
 | Installation Complete |
 +-----------------------+
 "
+
+# Remove chroot setup script
+rm -rf ./chroot-setup.sh
 
 # Unmount all partitions under /mnt
 echo "Unmounting partitions..."
