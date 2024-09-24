@@ -731,9 +731,6 @@ echo -ne "
 +--------------------+
 "
 
-# Create a temporary user for building AUR packages
-useradd -m -G wheel -s /bin/bash temp_aur_user
-
 install_aur_helper() {
     local aur_helper="$1"
     local repo_url="$2"
@@ -742,11 +739,14 @@ install_aur_helper() {
 
     echo "Installing $aur_helper"
 
-    # Add the temporary user to the wheel group (needed for Yay)
-    usermod -aG wheel temp_aur_user
-
     # Perform the installation within the chroot environment
     arch-chroot /mnt /bin/bash -c "
+
+        # Create a temporary user for building AUR packages
+        useradd -m -G wheel -s /bin/bash temp_aur_user
+
+        # Add the temporary user to the wheel group (needed for Yay)
+        usermod -aG wheel temp_aur_user
 
         # Install dependencies for makepkg and the specific AUR helper as root
         pacman -Sy --noconfirm --needed fakeroot debugedit $dependency
@@ -770,6 +770,9 @@ install_aur_helper() {
             cd ~ && rm -rf '$temp_dir'
             echo '\''$aur_helper installed successfully! You can now use $aur_helper to install packages from the AUR.'\'
         '
+
+        # Remove the temporary user
+        userdel -r temp_aur_user
     "
 }
 
@@ -786,9 +789,6 @@ select aur_helper in "${options[@]}"; do
         *) echo "Invalid option";;
     esac
 done
-
-# Remove the temporary user
-userdel -r temp_aur_user
 
 
 # Select GUI (Optional) 
