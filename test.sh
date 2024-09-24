@@ -780,21 +780,17 @@ done
 # Remove the temporary user
 userdel -r temp_aur_user
 
-# Select GUI (Optional) 
+# Select GUI (Optional) 
 echo -ne "
 +-----------------------+
 | Select GUI (Optional) |
 +-----------------------+
 "
 
-# Ask the user if they want to install a GUI
-options=("Server (No GUI)" "GNOME" "KDE Plasma")
-select gui_choice in "${options[@]}"; do
+install_gui() {
+    local gui_choice="$1"
+
     case $gui_choice in
-        "Server (No GUI)")
-            echo "Skipping GUI installation. System will be set up as a server."
-            break 
-            ;;
         "GNOME")
             echo "Installing GNOME desktop environment..."
             pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
@@ -802,12 +798,11 @@ select gui_choice in "${options[@]}"; do
                 exit 1
             }
 
-            systemctl enable gdm.service || {
+            arch-chroot /mnt systemctl enable gdm.service || {
                 echo "Failed to enable gdm service. Exiting."
                 exit 1
             }
             echo "GNOME installed and gdm enabled."
-            break
             ;;
         "KDE Plasma")
             echo "Installing KDE Plasma desktop environment..."
@@ -816,15 +811,23 @@ select gui_choice in "${options[@]}"; do
                 exit 1
             }
 
-            systemctl enable sddm.service || {
+            arch-chroot /mnt systemctl enable sddm.service || {
                 echo "Failed to enable sddm service. Exiting."
                 exit 1
             }
             echo "KDE Plasma installed and sddm enabled."
-            break
             ;;
-        *) echo "Invalid option";;
+        *) 
+            echo "Invalid GUI choice. Skipping GUI installation."
+            ;;
     esac
+}
+
+# Ask the user if they want to install a GUI
+options=("Server (No GUI)" "GNOME" "KDE Plasma")
+select gui_choice in "${options[@]}"; do
+    install_gui "$gui_choice"
+    break
 done
 
 echo -ne "
