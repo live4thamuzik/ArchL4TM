@@ -6,7 +6,7 @@ echo -ne "
 "
 
 # Install dependencies for makepkg
-pacman -Sy --noconfirm --needed fakeroot debugedit cargo
+pacman -Sy --noconfirm --needed fakeroot debugedit
 
 # Create a temporary user for building AUR packages
 useradd -m -G wheel -s /bin/bash temp_aur_user
@@ -46,6 +46,8 @@ options=("Yay" "Paru")
 select aur_helper in "${options[@]}"; do
     case $aur_helper in
         "Yay")
+            # Install go before building Yay
+            pacman -Sy --noconfirm --needed go
             su - temp_aur_user -c "
                 # Clone the repo
                 if ! git clone 'https://aur.archlinux.org/yay.git' '/mnt/tmp/Yay'; then 
@@ -65,6 +67,8 @@ select aur_helper in "${options[@]}"; do
             "
             ;;
         "Paru")
+            # Install go before building Paru
+            pacman -Sy --noconfirm --needed cargo
             su - temp_aur_user -c "
                 # Clone the repo
                 if ! git clone 'https://aur.archlinux.org/paru.git' '/mnt/tmp/Paru'; then 
