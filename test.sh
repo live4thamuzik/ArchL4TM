@@ -751,20 +751,20 @@ install_aur_helper() {
     # Switch to the temporary user and build/install the AUR helper
     su - temp_aur_user -c '
         # Clone the repo
-        if ! git clone $repo_url $temp_dir; then 
-            echo \"Failed to clone $aur_helper repository. Please check your internet connection and try again.\"
+        if ! git clone "$repo_url" "$temp_dir"; then 
+            echo "Failed to clone $aur_helper repository. Please check your internet connection and try again."
             exit 1
-        fi
+        fi 
 
         # Build and install the AUR helper (with --noconfirm)
-        cd $temp_dir && makepkg -si --noconfirm || {
-            echo \"Failed to build and install $aur_helper. Check the installation logs for more details.\"
+        cd "$temp_dir" && makepkg -si --noconfirm || {
+            echo "Failed to build and install $aur_helper. Check the installation logs for more details."
             exit 1
         }
 
         # Clean up
-        cd ~ && rm -rf $temp_dir
-        echo \"$aur_helper installed successfully! You can now use $aur_helper to install packages from the AUR.\"
+        cd ~ && rm -rf "$temp_dir"
+        echo "$aur_helper installed successfully! You can now use $aur_helper to install packages from the AUR."
     '
 }
 
@@ -772,15 +772,15 @@ install_aur_helper() {
 # Ask the user which AUR helper they want
 options=("Yay" "Paru")
 select aur_helper in "${options[@]}"; do
-    case $aur_helper in
-        "Yay")
-            install_aur_helper "Yay" "https://aur.archlinux.org/yay.git"
-            ;;
-        "Paru")
-            install_aur_helper "Paru" "https://aur.archlinux.org/paru.git"
-            ;;
-        *) echo "Invalid option";;
-    esac
+    case $aur_helper in
+        "Yay")
+            install_aur_helper "Yay" "https://aur.archlinux.org/yay.git"
+            ;;
+        "Paru")
+            install_aur_helper "Paru" "https://aur.archlinux.org/paru.git"
+            ;;
+        *) echo "Invalid option";;
+    esac
 done
 
 # Remove the temporary user
