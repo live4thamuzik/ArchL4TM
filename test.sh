@@ -752,7 +752,7 @@ install_aur_helper() {
     su - temp_aur_user -c "
         # Clone the repo
         if ! git clone $repo_url $temp_dir; then 
-            echo \"Failed to clone $aur_helper repository. Please check your internet connection and try again.\"
+            echo \"Failed to clone $aur_helper repository. Please check your internet connection and try again.\""
             exit 1
         fi
 
@@ -766,6 +766,7 @@ install_aur_helper() {
         cd ~ && rm -rf $temp_dir
         echo \"$aur_helper installed successfully! You can now use $aur_helper to install packages from the AUR.\"
 }
+"
 
 # Ask the user which AUR helper they want
 options=("Yay" "Paru")
