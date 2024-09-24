@@ -740,6 +740,7 @@ install_aur_helper() {
 
     # Perform the installation within the chroot environment
     arch-chroot /mnt /bin/bash -c "
+
         # Create a temporary user for building AUR packages
         useradd -m -G wheel -s /bin/bash temp_aur_user
 
@@ -747,7 +748,7 @@ install_aur_helper() {
         usermod -aG wheel temp_aur_user
 
         # Install dependencies for makepkg and the specific AUR helper as root
-        pacman -Sy --noconfirm --needed fakeroot debugedit $dependency
+        pacman -Sy --noconfirm --needed base-devel fakeroot debugedit $dependency
 
         # Switch to the temporary user 
         su - temp_aur_user -c \" 
@@ -759,8 +760,9 @@ install_aur_helper() {
             fi 
 
             # Build and install the AUR helper (with --noconfirm)
-            cd $temp_dir && makepkg -si --noconfirm || {  
-                echo 'Failed to build and install $aur_helper. Check the installation logs for more details.'
+            cd $temp_dir && makepkg -si --noconfirm 2>&1 || {  
+                echo 'Failed to build and install $aur_helper. Installation logs:'
+                cat /tmp/paru_install.log # Assuming makepkg logs are captured here
                 exit 1 
             }
 
@@ -769,9 +771,14 @@ install_aur_helper() {
             echo '$aur_helper installed successfully! You can now use $aur_helper to install packages from the AUR.'
         \" 
 
-        # Remove the temporary user
+        # Remove the temporary user (within the chroot)
         userdel -r temp_aur_user
-    "
+    " || {
+        echo "Chroot installation failed. Please check the logs for more details."
+        exit 1
+    }
+
+    # No need to delete the user again outside the chroot
 }
 
 # Directly install Paru
@@ -816,7 +823,7 @@ install_gui() {
             echo "KDE Plasma installed and sddm enabled."
             ;;
         *) 
-            echo "Invalid GUI choice. Skipping GUI installation."
+            echo "Server Selected. Skipping GUI installation."
             ;;
     esac
 }
