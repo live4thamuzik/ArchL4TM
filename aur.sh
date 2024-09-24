@@ -6,7 +6,7 @@ echo -ne "
 "
 
 # Install dependencies for makepkg
-pacman -Sy --noconfirm --needed fakeroot debugedit
+pacman -Sy --noconfirm --needed fakeroot debugedit cargo
 
 # Create a temporary user for building AUR packages
 useradd -m -G wheel -s /bin/bash temp_aur_user
