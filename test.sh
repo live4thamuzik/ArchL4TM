@@ -741,7 +741,6 @@ install_aur_helper() {
 
     # Perform the installation within the chroot environment
     arch-chroot /mnt /bin/bash -c "
-
         # Create a temporary user for building AUR packages
         useradd -m -G wheel -s /bin/bash temp_aur_user
 
@@ -752,24 +751,24 @@ install_aur_helper() {
         pacman -Sy --noconfirm --needed fakeroot debugedit $dependency
 
         # Switch to the temporary user 
-        su - temp_aur_user -c '
+        su - temp_aur_user -c \" # Use double quotes here
 
             # Clone the repo
-            if ! git clone '$repo_url' '$temp_dir'; then 
-                echo '\''Failed to clone $aur_helper repository. Please check your internet connection and try again.'\'
+            if ! git clone $repo_url $temp_dir; then 
+                echo 'Failed to clone $aur_helper repository. Please check your internet connection and try again.'
                 exit 1
             fi 
 
             # Build and install the AUR helper (with --noconfirm)
-            cd '$temp_dir' && makepkg -si --noconfirm || {  
-                echo '\''Failed to build and install $aur_helper. Check the installation logs for more details.'\'
+            cd $temp_dir && makepkg -si --noconfirm || {  
+                echo 'Failed to build and install $aur_helper. Check the installation logs for more details.'
                 exit 1 
             }
 
             # Clean up
-            cd ~ && rm -rf '$temp_dir'
-            echo '\''$aur_helper installed successfully! You can now use $aur_helper to install packages from the AUR.'\'
-        '
+            cd ~ && rm -rf $temp_dir
+            echo '$aur_helper installed successfully! You can now use $aur_helper to install packages from the AUR.'
+        \" # Close the double quotes
 
         # Remove the temporary user
         userdel -r temp_aur_user
