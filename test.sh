@@ -758,9 +758,6 @@ install_aur_helper() {
         # Clean up
         cd ~ && rm -rf $temp_dir
         echo \"$aur_helper installed successfully! You can now use $aur_helper to install packages from the AUR.\"
-    "
-
-    break  # Exit the select loop after successful installation
 }
 
 # Ask the user which AUR helper they want
