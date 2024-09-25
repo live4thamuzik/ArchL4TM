@@ -1,6 +1,6 @@
 # ArchL4TM
 
-This is a semi-interactive Arch Linux installation bash script.
+This is a semi-interactive Arch Linux minimal installation bash script.
 
 The script will install Arch Linux on EFI systems with minimal config and packages using LVM, LUKS and ext4. (no swap)
 
@@ -52,7 +52,9 @@ The script will install Arch Linux on EFI systems with minimal config and packag
 # Microcode detection for AMD and Intel processors
 - Script will use lscpu to detect and install the correct microcode needed
 
-# User can set Timezone and Locale from numbered lists
+# Locale set to en_US.UTF-8 UTF-8  (see line 421 to make changes)
+
+# User can set Timezone from numbered lists
 
 # Mirrorlist is updated with reflector
 
