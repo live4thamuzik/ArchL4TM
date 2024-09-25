@@ -381,7 +381,7 @@ create_user() {
 
     # Set ownership and permissions for the home directory (within chroot)
     chown -R "$user":"$user" /home/"$user"
-    chmod 700 /home/"$user"
+    chmod 755 /home/"$user"
 
     echo "User '$user' created successfully with password set."
 EOF
