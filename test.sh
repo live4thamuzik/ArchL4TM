@@ -237,9 +237,9 @@ fi
 
 # Constants
 PAGE_SIZE=80
-COLS=2        # Number of columns to display
-NUMBER_WIDTH=4 # Width for number and dot
-COLUMN_WIDTH=2 # Width of each column for locales
+COLS=2           # Number of columns to display
+NUMBER_WIDTH=4  # Width for number and dot
+COLUMN_WIDTH=2  # Width of each column for locales
 
 # Function to display a page of locales in columns
 display_page() {
@@ -301,8 +301,8 @@ while true; do
                 echo "Selected locale is already active."
             fi
 
-            # Run locale-gen to apply the changes and capture output
-            locale_gen_output=$(locale-gen 2>&1)
+            # Run locale-gen within the chroot and capture output
+            locale_gen_output=$(arch-chroot /mnt locale-gen 2>&1)
 
             # Check if locale-gen was successful
             if [[ $? -ne 0 ]]; then
@@ -310,14 +310,14 @@ while true; do
                 exit 1
             fi
 
-            # Set the locale in /etc/locale.conf
-            echo "LANG=\"$selected_locale\"" > /mnt/etc/locale.conf
+            # Set the locale in /etc/locale.conf within the chroot
+            arch-chroot /mnt /bin/bash -c "echo \"LANG=$selected_locale\" > /etc/locale.conf"
 
-            # Re-evaluate locale variables after locale-gen
-            . /mnt/etc/locale.conf
+            # Re-evaluate locale variables after locale-gen (within the chroot)
+            arch-chroot /mnt /bin/bash -c ". /etc/locale.conf" 
 
             # Verify locale setting
-            echo "Locale has been set to $selected_locale"
+            arch-chroot /mnt /bin/bash -c "echo \"Locale has been set to \$LANG\""
             break
         else
             echo "Invalid selection. Please enter a valid number from the displayed list."
@@ -342,8 +342,8 @@ echo -ne "
 
 # Function to get a list of timezones
 get_timezones() {
-  local count=1
-  find /mnt/usr/share/zoneinfo -type f | sed 's|/mnt/usr/share/zoneinfo/||' | awk -v cnt=$count '{print cnt". "$0; cnt++}'
+ local count=1
+ find /mnt/usr/share/zoneinfo -type f | sed 's|/mnt/usr/share/zoneinfo/||' | awk -v cnt=$count '{print cnt". "$0; cnt++}'
 }
 
 # Collect timezones into an array
@@ -351,8 +351,8 @@ mapfile -t timezones < <(get_timezones)
 
 # Check if timezones were collected
 if [ ${#timezones[@]} -eq 0 ]; then
-  echo "No timezones found. Please check the timezone directory and try again."
-  exit 1
+ echo "No timezones found. Please check the timezone directory and try again."
+ exit 1
 fi
 
 # Constants
@@ -363,26 +363,26 @@ COLUMN_WIDTH=2  # Width of each column for timezones
 
 # Function to display a page of timezones in columns
 display_page() {
-  local start=$1
-  local end=$2
-  local count=0
+ local start=$1
+ local end=$2
+ local count=0
 
-  echo "Timezones ($((start + 1)) to $end of ${#timezones[@]}):"
+ echo "Timezones ($((start + 1)) to $end of ${#timezones[@]}):"
 
-  for ((i=start; i<end; i++)); do
-    # Print timezones in columns with minimized gap
-    printf "%-${NUMBER_WIDTH}s%-${COLUMN_WIDTH}s" "${timezones[$i]}" ""
-    count=$((count + 1))
-    
-    if ((count % COLS == 0)); then
-      echo
-    fi
-  done
-
-  # Add a newline at the end if the last line isn't fully filled
-  if ((count % COLS != 0)); then
-    echo
+ for ((i=start; i<end; i++)); do
+  # Print timezones in columns with minimized gap
+  printf "%-${NUMBER_WIDTH}s%-${COLUMN_WIDTH}s" "${timezones[$i]}" ""
+  count=$((count + 1))
+  
+  if ((count % COLS == 0)); then
+   echo
   fi
+ done
+
+ # Add a newline at the end if the last line isn't fully filled
+ if ((count % COLS != 0)); then
+  echo
+ fi
 }
 
 # Display pages of timezones
@@ -390,44 +390,43 @@ total_timezones=${#timezones[@]}
 current_page=0
 
 while true; do
-  start=$((current_page * PAGE_SIZE))
-  end=$((start + PAGE_SIZE))
-  if ((end > total_timezones)); then
-    end=$total_timezones
-  fi
+ start=$((current_page * PAGE_SIZE))
+ end=$((start + PAGE_SIZE))
+ if ((end > total_timezones)); then
+  end=$total_timezones
+ fi
 
-  display_page $start $end
+ display_page $start $end
 
-  # Prompt user for selection or continue
-  echo -ne "Enter the number of your timezone choice from this page, or press Enter to see more timezones: "
-  read -r choice
+ # Prompt user for selection or continue
+ echo -ne "Enter the number of your timezone choice from this page, or press Enter to see more timezones: "
+ read -r choice
 
-  # Check if user made a choice
-  if [[ "$choice" =~ ^[0-9]+$ ]]; then
-    if [[ "$choice" -ge 1 && "$choice" -le $total_timezones ]]; then
-      # Extract the selected timezone
-      selected_timezone=$(echo "${timezones[$((choice-1))]}" | awk '{print $2}')
+ # Check if user made a choice
+ if [[ "$choice" =~ ^[0-9]+$ ]]; then
+  if [[ "$choice" -ge 1 && "$choice" -le $total_timezones ]]; then
+   # Extract the selected timezone
+   selected_timezone=$(echo "${timezones[$((choice-1))]}" | awk '{print $2}')
 
-      # Set timezone
-      echo "Setting timezone to $selected_timezone"
-      ln -sf "/mnt/usr/share/zoneinfo/$selected_timezone" /mnt/etc/localtime
+   # Set timezone within the chroot
+   arch-chroot /mnt /bin/bash -c "ln -sf /usr/share/zoneinfo/$selected_timezone /etc/localtime"
 
-      # Verify timezone setting
-      echo "Timezone has been set to $(readlink -f /mnt/etc/localtime)"
-      break
-    else
-      echo "Invalid selection. Please enter a valid number from the displayed list."
-    fi
-  elif [[ -z "$choice" ]]; then
-    # Continue to the next page
-    if ((end == total_timezones)); then
-      echo "No more timezones to display."
-      break
-    fi
-    current_page=$((current_page + 1))
+   # Verify timezone setting
+   arch-chroot /mnt /bin/bash -c "echo \"Timezone has been set to \$(readlink -f /etc/localtime)\""
+   break
   else
-    echo "Invalid input. Please enter a number or press Enter to continue."
+   echo "Invalid selection. Please enter a valid number from the displayed list."
   fi
+ elif [[ -z "$choice" ]]; then
+  # Continue to the next page
+  if ((end == total_timezones)); then
+   echo "No more timezones to display."
+   break
+  fi
+  current_page=$((current_page + 1))
+ else
+  echo "Invalid input. Please enter a number or press Enter to continue."
+ fi
 done
 
 echo -ne "
