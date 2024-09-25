@@ -417,7 +417,7 @@ echo -ne "
 "
 
 # Uncomment  locale
-sed -i '/^#en_US.UTF-8/n UTF-8/c\en_US.UTF-8/n UTF-8' /mnt/etc/locale.gen
+sed -i '/^#en_US.UTF-8\nUTF-8/c\en_US.UTF-8/n UTF-8' /etc/locale.gen
 
 # Generate locales
 locale-gen
