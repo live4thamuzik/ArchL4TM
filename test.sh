@@ -288,7 +288,7 @@ while true; do
                 uncommented_locale=$(echo "$selected_locale" | sed 's/^# //')
                 echo "Uncommenting locale: $uncommented_locale"
                 # Robust sed command to uncomment the locale
-                sed -i "/^[[:space:]]*#+[[:space:]]*$uncommented_locale[[:space:]]*$/s/^[[:space:]]*#+[[:space:]]*//" /mnt/etc/locale.gen
+                sed -i '/^"$uncommented_locale"/c\"$selected_locale"' /mnt/etc/locale.gen
             else
                 echo "Selected locale is already active."
             fi
