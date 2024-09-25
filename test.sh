@@ -207,126 +207,6 @@ echo -ne "
 pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed || { echo "Failed to install base system"; exit 1; }
 
 echo -ne "
-+----------------+
-| Setting locale |
-+----------------+
-"
-
-# Function to get a list of locales from /etc/locale.gen
-get_locales() {
-    awk '{print NR ". " $1}' /mnt/etc/locale.gen
-}
-
-# Collect locales into an array
-locales=($(get_locales))
-
-# Check if locales were collected
-if [ ${#locales[@]} -eq 0 ]; then
-    echo "No locales found in /etc/locale.gen. Please add some locales and try again."
-    exit 1
-fi
-
-# Constants
-PAGE_SIZE=80
-COLS=2           # Number of columns to display
-NUMBER_WIDTH=4  # Width for number and dot
-COLUMN_WIDTH=2  # Width of each column for locales
-
-# Function to display a page of locales in columns
-display_page() {
-    local start=$1
-    local end=$2
-    local count=0
-
-    echo "Locales ($((start + 1)) to $end of ${#locales[@]}):"
-
-    for ((i=start; i<end; i++)); do
-        # Print locales in columns with minimized gap
-        printf "%-${NUMBER_WIDTH}s%-${COLUMN_WIDTH}s" "${locales[$i]}" ""
-        count=$((count + 1))
-
-        if ((count % COLS == 0)); then
-            echo
-        fi
-    done
-
-    # Add a newline at the end if the last line isn't fully filled
-    if ((count % COLS != 0)); then
-        echo
-    fi
-}
-
-# Display pages of locales
-total_locales=${#locales[@]}
-current_page=0
-
-# Declare selected_locale outside the loop
-selected_locale=""
-
-while true; do
-    start=$((current_page * PAGE_SIZE))
-    end=$((start + PAGE_SIZE))
-    if ((end > total_locales)); then
-        end=$total_locales
-    fi
-
-    display_page $start $end
-
-    # Prompt user for selection or continue
-    echo -ne "Enter the number of your locale choice from this page, or press Enter to see more locales: "
-    read -r choice
-
-    # Check if user made a choice
-    if [[ "$choice" =~ ^[0-9]+$ ]]; then
-        if [[ "$choice" -ge 1 && "$choice" -le $total_locales ]]; then
-            # Extract the selected locale
-            selected_locale=$(echo "${locales[$((choice-1))]}" | awk '{print $2}')
-
-            # Check if the selected locale is commented
-            if [[ "$selected_locale" == \#* ]]; then
-                # Remove the leading '#' for uncommenting
-                uncommented_locale=$(echo "$selected_locale" | sed 's/^# //')
-                echo "Uncommenting locale: $uncommented_locale"
-                # Robust sed command to uncomment the locale
-                sed -i '/^"$uncommented_locale"/c\"$selected_locale"' /mnt/etc/locale.gen
-            else
-                echo "Selected locale is already active."
-            fi
-
-            # Run locale-gen within the chroot and capture output
-            locale_gen_output=$(arch-chroot /mnt locale-gen 2>&1)
-
-            # Check if locale-gen was successful
-            if [[ $? -ne 0 ]]; then
-                echo "Error running locale-gen: $locale_gen_output"
-                exit 1
-            fi
-
-            # Set the locale in /etc/locale.conf within the chroot
-            arch-chroot /mnt /bin/bash -c "echo \"LANG=$selected_locale\" > /etc/locale.conf"
-
-            # Re-evaluate locale variables after locale-gen (within the chroot)
-            arch-chroot /mnt /bin/bash -c "source /etc/profile.d/locale.sh" 
-
-            # Verify locale setting
-            arch-chroot /mnt /bin/bash -c "echo \"Locale has been set to \$LANG\""
-            break
-        else
-            echo "Invalid selection. Please enter a valid number from the displayed list."
-        fi
-    elif [[ -z "$choice" ]]; then
-        # Continue to the next page
-        if ((end == total_locales)); then
-            echo "No more locales to display."
-            break
-        fi
-        current_page=$((current_page + 1))
-    else
-        echo "Invalid input. Please enter a number or press Enter to continue."
-    fi
-done
-
-echo -ne "
 +------------------+
 | Setting timezone |
 +------------------+
@@ -464,46 +344,40 @@ create_user() {
 
     # Save the user creation commands in a script file to be executed in chroot
     cat <<EOF > /mnt/create-user.sh
-    #!/bin/bash
+#!/bin/bash
 
-    set -e
+set -e
 
-    # Check if the user already exists within the chroot
-    if id "$user" &>/dev/null; then
-        echo "User '$user' already exists. Please choose a different username."
-        exit 1
-    fi
+# Check if the user already exists within the chroot
+if id "$user" &>/dev/null; then
+    echo "User '$user' already exists. Please choose a different username."
+    exit 1
+fi
 
-    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || {
-        echo "Failed to create user '$user'."
-        exit 1
-    }
+useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || {
+    echo "Failed to create user '$user'. Exiting."
+    exit 1
+}
 
-    # Prompt for and set password (with confirmation)
-    while true; do
-        read -s -p "Enter password for '$user': " password
-        echo
-        read -s -p "Confirm password: " confirm_password
-        echo
-
-        if [ "$password" == "$confirm_password" ]; then
-            passwd "$user"  # Use interactive passwd directly
-            if [ $? -eq 0 ]; then
-                echo "Password for '$user' set successfully."
-                break
-            else
-                echo "Failed to set password for '$user'. Please try again."
-            fi
-        else
-            echo "Passwords do not match. Please try again."
+# Prompt for and set password (with confirmation)
+if [ "$password" == "$confirm_password" ]; then
+    passwd "$user"  # Use interactive passwd directly
+    if [ $? -eq 0 ]; then
+        echo "Password for '$user' set successfully."
+        break
+    else
+        echo "Failed to set password for '$user'. Please try again."
         fi
-    done
+else
+    echo "Passwords do not match. Please try again."
+    fi
+done
 
-    # Set ownership and permissions for the home directory (within chroot)
-    chown -R "$user":"$user" /home/"$user"
-    chmod 700 /home/"$user"
+# Set ownership and permissions for the home directory (within chroot)
+chown -R "$user":"$user" /home/"$user"
+chmod 700 /home/"$user"
 
-    echo "User '$user' created successfully with password set."
+echo "User '$user' created successfully with password set."
 EOF
 
     chmod +x /mnt/create-user.sh
@@ -524,7 +398,6 @@ if ! create_user; then
 fi
 
 
-
 echo -ne "
 +----------------+
 | Running chroot |
@@ -537,27 +410,36 @@ cat <<EOF > /mnt/chroot-setup.sh
 
 set -e
 
+echo -ne "
++----------------+
+| Setting locale |
++----------------+
+"
+
+# Uncomment  locale
+sed -i '/^#en_US.UTF-8/n UTF-8/c\en_US.UTF-8/n UTF-8' /mnt/etc/locale.gen
+
+# Generate locales
+locale-gen
+
+# Set the locale in /etc/locale.conf within the chroot
+echo LANG=en_US.UTF-8 > /etc/locale.conf
+
 # Define functions
 
 # Get disk value from the first command-line argument
 disk="$1" 
 
 set_root_password() {
-    while true; do
-        read -s -p "Set root password: " root_password
-        echo
-        read -s -p "Confirm root password: " confirm_root_password
-        echo
-
-        if [ "$root_password" == "$confirm_root_password" ]; then
-            passwd  # Use interactive passwd directly
-            if [ $? -eq 0 ]; then
-                echo "Root password set successfully."
-                break
-            else
-                echo "Failed to set root password. Please try again."
-            fi
+    if [ "$root_password" == "$confirm_root_password" ]; then
+        passwd  # Use interactive passwd directly
+        if [ $? -eq 0 ]; then
+            echo "Root password set successfully."
+            break
         else
+            echo "Failed to set root password. Please try again."
+         fi
+    else
             echo "Passwords do not match. Please try again."
         fi
     done
