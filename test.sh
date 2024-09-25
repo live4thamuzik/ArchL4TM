@@ -208,15 +208,6 @@ pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed ||
 
 echo -ne "
 +----------------+
-| Generate fstab |
-+----------------+
-"
-
-# Generate fstab
-genfstab -U -p /mnt >> /mnt/etc/fstab || { echo "Failed to generate fstab"; exit 1; }
-
-echo -ne "
-+----------------+
 | Setting locale |
 +----------------+
 "
@@ -296,7 +287,8 @@ while true; do
                 # Remove the leading '#' for uncommenting
                 uncommented_locale=$(echo "$selected_locale" | sed 's/^# //')
                 echo "Uncommenting locale: $uncommented_locale"
-                sed -i "/^# $uncommented_locale/s/^# //" /mnt/etc/locale.gen
+                # Robust sed command to uncomment the locale
+                sed -i "/^[[:space:]]*#+[[:space:]]*$uncommented_locale[[:space:]]*$/s/^[[:space:]]*#+[[:space:]]*//" /mnt/etc/locale.gen
             else
                 echo "Selected locale is already active."
             fi
@@ -314,7 +306,7 @@ while true; do
             arch-chroot /mnt /bin/bash -c "echo \"LANG=$selected_locale\" > /etc/locale.conf"
 
             # Re-evaluate locale variables after locale-gen (within the chroot)
-            arch-chroot /mnt /bin/bash -c ". /etc/locale.conf" 
+            arch-chroot /mnt /bin/bash -c "source /etc/profile.d/locale.sh" 
 
             # Verify locale setting
             arch-chroot /mnt /bin/bash -c "echo \"Locale has been set to \$LANG\""
@@ -760,14 +752,6 @@ su - temp_aur_user -c "
     echo 'paru installed successfully! You can now use paru to install packages from the AUR.'
 "
 
-EOF
-
-chmod +x /mnt/chroot-setup.sh
-
-# Execute the script inside chroot, passing $disk as an argument
-arch-chroot /mnt ./chroot-setup.sh "$disk"
-
-
 # Select GUI (Optional) 
 echo -ne "
 +-----------------------+
@@ -781,12 +765,12 @@ install_gui() {
     case $gui_choice in
         "GNOME")
             echo "Installing GNOME desktop environment..."
-            arch-chroot /mnt pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
+            pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
                 echo "Failed to install GNOME packages. Exiting."
                 exit 1
             }
 
-            arch-chroot /mnt systemctl enable gdm.service || {
+            systemctl enable gdm.service || {
                 echo "Failed to enable gdm service. Exiting."
                 exit 1
             }
@@ -794,12 +778,12 @@ install_gui() {
             ;;
         "KDE Plasma")
             echo "Installing KDE Plasma desktop environment..."
-            arch-chroot /mnt pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
+            pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
                 echo "Failed to install KDE Plasma packages. Exiting."
                 exit 1
             }
 
-            arch-chroot /mnt systemctl enable sddm.service || {
+            systemctl enable sddm.service || {
                 echo "Failed to enable sddm service. Exiting."
                 exit 1
             }
@@ -817,6 +801,14 @@ select gui_choice in "${options[@]}"; do
     install_gui "$gui_choice"
     break
 done
+
+EOF
+
+chmod +x /mnt/chroot-setup.sh
+
+# Execute the script inside chroot, passing $disk as an argument
+arch-chroot /mnt ./chroot-setup.sh "$disk"
+
 
 echo -ne "
 
