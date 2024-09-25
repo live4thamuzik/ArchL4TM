@@ -733,7 +733,10 @@ trap 'userdel -r temp_aur_user' EXIT
 
 # Switch to the temporary user 
 su - temp_aur_user -c "
-
+    
+    # Unset SUDO_ASKPASS and other potential sudo-related variables
+    unset SUDO_ASKPASS 
+    
     # Clone the repo
     if ! git clone https://aur.archlinux.org/paru.git ; then 
         echo 'Failed to clone paru repository. Please check your internet connection and try again.'
@@ -784,8 +787,8 @@ install_gui() {
             echo "GNOME installed and gdm enabled."
             ;;
         "KDE Plasma")
-           arch-chroot /mnt echo "Installing KDE Plasma desktop environment..."
-            pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
+            echo "Installing KDE Plasma desktop environment..."
+            arch-chroot /mnt pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
                 echo "Failed to install KDE Plasma packages. Exiting."
                 exit 1
             }
