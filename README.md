@@ -65,7 +65,7 @@ The script will install Arch Linux on EFI systems with minimal config and packag
 - ParallelDownloads
 - MultiLib
 
-# AUR Helper:
+# AUR Helper:  (not working - removed for now)
 - Paru
 
 # Detection for NVIDIA GPU
