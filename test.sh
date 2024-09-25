@@ -360,18 +360,19 @@ useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || {
 }
 
 # Prompt for and set password (with confirmation)
-if [ "$password" == "$confirm_password" ]; then
-    passwd "$user"  # Use interactive passwd directly
-    if [ $? -eq 0 ]; then
-        echo "Password for '$user' set successfully."
-        break
+while true ; do
+    if [ "$password" == "$confirm_password" ]; then
+        passwd "$user"  # Use interactive passwd directly
+        if [ $? -eq 0 ]; then
+            echo "Password for '$user' set successfully."
+            break
+        else
+            echo "Failed to set password for '$user'. Please try again."
+            fi
     else
-        echo "Failed to set password for '$user'. Please try again."
+        echo "Passwords do not match. Please try again."
         fi
-else
-    echo "Passwords do not match. Please try again."
-    fi
-done
+    done
 
 # Set ownership and permissions for the home directory (within chroot)
 chown -R "$user":"$user" /home/"$user"
@@ -431,6 +432,7 @@ echo LANG=en_US.UTF-8 > /etc/locale.conf
 disk="$1" 
 
 set_root_password() {
+while true ; do
     if [ "$root_password" == "$confirm_root_password" ]; then
         passwd  # Use interactive passwd directly
         if [ $? -eq 0 ]; then
