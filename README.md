@@ -47,6 +47,7 @@ The script will install Arch Linux on EFI systems with minimal config and packag
 - debugedit
 - kmod
 - fakeroot
+- cargo
 
 # Microcode detection for AMD and Intel processors
 - Script will use lscpu to detect and install the correct microcode needed
