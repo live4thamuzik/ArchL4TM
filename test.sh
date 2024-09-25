@@ -752,6 +752,13 @@ su - temp_aur_user -c "
     echo 'paru installed successfully! You can now use paru to install packages from the AUR.'
 "
 
+EOF
+
+chmod +x /mnt/chroot-setup.sh
+
+# Execute the script inside chroot, passing $disk as an argument
+arch-chroot /mnt ./chroot-setup.sh "$disk"
+
 # Select GUI (Optional) 
 echo -ne "
 +-----------------------+
@@ -765,25 +772,25 @@ install_gui() {
     case $gui_choice in
         "GNOME")
             echo "Installing GNOME desktop environment..."
-            pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
+            arch-chroot /mnt pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
                 echo "Failed to install GNOME packages. Exiting."
                 exit 1
             }
 
-            systemctl enable gdm.service || {
+            arch-chroot /mnt systemctl enable gdm.service || {
                 echo "Failed to enable gdm service. Exiting."
                 exit 1
             }
             echo "GNOME installed and gdm enabled."
             ;;
         "KDE Plasma")
-            echo "Installing KDE Plasma desktop environment..."
+           arch-chroot /mnt echo "Installing KDE Plasma desktop environment..."
             pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
                 echo "Failed to install KDE Plasma packages. Exiting."
                 exit 1
             }
 
-            systemctl enable sddm.service || {
+            arch-chroot /mnt systemctl enable sddm.service || {
                 echo "Failed to enable sddm service. Exiting."
                 exit 1
             }
@@ -801,14 +808,6 @@ select gui_choice in "${options[@]}"; do
     install_gui "$gui_choice"
     break
 done
-
-EOF
-
-chmod +x /mnt/chroot-setup.sh
-
-# Execute the script inside chroot, passing $disk as an argument
-arch-chroot /mnt ./chroot-setup.sh "$disk"
-
 
 echo -ne "
 
