@@ -750,14 +750,14 @@ su - temp_aur_user -c "
     fi 
 
     # Build and install the AUR helper (with --noconfirm)
-    makepkg -si --noconfirm 2>&1 | tee paru_install.log || {  
+    cd paru && makepkg -si --noconfirm 2>&1 | tee paru_install.log || {  
         echo 'Failed to build and install paru. Last few lines of installation logs:'
         tail -n 20 paru_install.log 
         exit 1 
     } 
 
     # Clean up
-    cd ~ && rm -rf paru/
+    rm -rf paru/
     echo 'paru installed successfully! You can now use paru to install packages from the AUR.'
 "
 
