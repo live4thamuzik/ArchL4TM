@@ -344,41 +344,46 @@ create_user() {
 
     # Save the user creation commands in a script file to be executed in chroot
     cat <<EOF > /mnt/create-user.sh
-#!/bin/bash
+    #!/bin/bash
 
-set -e
+    set -e
 
-# Check if the user already exists within the chroot
-if id "$user" &>/dev/null; then
-    echo "User '$user' already exists. Please choose a different username."
-    exit 1
-fi
+    # Check if the user already exists within the chroot
+    if id "$user" &>/dev/null; then
+        echo "User '$user' already exists. Please choose a different username."
+        exit 1
+    fi
 
-useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || {
-    echo "Failed to create user '$user'. Exiting."
-    exit 1
-}
+    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || {
+        echo "Failed to create user '$user'."
+        exit 1
+    }
 
-# Prompt for and set password (with confirmation)
-while true ; do
-    if [ "$password" == "$confirm_password" ]; then
-        passwd "$user"  # Use interactive passwd directly
-        if [ $? -eq 0 ]; then
-            echo "Password for '$user' set successfully."
-            break
-        else
-            echo "Failed to set password for '$user'. Please try again."
+    # Prompt for and set password (with confirmation)
+    while true; do
+        read -s -p "Enter password for '$user': " password
+        echo
+        read -s -p "Confirm password: " confirm_password
+        echo
+
+        if [ "$password" == "$confirm_password" ]; then
+            passwd "$user"  # Use interactive passwd directly
+            if [ $? -eq 0 ]; then
+                echo "Password for '$user' set successfully."
+                break
+            else
+                echo "Failed to set password for '$user'. Please try again."
             fi
-    else
-        echo "Passwords do not match. Please try again."
+        else
+            echo "Passwords do not match. Please try again."
         fi
     done
 
-# Set ownership and permissions for the home directory (within chroot)
-chown -R "$user":"$user" /home/"$user"
-chmod 700 /home/"$user"
+    # Set ownership and permissions for the home directory (within chroot)
+    chown -R "$user":"$user" /home/"$user"
+    chmod 700 /home/"$user"
 
-echo "User '$user' created successfully with password set."
+    echo "User '$user' created successfully with password set."
 EOF
 
     chmod +x /mnt/create-user.sh
@@ -432,16 +437,21 @@ echo LANG=en_US.UTF-8 > /etc/locale.conf
 disk="$1" 
 
 set_root_password() {
-while true ; do
-    if [ "$root_password" == "$confirm_root_password" ]; then
-        passwd  # Use interactive passwd directly
-        if [ $? -eq 0 ]; then
-            echo "Root password set successfully."
-            break
+    while true; do
+        read -s -p "Set root password: " root_password
+        echo
+        read -s -p "Confirm root password: " confirm_root_password
+        echo
+
+        if [ "$root_password" == "$confirm_root_password" ]; then
+            passwd  # Use interactive passwd directly
+            if [ $? -eq 0 ]; then
+                echo "Root password set successfully."
+                break
+            else
+                echo "Failed to set root password. Please try again."
+            fi
         else
-            echo "Failed to set root password. Please try again."
-         fi
-    else
             echo "Passwords do not match. Please try again."
         fi
     done
@@ -591,53 +601,6 @@ grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB config
 else
     echo "No NVIDIA GPUs detected. Skipping NVIDIA-related actions."
 fi
-
-# Install AUR Helper 
-echo -ne "
-+--------------------+
-| Install AUR Helper |
-+--------------------+
-"
-
-# Create a temporary user for building AUR packages
-useradd -m -G wheel -s /bin/bash temp_aur_user || {
-    echo "Failed to create temporary user. Exiting."
-    exit 1
-}
-
-# Add the temporary user to the wheel group (needed for Yay)
-usermod -aG wheel temp_aur_user || {
-    echo "Failed to add user to wheel group. Exiting."
-    userdel -r temp_aur_user  # Clean up even on failure
-    exit 1
-}
-
-# Trap to ensure cleanup even if the script exits unexpectedly
-trap 'userdel -r temp_aur_user' EXIT
-
-# Switch to the temporary user 
-su - temp_aur_user -c "
-    
-    # Unset SUDO_ASKPASS and other potential sudo-related variables
-    unset SUDO_ASKPASS 
-    
-    # Clone the repo
-    if ! git clone https://aur.archlinux.org/paru.git ; then 
-        echo 'Failed to clone paru repository. Please check your internet connection and try again.'
-        exit 1
-    fi 
-
-    # Build and install the AUR helper (with --noconfirm)
-    cd paru && makepkg -si --noconfirm 2>&1 | tee paru_install.log || {  
-        echo 'Failed to build and install paru. Last few lines of installation logs:'
-        tail -n 20 paru_install.log 
-        exit 1 
-    } 
-
-    # Clean up
-    rm -rf paru/
-    echo 'paru installed successfully! You can now use paru to install packages from the AUR.'
-"
 
 EOF
 
