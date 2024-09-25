@@ -612,7 +612,7 @@ echo -ne "
 
 # Install additional needed packages
 echo "Installing Packages"
-pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot || { echo "Failed to install packages"; exit 1; }
+pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot cargo || { echo "Failed to install packages"; exit 1; }
 
 
 echo -ne "
@@ -717,72 +717,56 @@ else
     echo "No NVIDIA GPUs detected. Skipping NVIDIA-related actions."
 fi
 
-EOF
-
-chmod +x /mnt/chroot-setup.sh
-
-# Execute the script inside chroot, passing $disk as an argument
-arch-chroot /mnt ./chroot-setup.sh "$disk"
-
-# Install AUR Helper 
+# Install AUR Helper 
 echo -ne "
 +--------------------+
 | Install AUR Helper |
 +--------------------+
 "
 
-install_aur_helper() {
-    local aur_helper="$1"
-    local repo_url="$2"
-    local dependency="$3" 
-
-    echo "Installing $aur_helper"
-
-    # Perform the installation within the chroot environment
-    arch-chroot /mnt /bin/bash -c "
-
-        # Create a temporary user for building AUR packages
-        useradd -m -G wheel -s /bin/bash temp_aur_user
-
-        # Add the temporary user to the wheel group (needed for Yay)
-        usermod -aG wheel temp_aur_user
-
-        # Install dependencies for makepkg and the specific AUR helper as root
-        pacman -Sy --noconfirm --needed base-devel fakeroot debugedit $dependency
-
-        # Switch to the temporary user 
-        su - temp_aur_user -c \" 
-
-            # Clone the repo
-            if ! git clone $repo_url $temp_dir; then 
-                echo 'Failed to clone $aur_helper repository. Please check your internet connection and try again.'
-                exit 1
-            fi 
-
-            # Build and install the AUR helper (with --noconfirm)
-            cd $temp_dir && makepkg -si --noconfirm 2>&1 || {  
-                echo 'Failed to build and install $aur_helper. Installation logs:'
-                cat /tmp/paru_install.log # Assuming makepkg logs are captured here
-                exit 1 
-            }
-
-            # Clean up
-            cd ~ && rm -rf $temp_dir
-            echo '$aur_helper installed successfully! You can now use $aur_helper to install packages from the AUR.'
-        \" 
-
-        # Remove the temporary user (within the chroot)
-        userdel -r temp_aur_user
-    " || {
-        echo "Chroot installation failed. Please check the logs for more details."
-        exit 1
-    }
-
-    # No need to delete the user again outside the chroot
+# Create a temporary user for building AUR packages
+useradd -m -G wheel -s /bin/bash temp_aur_user || {
+    echo "Failed to create temporary user. Exiting."
+    exit 1
 }
 
-# Directly install Paru
-install_aur_helper "Paru" "https://aur.archlinux.org/paru.git" "cargo"
+# Add the temporary user to the wheel group (needed for Yay)
+usermod -aG wheel temp_aur_user || {
+    echo "Failed to add user to wheel group. Exiting."
+    userdel -r temp_aur_user  # Clean up even on failure
+    exit 1
+}
+
+# Trap to ensure cleanup even if the script exits unexpectedly
+trap 'userdel -r temp_aur_user' EXIT
+
+# Switch to the temporary user 
+su - temp_aur_user -c "
+
+    # Clone the repo
+    if ! git clone https://aur.archlinux.org/paru.git ; then 
+        echo 'Failed to clone paru repository. Please check your internet connection and try again.'
+        exit 1
+    fi 
+
+    # Build and install the AUR helper (with --noconfirm)
+    makepkg -si --noconfirm 2>&1 | tee paru_install.log || {  
+        echo 'Failed to build and install paru. Last few lines of installation logs:'
+        tail -n 20 paru_install.log 
+        exit 1 
+    } 
+
+    # Clean up
+    cd ~ && rm -rf paru/
+    echo 'paru installed successfully! You can now use paru to install packages from the AUR.'
+"
+
+EOF
+
+chmod +x /mnt/chroot-setup.sh
+
+# Execute the script inside chroot, passing $disk as an argument
+arch-chroot /mnt ./chroot-setup.sh "$disk"
 
 
 # Select GUI (Optional) 
@@ -798,7 +782,7 @@ install_gui() {
     case $gui_choice in
         "GNOME")
             echo "Installing GNOME desktop environment..."
-            pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
+            arch-chroot /mnt pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
                 echo "Failed to install GNOME packages. Exiting."
                 exit 1
             }
@@ -811,7 +795,7 @@ install_gui() {
             ;;
         "KDE Plasma")
             echo "Installing KDE Plasma desktop environment..."
-            pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
+            arch-chroot /mnt pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
                 echo "Failed to install KDE Plasma packages. Exiting."
                 exit 1
             }
