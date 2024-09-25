@@ -380,6 +380,7 @@ create_user() {
     done
 
     # Set ownership and permissions for the home directory (within chroot)
+    mkdir -p /home/"$user"
     chown -R "$user":"$user" /home/"$user"
     chmod 755 /home/"$user"
 
