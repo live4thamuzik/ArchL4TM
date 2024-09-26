@@ -407,7 +407,7 @@ echo "$USERNAME:$PASSWORD" | chpasswd
 echo "$USERNAME password set"
 
 # Set root password
-echo "$PASSWD" | chpasswd
+echo "root:$PASSWD" | chpasswd
 echo "root password set"
 
 # Set hostname
