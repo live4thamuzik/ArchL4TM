@@ -280,7 +280,7 @@ echo -ne "
 newuser
 
 
-ech -ne "
+echo -ne "
 +-------------------+
 | Set root password |
 +-------------------+
