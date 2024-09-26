@@ -351,6 +351,7 @@ create_user() {
     useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || {
         echo "Failed to create user '$user'."
         exit 1
+    }
 }
 
 set_user_password() {
