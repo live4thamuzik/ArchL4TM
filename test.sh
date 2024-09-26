@@ -380,9 +380,9 @@ create_user() {
     done
 
     # Set ownership and permissions for the home directory (within chroot)
-    mkdir -p /home/"$user"
-    chown -R "$user":"$user" /home/"$user"
-    chmod 755 /home/"$user"
+    #mkdir -p /home/"$user"
+    #chown -R "$user":"$user" /home/"$user"
+    #chmod 755 /home/"$user"
 
     echo "User '$user' created successfully with password set."
 EOF
@@ -416,21 +416,6 @@ cat <<EOF > /mnt/chroot-setup.sh
 #!/bin/bash
 
 set -e
-
-echo -ne "
-+----------------+
-| Setting locale |
-+----------------+
-"
-
-# Uncomment  locale
-sed -i '/^#en_US.UTF-8\nUTF-8/c\en_US.UTF-8/n UTF-8' /etc/locale.gen
-
-# Generate locales
-locale-gen
-
-# Set the locale in /etc/locale.conf within the chroot
-echo LANG=en_US.UTF-8 > /etc/locale.conf
 
 # Define functions
 
@@ -530,6 +515,20 @@ echo "NetworkManager enabled"
 systemctl enable fstrim.timer || { echo "Failed to enable SSD support"; exit 1; }
 echo "SSD support enabled"
 
+echo -ne "
++----------------+
+| Setting locale |
++----------------+
+"
+
+# Uncomment  locale
+sed --in-place=.bak 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+
+# Generate locales
+locale-gen
+
+# Set the locale in /etc/locale.conf within the chroot
+echo LANG=en_US.UTF-8 > /etc/locale.conf
 
 echo -ne "
 +------------------+
