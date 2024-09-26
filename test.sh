@@ -75,9 +75,9 @@ rootpasswd () {
     do
         read -rs -p "Set root password: " PASSWD1
         echo -ne "\n"
-        read -rs -p "Set root password: " PASSWD2
+        read -rs -p "confirm password: " PASSWD2
         echo -ne "\n"
-        if [[ "PASSWD1" == "PASSWD2" ]]; then
+        if [[ "$PASSWD1" == "$PASSWD2" ]]; then
             break
         else
             echo -ne "ERROR! Passwords do not match. \n"
