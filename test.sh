@@ -338,71 +338,54 @@ create_user() {
 
     # Validate username (non-empty) 
     if [ -z "$user" ]; then
-        echo "Username cannot be empty. Please try again."
+        echo "Username cannot be empty. Please try again." >&2  # Redirect error messages to stderr
         return 1 
     fi
 
-    # Save the user creation commands in a script file to be executed in chroot
-    cat <<EOF > /mnt/create-user.sh
-    #!/bin/bash
+    # Execute user creation commands directly within chroot
+    if ! arch-chroot /mnt /bin/bash -c "
+        set -e  # Exit immediately on any error
 
-    set -e
-
-    # Check if the user already exists within the chroot
-    if id "$user" &>/dev/null; then
-        echo "User '$user' already exists. Please choose a different username."
-        exit 1
-    fi
-
-    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || {
-        echo "Failed to create user '$user'."
-        exit 1
-    }
-
-    # Prompt for and set password (with confirmation)
-    while true; do
-        read -s -p "Enter password for '$user': " password
-        echo
-        read -s -p "Confirm password: " confirm_password
-        echo
-
-        if [ "$password" == "$confirm_password" ]; then
-            passwd "$user"  # Use interactive passwd directly
-            if [ $? -eq 0 ]; then
-                echo "Password for '$user' set successfully."
-                break
-            else
-                echo "Failed to set password for '$user'. Please try again."
-            fi
-        else
-            echo "Passwords do not match. Please try again."
+        # Check if the user already exists within the chroot
+        if id '$user' &>/dev/null; then
+            echo \"User '$user' already exists. Please choose a different username.\" >&2
+            exit 1
         fi
-    done
 
-    # Set ownership and permissions for the home directory (within chroot)
-    #mkdir -p /home/"$user"
-    #chown -R "$user":"$user" /home/"$user"
-    #chmod 755 /home/"$user"
+        # Create the user with explicit home directory and error handling
+        if ! useradd -m -d /home/$user -G wheel,power,storage,uucp,network -s /bin/bash '$user'; then
+            echo \"Failed to create user '$user'. Error: $?\" >&2  # Print the error code
+            exit 1
+        fi
 
-    echo "User '$user' created successfully with password set."
-EOF
+        # Prompt for and set password (with confirmation)
+        while true; do
+            read -s -p \"Enter password for '$user': \" password
+            echo
+            read -s -p \"Confirm password: \" confirm_password
+            echo
 
-    chmod +x /mnt/create-user.sh
+            if [ "\$password" == "\$confirm_password" ]; then
+                passwd '$user'  # Use interactive passwd directly
+                if [ \$? -eq 0 ]; then
+                    echo \"Password for '$user' set successfully.\"
+                    break
+                else
+                    echo \"Failed to set password for '$user'. Please try again.\" >&2
+                fi
+            else
+                echo \"Passwords do not match. Please try again.\" >&2
+            fi
+        done
 
-    # Execute the user creation script inside chroot
-    if ! arch-chroot /mnt ./create-user.sh; then
-        echo "User creation failed within the chroot environment. Exiting."
+        echo \"User '$user' created successfully with password set.\"
+    "; then
+        echo "User creation failed within the chroot environment. Exiting." >&2
         exit 1
     fi
 
     echo "User '$user' created successfully."
 }
-
-# Call the function to create the user
-if ! create_user; then
-    echo "User creation failed. Exiting."
-    exit 1
-fi
 
 
 echo -ne "
