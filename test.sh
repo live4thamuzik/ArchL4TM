@@ -333,71 +333,59 @@ echo -ne "
 "
 
 create_user() {
-    # Prompt for username
-    read -p "Enter a username: " user
+    # Prompt for username
+    read -p "Enter a username: " username
 
-    # Validate username (non-empty) 
-    if [ -z "$user" ]; then
-        echo "Username cannot be empty. Please try again."
-        return 1 
-    fi
+    # Validate username (non-empty) 
+    if [ -z "$username" ]; then
+        echo "Username cannot be empty. Please try again." >&2 
+        return 1 
+    fi
 
-    # Save the user creation commands in a script file to be executed in chroot
-    cat <<EOF > /mnt/create-user.sh
-    #!/bin/bash
+    # Execute user creation and password setting within chroot
+    if ! arch-chroot /mnt /bin/bash -c "
+        set -e  # Exit immediately on any error
 
-    set -e
+        # Check if the user already exists within the chroot
+        if id '$username' &>/dev/null; then
+            echo \"User '$username' already exists. Please choose a different username.\" >&2
+            exit 1
+        fi
 
-    # Check if the user already exists within the chroot
-    if id "$user" &>/dev/null; then
-        echo "User '$user' already exists. Please choose a different username."
-        exit 1
-    fi
+        # Create the user with specified groups and shell
+        if ! useradd -m -G wheel,power,storage,uucp,network -s /bin/bash '$username'; then
+            echo \"Failed to create user '$username'. Error: $?\" >&2 
+            exit 1
+        fi
 
-    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || {
-        echo "Failed to create user '$user'."
-        exit 1
-    }
+        # Prompt for and set password (with confirmation)
+        while true; do
+            read -s -p \"Enter password for '$username': \" password
+            echo
+            read -s -p \"Confirm password: \" confirm_password
+            echo
 
-    # Prompt for and set password (with confirmation)
-    while true; do
-        read -s -p "Enter password for '$user': " password
-        echo
-        read -s -p "Confirm password: " confirm_password
-        echo
+            if [ "\$password" == "\$confirm_password" ]; then
+                echo "\$password" | passwd --stdin '$username'  # Set password using stdin
+                if [ \$? -eq 0 ]; then
+                    echo \"Password for '$username' set successfully.\"
+                    break
+                else
+                    echo \"Failed to set password for '$username'. Please try again.\" >&2
+                fi
+            else
+                echo \"Passwords do not match. Please try again.\" >&2
+            fi
+        done
 
-        if [ "$password" == "$confirm_password" ]; then
-            passwd "$user"  # Use interactive passwd directly
-            if [ $? -eq 0 ]; then
-                echo "Password for '$user' set successfully."
-                break
-            else
-                echo "Failed to set password for '$user'. Please try again."
-            fi
-        else
-            echo "Passwords do not match. Please try again."
-        fi
-    done
+        echo \"User '$username' created successfully with password set.\"
+    "; then
+        echo "User creation failed within the chroot environment. Exiting." >&2
+        exit 1
+    fi
 
-    echo "User '$user' created successfully with password set."
-EOF
-
-    chmod +x /mnt/create-user.sh
-
-    # Execute the user creation script inside chroot
-    if ! arch-chroot /mnt ./create-user.sh; then
-        echo "User creation failed within the chroot environment. Exiting."
-        exit 1
-    fi
-
-    echo "User '$user' created successfully."
+    echo "User '$username' created successfully."
 }
-
-# Call the function to create the user
-if ! create_user; then
-    echo "User creation failed. Exiting."
-    exit 1
-fi
 
 
 echo -ne "
