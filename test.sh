@@ -70,6 +70,23 @@ newuser () {
     export NAME_OF_MACHINE=$name_of_machine
 }
 
+rootpasswd () {
+    while true
+    do
+        read -rs -p "Set root password: " PASSWD1
+        echo -ne "\n"
+        read -rs -p "Set root password: " PASSWD2
+        echo -ne "\n"
+        if [[ "PASSWD1" == "PASSWD2" ]]; then
+            break
+        else
+            echo -ne "ERROR! Passwords do not match. \n"
+        fi
+    done
+    export PASSWD=$PASSWD1
+}
+
+
 echo -ne "
 +-------------------+
 | Drive Preparation |
@@ -253,8 +270,22 @@ echo -ne "
 # Install base packages 
 pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed || { echo "Failed to install base system"; exit 1; }
 
+
+echo -ne "
++--------------------------+
+| Create user and hostname |
++--------------------------+
+"
 # Call functions
 newuser
+
+
+ech -ne "
++-------------------+
+| Set root password |
++-------------------+
+"
+rootpasswd
 
 echo -ne "
 +------------------+
@@ -369,32 +400,39 @@ set -e
 # Get disk value from the first command-line argument
 disk="$1" 
 
+# Add user account
 useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME
 echo "$USERNAME created, home directory created, added to wheel and libvirt group, default shell set to /bin/bash"
 echo "$USERNAME:$PASSWORD" | chpasswd
 echo "$USERNAME password set"
+
+# Set root password
+echo "$PASSWD" | chpasswd
+echo "root password set"
+
+# Set hostname
 echo $NAME_OF_MACHINE > /etc/hostname
 
-set_root_password() {
-    while true; do
-        read -s -p "Set root password: " root_password
-        echo
-        read -s -p "Confirm root password: " confirm_root_password
-        echo
-
-        if [ "$root_password" == "$confirm_root_password" ]; then
-            passwd  # Use interactive passwd directly
-            if [ $? -eq 0 ]; then
-                echo "Root password set successfully."
-                break
-            else
-                echo "Failed to set root password. Please try again."
-            fi
-        else
-            echo "Passwords do not match. Please try again."
-        fi
-    done
-}
+#set_root_password() {
+#    while true; do
+#        read -s -p "Set root password: " root_password
+#        echo
+#        read -s -p "Confirm root password: " confirm_root_password
+#        echo
+#
+#        if [ "$root_password" == "$confirm_root_password" ]; then
+#            passwd  # Use interactive passwd directly
+#            if [ $? -eq 0 ]; then
+#                echo "Root password set successfully."
+#                break
+#            else
+#                echo "Failed to set root password. Please try again."
+#            fi
+#        else
+#            echo "Passwords do not match. Please try again."
+#        fi
+#    done
+#}
 
 update_sudoers() {
     cp /etc/sudoers /etc/sudoers.backup
@@ -497,10 +535,10 @@ sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev autodetect modconf block encrypt lv
 mkinitcpio -p linux
 
 # Call defined functions
-create_user
-set_user_password "$user"
-set_root_password
+#set_root_password
 update_sudoers
+
+
 echo -ne "
 +-----------------+
 | Installing GRUB |
