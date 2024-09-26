@@ -405,6 +405,8 @@ useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME
 echo "$USERNAME created, home directory created, added to wheel and libvirt group, default shell set to /bin/bash"
 echo "$USERNAME:$PASSWORD" | chpasswd
 echo "$USERNAME password set"
+mkdir -p /home/$USERNAME
+chmod 751 -R $USERNAME /home/$USERNAME
 
 # Set root password
 echo "root:$PASSWD" | chpasswd
@@ -412,27 +414,6 @@ echo "root password set"
 
 # Set hostname
 echo $NAME_OF_MACHINE > /etc/hostname
-
-#set_root_password() {
-#    while true; do
-#        read -s -p "Set root password: " root_password
-#        echo
-#        read -s -p "Confirm root password: " confirm_root_password
-#        echo
-#
-#        if [ "$root_password" == "$confirm_root_password" ]; then
-#            passwd  # Use interactive passwd directly
-#            if [ $? -eq 0 ]; then
-#                echo "Root password set successfully."
-#                break
-#            else
-#                echo "Failed to set root password. Please try again."
-#            fi
-#        else
-#            echo "Passwords do not match. Please try again."
-#        fi
-#    done
-#}
 
 update_sudoers() {
     cp /etc/sudoers /etc/sudoers.backup
