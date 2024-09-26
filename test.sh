@@ -23,6 +23,53 @@ echo -ne "
                                                                    
 "
 
+# Create username and password
+newuser () {
+    # Loop through user input until the user gives a valid username
+    while true
+    do 
+            read -r -p "Enter a username: " username
+            if [[ "${username,,}" =~ ^[a-z_]([a-z0-9_-]{0,31}|[a-z0-9_-]{0,30}\$)$ ]]
+            then 
+                    break
+            fi 
+            echo "Invalid username."
+    done 
+    export USERNAME=$username
+
+    while true
+    do
+        read -rs -p "Set a password: " PASSWORD1
+        echo -ne "\n"
+        read -rs -p "Confirm password: " PASSWORD2
+        echo -ne "\n"
+        if [[ "$PASSWORD1" == "$PASSWORD2" ]]; then
+            break
+        else
+            echo -ne "ERROR! Passwords do not match. \n"
+        fi
+    done
+    export PASSWORD=$PASSWORD1
+
+     # Loop through user input until the user gives a valid hostname, but allow the user to force save 
+    while true
+    do 
+            read -r -p "Enter a hostname: " name_of_machine
+            # hostname regex (!!couldn't find spec for computer name!!)
+            if [[ "${name_of_machine,,}" =~ ^[a-z][a-z0-9_.-]{0,62}[a-z0-9]$ ]]
+            then 
+                    break 
+            fi 
+            # if validation fails allow the user to force saving of the hostname
+            read -r -p "Hostname doesn't seem correct. Do you still want to save it? (y/n)" force 
+            if [[ "${force,,}" = "y" ]]
+            then 
+                    break 
+            fi 
+    done 
+    export NAME_OF_MACHINE=$name_of_machine
+}
+
 echo -ne "
 +-------------------+
 | Drive Preparation |
@@ -206,6 +253,9 @@ echo -ne "
 # Install base packages 
 pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed || { echo "Failed to install base system"; exit 1; }
 
+# Call functions
+newuser
+
 echo -ne "
 +------------------+
 | Setting timezone |
@@ -301,31 +351,6 @@ while true; do
  fi
 done
 
-echo -ne "
-+--------------+
-| Set hostname |
-+--------------+
-"
-
-set_hostname() {
-  # Prompt user to enter hostname
-  read -p "Enter your desired hostname: " hostname
-
-  # Ensure hostname is not empty
-  if [ -z "$hostname" ]; then
-    echo "Hostname cannot be empty. Exiting."
-    exit 1
-  fi
-
-  # Write the hostname to /mnt/etc/hostname
-  echo "$hostname" > /mnt/etc/hostname || { echo "Failed to set hostname"; exit 1; }
-
-  echo "Hostname set to $hostname"
-}
-
-# Call the function to set hostname
-set_hostname
-
 
 echo -ne "
 +----------------+
@@ -344,37 +369,11 @@ set -e
 # Get disk value from the first command-line argument
 disk="$1" 
 
-create_user() {
-    # Prompt for username
-    read -p "Enter a username: " user
-
-    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || {
-        echo "Failed to create user '$user'."
-        exit 1
-    }
-}
-
-set_user_password() {
-    # Prompt for and set password (with confirmation)
-    while true; do
-        read -s -p "Enter password for '$user': " password
-        echo
-        read -s -p "Confirm password: " confirm_password
-        echo
-
-        if [ "$password" == "$confirm_password" ]; then
-            passwd "$user"  # Use interactive passwd directly
-            if [ $? -eq 0 ]; then
-                echo "Password for '$user' set successfully."
-                break
-            else
-                echo "Failed to set password for '$user'. Please try again."
-            fi
-        else
-            echo "Passwords do not match. Please try again."
-        fi
-    done
-}
+useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME
+echo "$USERNAME created, home directory created, added to wheel and libvirt group, default shell set to /bin/bash"
+echo "$USERNAME:$PASSWORD" | chpasswd
+echo "$USERNAME password set"
+echo $NAME_OF_MACHINE > /etc/hostname
 
 set_root_password() {
     while true; do
