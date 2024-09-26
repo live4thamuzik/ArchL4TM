@@ -513,6 +513,9 @@ locale-gen
 # Set the locale in /etc/locale.conf within the chroot
 echo LANG=en_US.UTF-8 > /etc/locale.conf
 
+# Remove .bak file
+rm -rf /etc/locale.gen.bak
+
 echo -ne "
 +------------------+
 | Update Initramfs |
