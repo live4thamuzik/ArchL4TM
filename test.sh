@@ -107,7 +107,7 @@ checkAURHelper() {
     ## Check & Install AUR helper
     if [ "$PACKAGER" = "pacman" ]; then
         if [ -z "$AUR_HELPER_CHECKED" ]; then
-            AUR_HELPERS="yay paru"
+            AUR_HELPERS="paru"
             for helper in ${AUR_HELPERS}; do
                 if command_exists "${helper}"; then
                     AUR_HELPER=${helper}
@@ -119,11 +119,11 @@ checkAURHelper() {
 
             printf "%b\n" "${YELLOW}Installing yay as AUR helper...${RC}"
             "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm base-devel
-            cd /opt && "$ESCALATION_TOOL" git clone https://aur.archlinux.org/yay-bin.git && "$ESCALATION_TOOL" chown -R "$USER":"$USER" ./yay-bin
+            cd /opt && "$ESCALATION_TOOL" git clone https://aur.archlinux.org/paru.git && "$ESCALATION_TOOL" chown -R "$USER":"$USER" ./paru
             cd yay-bin && makepkg --noconfirm -si
 
-            if command_exists yay; then
-                AUR_HELPER="yay"
+            if command_exists paru; then
+                AUR_HELPER="paru"
                 AUR_HELPER_CHECKED=true
             else
                 printf "%b\n" "${RED}Failed to install AUR helper.${RC}"
@@ -217,7 +217,7 @@ checkDistro() {
 
 checkEnv() {
     checkCommandRequirements 'curl groups sudo'
-    checkPackageManager 'nala apt-get dnf pacman zypper'
+    checkPackageManager 'pacman'
     checkCurrentDirectoryWritable
     checkSuperUser
     checkDistro
@@ -232,7 +232,7 @@ installParu() {
         pacman)
             if ! command_exists paru; then
                 printf "%b\n" "${YELLOW}Installing paru as AUR helper...${RC}"
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm base-devel
+                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm base-devel cargo
                 cd /opt && "$ESCALATION_TOOL" git clone https://aur.archlinux.org/paru.git && "$ESCALATION_TOOL" chown -R "$USER": ./paru
                 cd paru && makepkg --noconfirm -si
                 printf "%b\n" "${GREEN}Paru installed${RC}"
@@ -246,24 +246,6 @@ installParu() {
     esac
 }
 
-installYay() {
-    case "$PACKAGER" in
-        pacman)
-            if ! command_exists yay; then
-                printf "%b\n" "${YELLOW}Installing yay as AUR helper...${RC}"
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm base-devel
-                cd /opt && "$ESCALATION_TOOL" git clone https://aur.archlinux.org/yay-bin.git && "$ESCALATION_TOOL" chown -R "$USER": ./yay-bin
-                cd yay-bin && makepkg --noconfirm -si
-                printf "%b\n" "${GREEN}Yay installed${RC}"
-            else
-                printf "%b\n" "${GREEN}Aur helper already installed${RC}"
-            fi
-            ;;
-        *)
-            printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
-            ;;
-    esac
-}
 
 echo -ne "
 +-------------------+
@@ -750,6 +732,11 @@ useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME
 echo "$USERNAME created, home directory created, added to wheel, power, stoage, uucp, and network groups, default shell set to /bin/bash"
 echo "$USERNAME:$PASSWORD" | chpasswd
 echo "$USERNAME password set"
+
+# Ensure user has a folder inside /home with ownership
+mkdir -p ./home/$USERNAME
+chown $USERNAME:$USERNAME ./home/$USERNAME
+chmod 700 $USERNAME ./home/$USERNAME
 
 # Set root password
 echo "root:$PASSWD" | chpasswd
