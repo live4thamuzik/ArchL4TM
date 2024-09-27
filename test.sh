@@ -748,21 +748,21 @@ echo "root password set"
 # Set hostname
 echo $NAME_OF_MACHINE > /etc/hostname
 
+# Call funciton for AUR Helpers
+checkEnv
+checkEscalationTool
+installParu
+
 EOF
+
+# Make common-script.sh executable
+chmod +x /mnt/common-script.sh
 
 # Make chroot-setup.sh executable
 chmod +x /mnt/chroot-setup.sh
 
 # Execute the script inside chroot, passing $disk as an argument
 arch-chroot /mnt ./chroot-setup.sh "$disk"
-
-# Make common-script.sh executable
-chmod +x /mnt/common-script.sh
-
-# Call funciton for AUR Helpers
-checkEnv
-checkEscalationTool
-installParu
 
 # Select GUI (Optional) 
 echo -ne "
