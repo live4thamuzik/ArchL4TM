@@ -559,7 +559,6 @@ set -e
 # Call script to load functions for AUR installation 
 source ./common-script.sh
 
-
 # Define functions
 
 # Get disk value from the first command-line argument
@@ -585,6 +584,7 @@ install_grub() {
 
 # Run function checkEnv
 checkEnv
+checkPackageManager "pacman"
 
 echo -ne "
 +--------------------+
