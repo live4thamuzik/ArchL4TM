@@ -557,6 +557,9 @@ cat <<EOF > /mnt/chroot-setup.sh
 
 set -e
 
+# Call script to load functions for AUR installation 
+source ./common-script.sh
+
 # Define functions
 
 # Get disk value from the first command-line argument
@@ -729,7 +732,7 @@ fi
 
 # Add user account
 useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME
-echo "$USERNAME created, home directory created, added to wheel, power, stoage, uucp, and network groups, default shell set to /bin/bash"
+echo "$USERNAME created, home directory created, added to wheel, power, storage, uucp, and network groups, default shell set to /bin/bash"
 echo "$USERNAME:$PASSWORD" | chpasswd
 echo "$USERNAME password set"
 
@@ -760,7 +763,6 @@ chmod +x /mnt/common-script.sh
 checkEnv
 checkEscalationTool
 installParu
-installYay
 
 # Select GUI (Optional) 
 echo -ne "
