@@ -483,11 +483,9 @@ checkCommandRequirements() {
 
 checkPackageManager() {
     ## Check Package Manager
-    PACKAGEMANAGER=$1
-   
-    if command_exists "${PACKAGEMANAGER}"; then
-        PACKAGER=${PACKAGEMANAGER}
-        printf "%b\n" "${CYAN}Using ${PACKAGEMANAGER} as package manager${RC}"
+    if command_exists "${pacman}"; then
+        PACKAGER=${pacman}
+        printf "%b\n" "${CYAN}Using ${pacman} as package manager${RC}"
     else
         printf "%b\n" "${RED}Can't find a supported package manager${RC}"
         exit 1
