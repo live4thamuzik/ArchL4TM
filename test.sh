@@ -401,12 +401,10 @@ set -e
 disk="$1" 
 
 # Add user account
-useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME
+useradd -d /home/$USERNAME -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME
 echo "$USERNAME created, home directory created, added to wheel and libvirt group, default shell set to /bin/bash"
 echo "$USERNAME:$PASSWORD" | chpasswd
 echo "$USERNAME password set"
-mkdir -p /home/$USERNAME
-chown $USERNAME /home/$USERNAME
 
 # Set root password
 echo "root:$PASSWD" | chpasswd
