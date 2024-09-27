@@ -563,6 +563,7 @@ set -e
 # Call script to load functions for AUR installation 
 source ./common-script.sh
 
+
 # Define functions
 
 # Get disk value from the first command-line argument
@@ -586,6 +587,8 @@ install_grub() {
     }
 }
 
+# Run function checkEnv
+checkEnv
 
 echo -ne "
 +--------------------+
@@ -754,17 +757,14 @@ echo "root password set"
 echo $NAME_OF_MACHINE > /etc/hostname
 
 # Call funciton for AUR Helpers
-checkEnv
 checkEscalationTool
 installParu
 
 EOF
 
-# Make common-script.sh executable
-chmod +x /mnt/common-script.sh
 
-# Make chroot-setup.sh executable
-chmod +x /mnt/chroot-setup.sh
+# Make chroot-setup.sh and common-script.sh executable
+chmod +x /mnt/chroot-setup.sh /mnt/common-script.sh
 
 # Execute the script inside chroot, passing $disk as an argument
 arch-chroot /mnt ./chroot-setup.sh "$disk"
