@@ -137,7 +137,9 @@ fi
 
 # Remove existing partitions and clear old signatures
 echo -ne "d\nw" | fdisk "$disk" || { echo "Failed to delete partitions"; exit 1; }
-dd if=/dev/zero of="$disk" bs=512 count=1 conv=notrunc || { echo "Failed to wipe disk"; exit 1; }
+#dd if=/dev/zero of="$disk" bs=512 count=1 conv=notrunc || { echo "Failed to wipe disk"; exit 1; }
+shred -n 1 -v "$disk"  # Overwrite the disk once with random data
+cryptsetup luksDump "$disk"  # Check for any existing LUKS devices
 
 # Create new GPT partition table and partitions with types
 echo "Creating new GPT table and partitions on $disk"
@@ -400,19 +402,6 @@ set -e
 # Get disk value from the first command-line argument
 disk="$1" 
 
-# Add user account
-useradd -d /home/$USERNAME -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME
-echo "$USERNAME created, home directory created, added to wheel and libvirt group, default shell set to /bin/bash"
-echo "$USERNAME:$PASSWORD" | chpasswd
-echo "$USERNAME password set"
-
-# Set root password
-echo "root:$PASSWD" | chpasswd
-echo "root password set"
-
-# Set hostname
-echo $NAME_OF_MACHINE > /etc/hostname
-
 update_sudoers() {
     cp /etc/sudoers /etc/sudoers.backup
     sed -i 's/^# *%wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
@@ -577,6 +566,19 @@ grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB config
 else
     echo "No NVIDIA GPUs detected. Skipping NVIDIA-related actions."
 fi
+
+# Add user account
+useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME
+echo "$USERNAME created, home directory created, added to wheel, power, stoage, uucp, and network groups, default shell set to /bin/bash"
+echo "$USERNAME:$PASSWORD" | chpasswd
+echo "$USERNAME password set"
+
+# Set root password
+echo "root:$PASSWD" | chpasswd
+echo "root password set"
+
+# Set hostname
+echo $NAME_OF_MACHINE > /etc/hostname
 
 EOF
 
