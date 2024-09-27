@@ -406,7 +406,7 @@ echo "$USERNAME created, home directory created, added to wheel and libvirt grou
 echo "$USERNAME:$PASSWORD" | chpasswd
 echo "$USERNAME password set"
 mkdir -p /home/$USERNAME
-chmod 751 -R $USERNAME /home/$USERNAME
+chown $USERNAME /home/$USERNAME
 
 # Set root password
 echo "root:$PASSWD" | chpasswd
