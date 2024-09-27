@@ -436,10 +436,10 @@ checkAURHelper() {
                 fi
             done
 
-            printf "%b\n" "${YELLOW}Installing yay as AUR helper...${RC}"
+            printf "%b\n" "${YELLOW}Installing paru as AUR helper...${RC}"
             "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm base-devel
             cd /opt && "$ESCALATION_TOOL" git clone https://aur.archlinux.org/paru.git && "$ESCALATION_TOOL" chown -R "$USER":"$USER" ./paru
-            cd yay-bin && makepkg --noconfirm -si
+            cd paru && makepkg --noconfirm -si
 
             if command_exists paru; then
                 AUR_HELPER="paru"
@@ -535,7 +535,7 @@ checkDistro() {
 }
 
 checkEnv() {
-    checkCommandRequirements 'curl groups sudo'
+    checkCommandRequirements 'sudo'
     checkPackageManager 'pacman'
     checkCurrentDirectoryWritable
     checkSuperUser
@@ -747,7 +747,7 @@ mkdir -p ./home/$USERNAME
 sleep 2
 chown $USERNAME:$USERNAME ./home/$USERNAME
 sleep 2
-chmod 700 $USERNAME ./home/$USERNAME
+chmod 700 ./home/$USERNAME
 
 # Set root password
 echo "root:$PASSWD" | chpasswd
