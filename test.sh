@@ -741,7 +741,9 @@ echo "$USERNAME password set"
 
 # Ensure user has a folder inside /home with ownership
 mkdir -p ./home/$USERNAME
+sleep 2
 chown $USERNAME:$USERNAME ./home/$USERNAME
+sleep 2
 chmod 700 $USERNAME ./home/$USERNAME
 
 # Set root password
