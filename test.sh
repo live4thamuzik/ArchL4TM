@@ -571,6 +571,7 @@ echo -ne "
 +--------------------------------------------------+
 | Adding user, setting passwords, setting hostname |
 +--------------------------------------------------+
+"
 
 # Add user account
 useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME
