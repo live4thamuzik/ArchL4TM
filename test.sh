@@ -567,6 +567,11 @@ else
     echo "No NVIDIA GPUs detected. Skipping NVIDIA-related actions."
 fi
 
+echo -ne "
++--------------------------------------------------+
+| Adding user, setting passwords, setting hostname |
++--------------------------------------------------+
+
 # Add user account
 useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME
 echo "$USERNAME created, home directory created, added to wheel, power, storage, uucp, and network groups, default shell set to /bin/bash"
