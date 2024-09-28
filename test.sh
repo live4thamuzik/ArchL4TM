@@ -87,26 +87,6 @@ rootpasswd () {
 }
 
 
-installParu() {
-    case "$PACKAGER" in
-        pacman)
-            if ! command_exists paru; then
-                printf "%b\n" "${YELLOW}Installing paru as AUR helper...${RC}"
-                "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm base-devel cargo
-                cd /opt && "$ESCALATION_TOOL" git clone https://aur.archlinux.org/paru.git && "$ESCALATION_TOOL" chown -R "$USER": ./paru
-                cd paru && makepkg --noconfirm -si
-                printf "%b\n" "${GREEN}Paru installed${RC}"
-            else
-                printf "%b\n" "${GREEN}Paru already installed${RC}"
-            fi
-            ;;
-        *)
-            printf "%b\n" "${RED}Unsupported package manager: ""$PACKAGER""${RC}"
-            ;;
-    esac
-}
-
-
 echo -ne "
 +-------------------+
 | Drive Preparation |
@@ -405,143 +385,6 @@ while true; do
 done
 
 
-# Save the functions and commands in a script file
-cat <<EOF > /mnt/common-script.sh
-
-#!/bin/sh -e
-
-# shellcheck disable=SC2034
-
-RC='\033[0m'
-RED='\033[31m'
-YELLOW='\033[33m'
-CYAN='\033[36m'
-GREEN='\033[32m'
-
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
-
-checkAURHelper() {
-    ## Check & Install AUR helper
-    if [ "$PACKAGER" = "pacman" ]; then
-        if [ -z "$AUR_HELPER_CHECKED" ]; then
-            AUR_HELPERS="paru"
-            for helper in ${AUR_HELPERS}; do
-                if command_exists "${helper}"; then
-                    AUR_HELPER=${helper}
-                    printf "%b\n" "${CYAN}Using ${helper} as AUR helper${RC}"
-                    AUR_HELPER_CHECKED=true
-                    return 0
-                fi
-            done
-
-            printf "%b\n" "${YELLOW}Installing paru as AUR helper...${RC}"
-            "$ESCALATION_TOOL" "$PACKAGER" -S --needed --noconfirm base-devel
-            cd /opt && "$ESCALATION_TOOL" git clone https://aur.archlinux.org/paru.git && "$ESCALATION_TOOL" chown -R "$USER":"$USER" ./paru
-            cd paru && makepkg --noconfirm -si
-
-            if command_exists paru; then
-                AUR_HELPER="paru"
-                AUR_HELPER_CHECKED=true
-            else
-                printf "%b\n" "${RED}Failed to install AUR helper.${RC}"
-                exit 1
-            fi
-        fi
-    fi
-}
-
-checkEscalationTool() {
-    ## Check for escalation tools.
-    if [ -z "$ESCALATION_TOOL_CHECKED" ]; then
-        ESCALATION_TOOLS='sudo doas'
-        for tool in ${ESCALATION_TOOLS}; do
-            if command_exists "${tool}"; then
-                ESCALATION_TOOL=${tool}
-                printf "%b\n" "${CYAN}Using ${tool} for privilege escalation${RC}"
-                ESCALATION_TOOL_CHECKED=true
-                return 0
-            fi
-        done
-
-        printf "%b\n" "${RED}Can't find a supported escalation tool${RC}"
-        exit 1
-    fi
-}
-
-checkCommandRequirements() {
-    ## Check for requirements.
-    REQUIREMENTS=$1
-    for req in ${REQUIREMENTS}; do
-        if ! command_exists "${req}"; then
-            printf "%b\n" "${RED}To run me, you need: ${REQUIREMENTS}${RC}"
-            exit 1
-        fi
-    done
-}
-
-checkPackageManager() {
-    ## Check Package Manager
-    if command_exists "${pacman}"; then
-        PACKAGER=${pacman}
-        printf "%b\n" "${CYAN}Using ${pacman} as package manager${RC}"
-    else
-        printf "%b\n" "${RED}Can't find a supported package manager${RC}"
-        exit 1
-    fi
-}
-
-checkSuperUser() {
-    ## Check SuperUser Group
-    SUPERUSERGROUP='wheel sudo root'
-    for sug in ${SUPERUSERGROUP}; do
-        if groups | grep -q "${sug}"; then
-            SUGROUP=${sug}
-            printf "%b\n" "${CYAN}Super user group ${SUGROUP}${RC}"
-            break
-        fi
-    done
-
-    ## Check if member of the sudo group.
-    if ! groups | grep -q "${SUGROUP}"; then
-        printf "%b\n" "${RED}You need to be a member of the sudo group to run me!${RC}"
-        exit 1
-    fi
-}
-
-checkCurrentDirectoryWritable() {
-    ## Check if the current directory is writable.
-    GITPATH="$(dirname "$(realpath "$0")")"
-    if [ ! -w "$GITPATH" ]; then
-        printf "%b\n" "${RED}Can't write to $GITPATH${RC}"
-        exit 1
-    fi
-}
-
-checkDistro() {
-    DTYPE="unknown"  # Default to unknown
-    # Use /etc/os-release for modern distro identification
-    if [ -f /etc/os-release ]; then
-        . /etc/os-release
-        DTYPE=$ID
-    fi
-}
-
-checkEnv() {
-    checkCommandRequirements 'sudo'
-    checkPackageManager 'pacman'
-    checkCurrentDirectoryWritable
-    checkSuperUser
-    checkDistro
-    checkEscalationTool
-    checkAURHelper
-}
-
-EOF
-
-
-
 echo -ne "
 +----------------+
 | Running chroot |
@@ -553,9 +396,6 @@ cat <<EOF > /mnt/chroot-setup.sh
 #!/bin/bash
 
 set -e
-
-# Call script to load functions for AUR installation 
-source ./common-script.sh
 
 # Define functions
 
@@ -580,9 +420,6 @@ install_grub() {
     }
 }
 
-# Run function checkEnv
-checkEnv
-checkPackageManager "pacman"
 
 echo -ne "
 +--------------------+
@@ -750,15 +587,16 @@ echo "root password set"
 # Set hostname
 echo $NAME_OF_MACHINE > /etc/hostname
 
-# Call funciton for AUR Helpers
-checkEscalationTool
-installParu
+# Install Paru
+#cd /opt && git clone https://aur.archlinux.org/paru.git && chown -R ./paru
+#sleep 1
+#cd paru && makepkg --noconfirm -si
 
 EOF
 
 
 # Make chroot-setup.sh and common-script.sh executable
-chmod +x /mnt/chroot-setup.sh /mnt/common-script.sh
+chmod +x /mnt/chroot-setup.sh
 
 # Execute the script inside chroot, passing $disk as an argument
 arch-chroot /mnt ./chroot-setup.sh "$disk"
