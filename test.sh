@@ -70,6 +70,7 @@ newuser () {
     export NAME_OF_MACHINE=$name_of_machine
 }
 
+# Set root password
 rootpasswd () {
     while true
     do
