@@ -23,6 +23,71 @@ echo -ne "
                                                                    
 "
 
+# Create username and password
+newuser () {
+    # Loop through user input until the user gives a valid username
+    while true
+    do 
+            read -r -p "Enter a username: " username
+            if [[ "${username,,}" =~ ^[a-z_]([a-z0-9_-]{0,31}|[a-z0-9_-]{0,30}\$)$ ]]
+            then 
+                    break
+            fi 
+            echo "Invalid username."
+    done 
+    export USERNAME=$username
+
+    while true
+    do
+        read -rs -p "Set a password: " PASSWORD1
+        echo -ne "\n"
+        read -rs -p "Confirm password: " PASSWORD2
+        echo -ne "\n"
+        if [[ "$PASSWORD1" == "$PASSWORD2" ]]; then
+            break
+        else
+            echo -ne "ERROR! Passwords do not match. \n"
+        fi
+    done
+    export PASSWORD=$PASSWORD1
+
+     # Loop through user input until the user gives a valid hostname, but allow the user to force save 
+    while true
+    do 
+            read -r -p "Enter a hostname: " name_of_machine
+            # hostname regex (!!couldn't find spec for computer name!!)
+            if [[ "${name_of_machine,,}" =~ ^[a-z][a-z0-9_.-]{0,62}[a-z0-9]$ ]]
+            then 
+                    break 
+            fi 
+            # if validation fails allow the user to force saving of the hostname
+            read -r -p "Hostname doesn't seem correct. Do you still want to save it? (y/n)" force 
+            if [[ "${force,,}" = "y" ]]
+            then 
+                    break 
+            fi 
+    done 
+    export NAME_OF_MACHINE=$name_of_machine
+}
+
+# Set root password
+rootpasswd () {
+    while true
+    do
+        read -rs -p "Set root password: " PASSWD1
+        echo -ne "\n"
+        read -rs -p "confirm password: " PASSWD2
+        echo -ne "\n"
+        if [[ "$PASSWD1" == "$PASSWD2" ]]; then
+            break
+        else
+            echo -ne "ERROR! Passwords do not match. \n"
+        fi
+    done
+    export PASSWD=$PASSWD1
+}
+
+
 echo -ne "
 +-------------------+
 | Drive Preparation |
@@ -74,6 +139,8 @@ fi
 # Remove existing partitions and clear old signatures
 echo -ne "d\nw" | fdisk "$disk" || { echo "Failed to delete partitions"; exit 1; }
 dd if=/dev/zero of="$disk" bs=512 count=1 conv=notrunc || { echo "Failed to wipe disk"; exit 1; }
+#shred -n 1 -v "$disk"  # Overwrite the disk once with random data
+#cryptsetup luksDump "$disk"  # Check for any existing LUKS devices
 
 # Create new GPT partition table and partitions with types
 echo "Creating new GPT table and partitions on $disk"
@@ -206,133 +273,22 @@ echo -ne "
 # Install base packages 
 pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed || { echo "Failed to install base system"; exit 1; }
 
-echo -ne "
-+----------------+
-| Generate fstab |
-+----------------+
-"
-
-# Generate fstab
-genfstab -U -p /mnt >> /mnt/etc/fstab || { echo "Failed to generate fstab"; exit 1; }
 
 echo -ne "
-+----------------+
-| Setting locale |
-+----------------+
++--------------------------+
+| Create user and hostname |
++--------------------------+
 "
+# Call functions
+newuser
 
-# Function to get a list of locales from /etc/locale.gen
-get_locales() {
-    awk '{print NR ". " $1}' /mnt/etc/locale.gen
-}
 
-# Collect locales into an array
-locales=($(get_locales))
-
-# Check if locales were collected
-if [ ${#locales[@]} -eq 0 ]; then
-    echo "No locales found in /etc/locale.gen. Please add some locales and try again."
-    exit 1
-fi
-
-# Constants
-PAGE_SIZE=80
-COLS=2        # Number of columns to display
-NUMBER_WIDTH=4 # Width for number and dot
-COLUMN_WIDTH=2 # Width of each column for locales
-
-# Function to display a page of locales in columns
-display_page() {
-    local start=$1
-    local end=$2
-    local count=0
-
-    echo "Locales ($((start + 1)) to $end of ${#locales[@]}):"
-
-    for ((i=start; i<end; i++)); do
-        # Print locales in columns with minimized gap
-        printf "%-${NUMBER_WIDTH}s%-${COLUMN_WIDTH}s" "${locales[$i]}" ""
-        count=$((count + 1))
-
-        if ((count % COLS == 0)); then
-            echo
-        fi
-    done
-
-    # Add a newline at the end if the last line isn't fully filled
-    if ((count % COLS != 0)); then
-        echo
-    fi
-}
-
-# Display pages of locales
-total_locales=${#locales[@]}
-current_page=0
-
-# Declare selected_locale outside the loop
-selected_locale=""
-
-while true; do
-    start=$((current_page * PAGE_SIZE))
-    end=$((start + PAGE_SIZE))
-    if ((end > total_locales)); then
-        end=$total_locales
-    fi
-
-    display_page $start $end
-
-    # Prompt user for selection or continue
-    echo -ne "Enter the number of your locale choice from this page, or press Enter to see more locales: "
-    read -r choice
-
-    # Check if user made a choice
-    if [[ "$choice" =~ ^[0-9]+$ ]]; then
-        if [[ "$choice" -ge 1 && "$choice" -le $total_locales ]]; then
-            # Extract the selected locale
-            selected_locale=$(echo "${locales[$((choice-1))]}" | awk '{print $2}')
-
-            # Check if the selected locale is commented
-            if [[ "$selected_locale" == \#* ]]; then
-                # Remove the leading '#' for uncommenting
-                uncommented_locale=$(echo "$selected_locale" | sed 's/^# //')
-                echo "Uncommenting locale: $uncommented_locale"
-                sed -i "/^# $uncommented_locale/s/^# //" /mnt/etc/locale.gen
-            else
-                echo "Selected locale is already active."
-            fi
-
-            # Run locale-gen to apply the changes and capture output
-            locale_gen_output=$(locale-gen 2>&1)
-
-            # Check if locale-gen was successful
-            if [[ $? -ne 0 ]]; then
-                echo "Error running locale-gen: $locale_gen_output"
-                exit 1
-            fi
-
-            # Set the locale in /etc/locale.conf
-            echo "LANG=\"$selected_locale\"" > /mnt/etc/locale.conf
-
-            # Re-evaluate locale variables after locale-gen
-            . /mnt/etc/locale.conf
-
-            # Verify locale setting
-            echo "Locale has been set to $selected_locale"
-            break
-        else
-            echo "Invalid selection. Please enter a valid number from the displayed list."
-        fi
-    elif [[ -z "$choice" ]]; then
-        # Continue to the next page
-        if ((end == total_locales)); then
-            echo "No more locales to display."
-            break
-        fi
-        current_page=$((current_page + 1))
-    else
-        echo "Invalid input. Please enter a number or press Enter to continue."
-    fi
-done
+echo -ne "
++-------------------+
+| Set root password |
++-------------------+
+"
+rootpasswd
 
 echo -ne "
 +------------------+
@@ -342,8 +298,8 @@ echo -ne "
 
 # Function to get a list of timezones
 get_timezones() {
-  local count=1
-  find /mnt/usr/share/zoneinfo -type f | sed 's|/mnt/usr/share/zoneinfo/||' | awk -v cnt=$count '{print cnt". "$0; cnt++}'
+ local count=1
+ find /mnt/usr/share/zoneinfo -type f | sed 's|/mnt/usr/share/zoneinfo/||' | awk -v cnt=$count '{print cnt". "$0; cnt++}'
 }
 
 # Collect timezones into an array
@@ -351,8 +307,8 @@ mapfile -t timezones < <(get_timezones)
 
 # Check if timezones were collected
 if [ ${#timezones[@]} -eq 0 ]; then
-  echo "No timezones found. Please check the timezone directory and try again."
-  exit 1
+ echo "No timezones found. Please check the timezone directory and try again."
+ exit 1
 fi
 
 # Constants
@@ -363,26 +319,26 @@ COLUMN_WIDTH=2  # Width of each column for timezones
 
 # Function to display a page of timezones in columns
 display_page() {
-  local start=$1
-  local end=$2
-  local count=0
+ local start=$1
+ local end=$2
+ local count=0
 
-  echo "Timezones ($((start + 1)) to $end of ${#timezones[@]}):"
+ echo "Timezones ($((start + 1)) to $end of ${#timezones[@]}):"
 
-  for ((i=start; i<end; i++)); do
-    # Print timezones in columns with minimized gap
-    printf "%-${NUMBER_WIDTH}s%-${COLUMN_WIDTH}s" "${timezones[$i]}" ""
-    count=$((count + 1))
-    
-    if ((count % COLS == 0)); then
-      echo
-    fi
-  done
-
-  # Add a newline at the end if the last line isn't fully filled
-  if ((count % COLS != 0)); then
-    echo
+ for ((i=start; i<end; i++)); do
+  # Print timezones in columns with minimized gap
+  printf "%-${NUMBER_WIDTH}s%-${COLUMN_WIDTH}s" "${timezones[$i]}" ""
+  count=$((count + 1))
+  
+  if ((count % COLS == 0)); then
+   echo
   fi
+ done
+
+ # Add a newline at the end if the last line isn't fully filled
+ if ((count % COLS != 0)); then
+  echo
+ fi
 }
 
 # Display pages of timezones
@@ -390,148 +346,44 @@ total_timezones=${#timezones[@]}
 current_page=0
 
 while true; do
-  start=$((current_page * PAGE_SIZE))
-  end=$((start + PAGE_SIZE))
-  if ((end > total_timezones)); then
-    end=$total_timezones
-  fi
+ start=$((current_page * PAGE_SIZE))
+ end=$((start + PAGE_SIZE))
+ if ((end > total_timezones)); then
+  end=$total_timezones
+ fi
 
-  display_page $start $end
+ display_page $start $end
 
-  # Prompt user for selection or continue
-  echo -ne "Enter the number of your timezone choice from this page, or press Enter to see more timezones: "
-  read -r choice
+ # Prompt user for selection or continue
+ echo -ne "Enter the number of your timezone choice from this page, or press Enter to see more timezones: "
+ read -r choice
 
-  # Check if user made a choice
-  if [[ "$choice" =~ ^[0-9]+$ ]]; then
-    if [[ "$choice" -ge 1 && "$choice" -le $total_timezones ]]; then
-      # Extract the selected timezone
-      selected_timezone=$(echo "${timezones[$((choice-1))]}" | awk '{print $2}')
+ # Check if user made a choice
+ if [[ "$choice" =~ ^[0-9]+$ ]]; then
+  if [[ "$choice" -ge 1 && "$choice" -le $total_timezones ]]; then
+   # Extract the selected timezone
+   selected_timezone=$(echo "${timezones[$((choice-1))]}" | awk '{print $2}')
 
-      # Set timezone
-      echo "Setting timezone to $selected_timezone"
-      ln -sf "/mnt/usr/share/zoneinfo/$selected_timezone" /mnt/etc/localtime
+   # Set timezone within the chroot
+   arch-chroot /mnt /bin/bash -c "ln -sf /usr/share/zoneinfo/$selected_timezone /etc/localtime"
 
-      # Verify timezone setting
-      echo "Timezone has been set to $(readlink -f /mnt/etc/localtime)"
-      break
-    else
-      echo "Invalid selection. Please enter a valid number from the displayed list."
-    fi
-  elif [[ -z "$choice" ]]; then
-    # Continue to the next page
-    if ((end == total_timezones)); then
-      echo "No more timezones to display."
-      break
-    fi
-    current_page=$((current_page + 1))
+   # Verify timezone setting
+   arch-chroot /mnt /bin/bash -c "echo \"Timezone has been set to \$(readlink -f /etc/localtime)\""
+   break
   else
-    echo "Invalid input. Please enter a number or press Enter to continue."
+   echo "Invalid selection. Please enter a valid number from the displayed list."
   fi
+ elif [[ -z "$choice" ]]; then
+  # Continue to the next page
+  if ((end == total_timezones)); then
+   echo "No more timezones to display."
+   break
+  fi
+  current_page=$((current_page + 1))
+ else
+  echo "Invalid input. Please enter a number or press Enter to continue."
+ fi
 done
-
-echo -ne "
-+--------------+
-| Set hostname |
-+--------------+
-"
-
-set_hostname() {
-  # Prompt user to enter hostname
-  read -p "Enter your desired hostname: " hostname
-
-  # Ensure hostname is not empty
-  if [ -z "$hostname" ]; then
-    echo "Hostname cannot be empty. Exiting."
-    exit 1
-  fi
-
-  # Write the hostname to /mnt/etc/hostname
-  echo "$hostname" > /mnt/etc/hostname || { echo "Failed to set hostname"; exit 1; }
-
-  echo "Hostname set to $hostname"
-}
-
-# Call the function to set hostname
-set_hostname
-
-echo -ne "
-+-----------------+
-| Create new user |
-+-----------------+
-"
-
-create_user() {
-    # Prompt for username
-    read -p "Enter a username: " user
-
-    # Validate username (non-empty) 
-    if [ -z "$user" ]; then
-        echo "Username cannot be empty. Please try again."
-        return 1 
-    fi
-
-    # Save the user creation commands in a script file to be executed in chroot
-    cat <<EOF > /mnt/create-user.sh
-    #!/bin/bash
-
-    set -e
-
-    # Check if the user already exists within the chroot
-    if id "$user" &>/dev/null; then
-        echo "User '$user' already exists. Please choose a different username."
-        exit 1
-    fi
-
-    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$user" || {
-        echo "Failed to create user '$user'."
-        exit 1
-    }
-
-    # Prompt for and set password (with confirmation)
-    while true; do
-        read -s -p "Enter password for '$user': " password
-        echo
-        read -s -p "Confirm password: " confirm_password
-        echo
-
-        if [ "$password" == "$confirm_password" ]; then
-            passwd "$user"  # Use interactive passwd directly
-            if [ $? -eq 0 ]; then
-                echo "Password for '$user' set successfully."
-                break
-            else
-                echo "Failed to set password for '$user'. Please try again."
-            fi
-        else
-            echo "Passwords do not match. Please try again."
-        fi
-    done
-
-    # Set ownership and permissions for the home directory (within chroot)
-    chown -R "$user":"$user" /home/"$user"
-    chmod 700 /home/"$user"
-
-    echo "User '$user' created successfully with password set."
-EOF
-
-    chmod +x /mnt/create-user.sh
-
-    # Execute the user creation script inside chroot
-    if ! arch-chroot /mnt ./create-user.sh; then
-        echo "User creation failed within the chroot environment. Exiting."
-        exit 1
-    fi
-
-    echo "User '$user' created successfully."
-}
-
-# Call the function to create the user
-if ! create_user; then
-    echo "User creation failed. Exiting."
-    exit 1
-fi
-
 
 
 echo -ne "
@@ -550,27 +402,6 @@ set -e
 
 # Get disk value from the first command-line argument
 disk="$1" 
-
-set_root_password() {
-    while true; do
-        read -s -p "Set root password: " root_password
-        echo
-        read -s -p "Confirm root password: " confirm_root_password
-        echo
-
-        if [ "$root_password" == "$confirm_root_password" ]; then
-            passwd  # Use interactive passwd directly
-            if [ $? -eq 0 ]; then
-                echo "Root password set successfully."
-                break
-            else
-                echo "Failed to set root password. Please try again."
-            fi
-        else
-            echo "Passwords do not match. Please try again."
-        fi
-    done
-}
 
 update_sudoers() {
     cp /etc/sudoers /etc/sudoers.backup
@@ -612,7 +443,7 @@ echo -ne "
 
 # Install additional needed packages
 echo "Installing Packages"
-pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot || { echo "Failed to install packages"; exit 1; }
+pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot cargo || { echo "Failed to install packages"; exit 1; }
 
 
 echo -ne "
@@ -644,6 +475,23 @@ echo "NetworkManager enabled"
 systemctl enable fstrim.timer || { echo "Failed to enable SSD support"; exit 1; }
 echo "SSD support enabled"
 
+echo -ne "
++----------------+
+| Setting locale |
++----------------+
+"
+
+# Uncomment  locale
+sed --in-place=.bak 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+
+# Generate locales
+locale-gen
+
+# Set the locale in /etc/locale.conf within the chroot
+echo LANG=en_US.UTF-8 > /etc/locale.conf
+
+# Remove .bak file
+rm -rf /etc/locale.gen.bak
 
 echo -ne "
 +------------------+
@@ -656,8 +504,10 @@ sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev autodetect modconf block encrypt lv
 mkinitcpio -p linux
 
 # Call defined functions
-set_root_password
+#set_root_password
 update_sudoers
+
+
 echo -ne "
 +-----------------+
 | Installing GRUB |
@@ -678,8 +528,8 @@ sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved' /etc/default/grub || { echo "Faile
 sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice='"$disk"'3:volgroup0 loglevel=3"' /etc/default/grub || { echo "Failed to update GRUB_CMDLINE_LINUX_DEFAULT"; exit 1; }
 sed -i '/^#GRUB_ENABLE_CRYPTODISK=y/c\GRUB_ENABLE_CRYPTODISK=y' /etc/default/grub || { echo "Failed to update GRUB_ENABLE_CRYPTODISK"; exit 1; }
 sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub || { echo "Failed to update GRUB_SAVEDEFAULT"; exit 1; }
+cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale.en.mo || { echo "Failed to update copy locale for GRUB messages"; exit 1; }
 grub-mkconfig -o /boot/grub/grub.cfg || { echo "Failed to regenerate GRUB configuration"; exit 1; }
-
 
 
 echo -ne "
@@ -696,6 +546,7 @@ if [ ${#dGPU[@]} -gt 0 ]; then
     for gpu in "${dGPU[@]}"; do
         echo "  $gpu"
     done
+
 
 echo -ne "
 +-------------------+
@@ -717,12 +568,95 @@ else
     echo "No NVIDIA GPUs detected. Skipping NVIDIA-related actions."
 fi
 
+echo -ne "
++--------------------------------------------------+
+| Adding user, setting passwords, setting hostname |
++--------------------------------------------------+
+"
+
+# Add user account
+useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME
+echo "$USERNAME created, home directory created, added to wheel, power, storage, uucp, and network groups, default shell set to /bin/bash"
+echo "$USERNAME:$PASSWORD" | chpasswd
+echo "$USERNAME password set"
+
+# Ensure user has a folder inside /home with ownership
+mkdir -p ./home/$USERNAME
+sleep 2
+chown $USERNAME:$USERNAME ./home/$USERNAME
+sleep 2
+chmod 700 ./home/$USERNAME
+
+# Set root password
+echo "root:$PASSWD" | chpasswd
+echo "root password set"
+
+# Set hostname
+echo $NAME_OF_MACHINE > /etc/hostname
+
+# Install Paru
+#cd /opt && git clone https://aur.archlinux.org/paru.git && chown -R ./paru
+#sleep 2
+#cd paru && makepkg --noconfirm -si
+
 EOF
 
+
+# Make chroot-setup.sh and common-script.sh executable
 chmod +x /mnt/chroot-setup.sh
 
 # Execute the script inside chroot, passing $disk as an argument
 arch-chroot /mnt ./chroot-setup.sh "$disk"
+
+# Select GUI (Optional) 
+echo -ne "
++-----------------------+
+| Select GUI (Optional) |
++-----------------------+
+"
+
+install_gui() {
+    local gui_choice="$1"
+
+    case $gui_choice in
+        "GNOME")
+            echo "Installing GNOME desktop environment..."
+            arch-chroot /mnt pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox || {
+                echo "Failed to install GNOME packages. Exiting."
+                exit 1
+            }
+
+            arch-chroot /mnt systemctl enable gdm.service || {
+                echo "Failed to enable gdm service. Exiting."
+                exit 1
+            }
+            echo "GNOME installed and gdm enabled."
+            ;;
+        "KDE Plasma")
+            echo "Installing KDE Plasma desktop environment..."
+            arch-chroot /mnt pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance || {
+                echo "Failed to install KDE Plasma packages. Exiting."
+                exit 1
+            }
+
+            arch-chroot /mnt systemctl enable sddm.service || {
+                echo "Failed to enable sddm service. Exiting."
+                exit 1
+            }
+            echo "KDE Plasma installed and sddm enabled."
+            ;;
+        *) 
+            echo "Server Selected. Skipping GUI installation."
+            ;;
+    esac
+}
+
+# Ask the user if they want to install a GUI
+options=("Server (No GUI)" "GNOME" "KDE Plasma")
+select gui_choice in "${options[@]}"; do
+    install_gui "$gui_choice"
+    break
+done
 
 echo -ne "
 
