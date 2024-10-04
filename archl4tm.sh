@@ -581,11 +581,11 @@ echo "$USERNAME:$PASSWORD" | chpasswd
 echo "$USERNAME password set"
 
 # Ensure user has a folder inside /home with ownership
-mkdir -p ./home/$USERNAME
+mkdir -p /home/$USERNAME
 sleep 2
-chown $USERNAME:$USERNAME ./home/$USERNAME
+chown $USERNAME:$USERNAME /home/$USERNAME
 sleep 2
-chmod 700 ./home/$USERNAME
+chmod 700 /home/$USERNAME
 
 # Set root password
 echo "root:$PASSWD" | chpasswd
