@@ -574,18 +574,16 @@ echo -ne "
 +--------------------------------------------------+
 "
 
+# Configure useradd defaults
+if ! grep -q "CREATE_HOME yes" /etc/default/useradd; then
+    echo "CREATE_HOME yes" >> /etc/default/useradd
+fi
+
 # Add user account
 useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME
 echo "$USERNAME created, home directory created, added to wheel, power, storage, uucp, and network groups, default shell set to /bin/bash"
 echo "$USERNAME:$PASSWORD" | chpasswd
 echo "$USERNAME password set"
-
-# Ensure user has a folder inside /home with ownership
-mkdir -p /home/$USERNAME
-sleep 2
-chown $USERNAME:$USERNAME /home/$USERNAME
-sleep 2
-chmod 700 /home/$USERNAME
 
 # Set root password
 echo "root:$PASSWD" | chpasswd
