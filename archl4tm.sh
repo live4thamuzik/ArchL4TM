@@ -654,14 +654,14 @@ install_aur_helper() {
 }
 
 # Ask the user which AUR helper they want
-options=(Yay Paru)
+options=('Yay' 'Paru')
 select aur_helper in "${options[@]}"; do
   case $aur_helper in
-  "Yay")
+  'Yay')
     pacman -Sy --noconfirm --needed go
     install_aur_helper "Yay" "https://aur.archlinux.org/yay.git"
     ;;
-  "Paru")
+  'Paru')
     pacman -Sy --noconfirm --needed cargo
     install_aur_helper "Paru" "https://aur.archlinux.org/paru.git"
     ;;
