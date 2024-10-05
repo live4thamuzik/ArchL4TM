@@ -290,6 +290,7 @@ echo -ne "
 "
 rootpasswd
 
+
 echo -ne "
 +------------------+
 | Setting timezone |
@@ -443,7 +444,7 @@ echo -ne "
 
 # Install additional needed packages
 echo "Installing Packages"
-pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot cargo || { echo "Failed to install packages"; exit 1; }
+pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot shadow base-passwd cargo || { echo "Failed to install packages"; exit 1; }
 
 
 echo -ne "
@@ -574,16 +575,34 @@ echo -ne "
 +--------------------------------------------------+
 "
 
-# Configure useradd defaults
-if ! grep -q "CREATE_HOME yes" /etc/default/useradd; then
-    echo "CREATE_HOME yes" >> /etc/default/useradd
-fi
+# Ensure /etc/skel exists and has correct permissions
+  if [ ! -d /etc/skel ]; then
+    echo 'Warning: /etc/skel does not exist. Creating it...'
+    mkdir -p /etc/skel
+    chmod 0755 /etc/skel
+  fi
 
-# Add user account
-useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME
-echo "$USERNAME created, home directory created, added to wheel, power, storage, uucp, and network groups, default shell set to /bin/bash"
-echo "$USERNAME:$PASSWORD" | chpasswd
-echo "$USERNAME password set"
+
+# Explicitly manage /etc/skel and create home directory
+  cp -r /etc/skel /home/$USERNAME
+  chown -R $USERNAME:$USERNAME /home/$USERNAME
+  chmod 0700 /home/$USERNAME
+  echo 'Home directory created and populated from /etc/skel'
+
+
+# Verify /etc/shadow update
+  ls -l /etc/shadow  # Check before useradd
+  useradd -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME 
+  ls -l /etc/shadow  # Check after useradd
+  echo 'User added and /etc/shadow updated'
+
+
+# Validate /etc/default/useradd settings
+  echo '--- /etc/default/useradd settings ---'
+  echo "SKEL: $(grep ^SKEL= /etc/default/useradd)"
+  echo "HOME: $(grep ^HOME= /etc/default/useradd)"
+  echo "SHELL: $(grep ^SHELL= /etc/default/useradd)" 
+
 
 # Set root password
 echo "root:$PASSWD" | chpasswd
