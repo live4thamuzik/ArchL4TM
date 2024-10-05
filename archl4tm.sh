@@ -582,6 +582,9 @@ echo -ne "
     chmod 0755 /etc/skel
   fi
 
+# Create user
+ useradd -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME 
+ echo "$USERNAME:$PASSWORD" | chpasswd
 
 # Explicitly manage /etc/skel and create home directory
   cp -r /etc/skel /home/$USERNAME
@@ -592,8 +595,7 @@ echo -ne "
 
 # Verify /etc/shadow update
   ls -l /etc/shadow  # Check before useradd
-  useradd -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME 
-  ls -l /etc/shadow  # Check after useradd
+   ls -l /etc/shadow  # Check after useradd
   echo 'User added and /etc/shadow updated'
 
 
