@@ -654,7 +654,7 @@ install_aur_helper() {
 }
 
 # Ask the user which AUR helper they want
-options=("Yay" "Paru")
+options=(Yay Paru)
 select aur_helper in "${options[@]}"; do
   case $aur_helper in
   "Yay")
