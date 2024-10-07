@@ -64,7 +64,7 @@ The script will install Arch Linux on EFI systems with minimal config and packag
   - ParallelDownloads
   - MultiLib
 
-  # AUR Helper options:
+  # AUR Helper options:   (Removed - Not working)
   - Paru
   - Yay
 
