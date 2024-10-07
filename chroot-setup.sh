@@ -186,7 +186,7 @@ echo -ne "
   fi
 
 # Create user
- useradd -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME 
+ useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME 
  echo "$USERNAME:$PASSWORD" | chpasswd
 
 # Explicitly manage /etc/skel and create home directory
@@ -257,7 +257,7 @@ install_aur_helper() {
 }
 
 # Ask the user which AUR helper they want
-options=(Yay Paru)
+options=("Yay" "Paru")
 select aur_helper in "${options[@]}"; do
   case $aur_helper in
   "Yay")
