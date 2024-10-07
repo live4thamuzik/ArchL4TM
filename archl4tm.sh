@@ -697,7 +697,7 @@ echo -ne "
 "
 
 # Remove chroot setup script
-rm -rf ./chroot-setup.sh
+rm -rf /mnt/chroot-setup.sh
 
 # Unmount all partitions under /mnt
 echo "Unmounting partitions..."
