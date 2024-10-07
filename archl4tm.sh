@@ -95,7 +95,7 @@ echo -ne "
 "
 
 # List Disks
-sgdisk -l
+fdisk -l
 
 # Select Disk
 read -p "Enter the disk (e.g., /dev/sda): " disk
@@ -121,7 +121,7 @@ fi
 
 # List current partitions
 echo "Current partitions on $disk:"
-sgdisk -l "$disk"
+fdisk -l "$disk"
 
 # Confirm deletion of existing partitions
 echo "This will delete all existing partitions on $disk. Proceed? (Y/n)"
@@ -137,7 +137,7 @@ if [ "$proceed" != "y" ] && [ -n "$proceed" ]; then
 fi
 
 # Remove existing partitions and clear old signatures
-echo -ne "d\nw" | sgdisk "$disk" || { echo "Failed to delete partitions"; exit 1; }
+echo -ne "d\nw" | fdisk "$disk" || { echo "Failed to delete partitions"; exit 1; }
 dd if=/dev/zero of="$disk" bs=512 count=1 conv=notrunc || { echo "Failed to wipe disk"; exit 1; }
 #shred -n 1 -v "$disk"  # Overwrite the disk once with random data
 #cryptsetup luksDump "$disk"  # Check for any existing LUKS devices
@@ -164,7 +164,7 @@ echo "t"       # Change partition type
 echo "3"       # Partition 3
 echo "44"      # Set type to LVM
 echo "w"       # Write changes
-) | sgdisk "$disk" || { echo "Failed to create partitions"; exit 1; }
+) | fdisk "$disk" || { echo "Failed to create partitions"; exit 1; }
 partprobe "$disk" || { echo "Failed to re-read partition table"; exit 1; }
 
 echo -ne "
