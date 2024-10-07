@@ -583,7 +583,7 @@ echo -ne "
   fi
 
 # Create user
- useradd -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME 
+ useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME 
  echo "$USERNAME:$PASSWORD" | chpasswd
 
 # Explicitly manage /etc/skel and create home directory
