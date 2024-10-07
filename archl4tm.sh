@@ -576,7 +576,7 @@ echo -ne "
 "
 
 # Create user
- useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME 
+ useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME || { echo "Failed to create user"; exit 1; }
  echo "$USERNAME:$PASSWORD" | chpasswd
 
 # Set root password
