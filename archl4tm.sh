@@ -575,36 +575,9 @@ echo -ne "
 +--------------------------------------------------+
 "
 
-# Ensure /etc/skel exists and has correct permissions
-  if [ ! -d /etc/skel ]; then
-    echo 'Warning: /etc/skel does not exist. Creating it...'
-    mkdir -p /etc/skel
-    chmod 0755 /etc/skel
-  fi
-
 # Create user
  useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME 
  echo "$USERNAME:$PASSWORD" | chpasswd
-
-# Explicitly manage /etc/skel and create home directory
-  cp -r /etc/skel /home/$USERNAME
-  chown -R $USERNAME:$USERNAME /home/$USERNAME
-  chmod 0700 /home/$USERNAME
-  echo 'Home directory created and populated from /etc/skel'
-
-
-# Verify /etc/shadow update
-  ls -l /etc/shadow  # Check before useradd
-   ls -l /etc/shadow  # Check after useradd
-  echo 'User added and /etc/shadow updated'
-
-
-# Validate /etc/default/useradd settings
-  echo '--- /etc/default/useradd settings ---'
-  echo "SKEL: $(grep ^SKEL= /etc/default/useradd)"
-  echo "HOME: $(grep ^HOME= /etc/default/useradd)"
-  echo "SHELL: $(grep ^SHELL= /etc/default/useradd)" 
-
 
 # Set root password
 echo "root:$PASSWD" | chpasswd
@@ -612,16 +585,6 @@ echo "root password set"
 
 # Set hostname
 echo $NAME_OF_MACHINE > /etc/hostname
-
-# Install AUR Helper
-echo -ne "
-+--------------------+
-| Install AUR Helper |
-+--------------------+
-"
-
-# Create a temporary user for building AUR packages
-useradd -m -G wheel -s /bin/bash temp_aur_user
 
 EOF
 
