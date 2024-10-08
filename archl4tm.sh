@@ -516,7 +516,7 @@ echo -ne
 mkfs.ext4 /dev/volgroup0/lv_home || { echo "Failed to format home volume"; exit 1; }
 
 # Create /home directory
-mkdir -p /home
+mkdir -p /home || { echo "Failed to make /home directory"; exit 1; }
 
 # Mount home volume
 mount /dev/volgroup0/lv_home /home || { echo "Failed to mount /home"; exit 1; }
