@@ -23,6 +23,14 @@ echo -ne "
                                                                    
 "
 
+# Logging
+log_error() {
+    local message="$1"
+    local err_code="$2"
+    echo "Error: $message (exit code: $err_code)" >&2
+    # Add more error handling logic if needed (e.g., send an email alert)
+}
+
 # Create username and password
 newuser () {
     # Loop through user input until the user gives a valid username
@@ -575,13 +583,17 @@ echo -ne "
 +--------------------------------------------------+
 "
 
-# Create user
- useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $USERNAME || { echo "Failed to create user"; exit 1; }
- echo "$USERNAME:$PASSWORD" | chpasswd
+ # Create user home directory
+    if ! useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$USERNAME"; then
+        echo "Error creating user $USERNAME. Check /var/log/arch_install.log for details." >&2
+        exit 1
+    fi
 
-# Set root password
-echo "root:$PASSWD" | chpasswd
-echo "root password set"
+    # Set user password
+    if ! echo "$USERNAME:$PASSWORD" | chpasswd; then
+        echo "Error setting password for user $USERNAME. Check /var/log/arch_install.log for details." >&2
+        exit 1
+    fi 
 
 # Set hostname
 echo $NAME_OF_MACHINE > /etc/hostname
