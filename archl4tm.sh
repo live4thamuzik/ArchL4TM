@@ -240,13 +240,6 @@ mount "${disk}2" /mnt/boot || { echo "Failed to mount /boot"; exit 1; }
 mkdir -p /mnt/boot/EFI
 mount "${disk}1" /mnt/boot/EFI || { echo "Failed to mount /boot"; exit 1; }
 
-# Format home volume
-mkfs.ext4 /dev/volgroup0/lv_home || { echo "Failed to format home volume"; exit 1; }
-
-# Create /home directory and mount home volume
-mkdir -p /mnt/home
-mount /dev/volgroup0/lv_home /mnt/home || { echo "Failed to mount /home"; exit 1; }
-
 # Ensure /mnt/etc exists
 mkdir -p /mnt/etc
 
@@ -512,6 +505,24 @@ echo -ne "
 sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev autodetect modconf block encrypt lvm2 filesystems keyboard fsck)/' /etc/mkinitcpio.conf
 mkinitcpio -p linux
 
+
+echo -ne 
++------------------+
+| Setting up /home |
++------------------+
+"
+
+# Format home volume
+mkfs.ext4 /dev/volgroup0/lv_home || { echo "Failed to format home volume"; exit 1; }
+
+# Create /home directory
+mkdir -p /home
+
+# Mount home volume
+mount /dev/volgroup0/lv_home /home || { echo "Failed to mount /home"; exit 1; }
+
+
+
 echo -ne "
 +--------------------------------------------------+
 | Adding user, setting passwords, setting hostname |
@@ -519,10 +530,7 @@ echo -ne "
 "
 
  # Create user and home directory
-echo "Tracing useradd with strace..." 
-strace -f -o useradd.trace useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$USERNAME"
-echo "useradd trace complete."
-
+useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$USERNAME"
 if [[ $? -ne 0 ]]; then
     log_error "Error creating user $USERNAME" $?
     exit $?  # Exit with the useradd exit code
