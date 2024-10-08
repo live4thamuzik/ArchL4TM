@@ -290,7 +290,7 @@ echo -ne "
 "
 # Generate FStab
 genfstab -U -p /mnt >> /mnt/etc/fstab
-
+echo "/mnt/etc/fstab created"
 
 echo -ne "
 +--------------------------+
