@@ -518,12 +518,15 @@ echo -ne "
 +--------------------------------------------------+
 "
 
- # Create user home directory
-    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$USERNAME" 
-    if [[ $? -ne 0 ]]; then 
-        log_error "Error creating user $USERNAME" $?
-        exit $?  # Exit with the useradd exit code
-    fi
+ # Create user and home directory
+echo "Tracing useradd with strace..." 
+strace -f -o useradd.trace useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$USERNAME"
+echo "useradd trace complete."
+
+if [[ $? -ne 0 ]]; then
+    log_error "Error creating user $USERNAME" $?
+    exit $?  # Exit with the useradd exit code
+fi
 
     # Set user password
     echo "$USERNAME:$PASSWORD" | chpasswd
