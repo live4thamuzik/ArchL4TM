@@ -512,8 +512,36 @@ echo -ne "
 sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev autodetect modconf block encrypt lvm2 filesystems keyboard fsck)/' /etc/mkinitcpio.conf
 mkinitcpio -p linux
 
+echo -ne "
++--------------------------------------------------+
+| Adding user, setting passwords, setting hostname |
++--------------------------------------------------+
+"
+
+ # Create user home directory
+    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$USERNAME" 
+    if [[ $? -ne 0 ]]; then 
+        log_error "Error creating user $USERNAME" $?
+        exit $?  # Exit with the useradd exit code
+    fi
+
+    # Set user password
+    echo "$USERNAME:$PASSWORD" | chpasswd
+    if [[ $? -ne 0 ]]; then
+        log_error "Error setting password for user $USERNAME" $?
+        exit $?  # Exit with the chpasswd exit code
+    fi 
+
+# Set root password
+if ! echo "root:$PASSWD" | chpasswd; then
+    log_error "Error setting root password" $?
+    exit $?
+fi
+
+# Set hostname
+echo $NAME_OF_MACHINE > /etc/hostname
+
 # Call defined functions
-#set_root_password
 update_sudoers
 
 
@@ -577,29 +605,6 @@ else
     echo "No NVIDIA GPUs detected. Skipping NVIDIA-related actions."
 fi
 
-echo -ne "
-+--------------------------------------------------+
-| Adding user, setting passwords, setting hostname |
-+--------------------------------------------------+
-"
-
- # Create user home directory
-    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$USERNAME" 
-    if [[ $? -ne 0 ]]; then 
-        log_error "Error creating user $USERNAME" $?
-        exit $?  # Exit with the useradd exit code
-    fi
-
-    # Set user password
-    echo "$USERNAME:$PASSWORD" | chpasswd
-    if [[ $? -ne 0 ]]; then
-        log_error "Error setting password for user $USERNAME" $?
-        exit $?  # Exit with the chpasswd exit code
-    fi 
-
-
-# Set hostname
-echo $NAME_OF_MACHINE > /etc/hostname
 
 EOF
 
