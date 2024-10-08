@@ -519,7 +519,7 @@ mkfs.ext4 /dev/volgroup0/lv_home || { echo "Failed to format home volume"; exit 
 mkdir -p /home || { echo "Failed to make /home directory"; exit 1; }
 
 # Mount home volume
-mount /dev/volgroup0/lv_home /home || { echo "Failed to mount /home"; exit 1; }
+mount /dev/mapper/volgroup0-lv_home /home || { echo "Failed to mount /home"; exit 1; }
 
 
 
