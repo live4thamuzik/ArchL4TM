@@ -513,7 +513,7 @@ echo -ne "
 "
 
 # Format home volume
-mkfs.ext4 /dev/volgroup0/lv_home || { echo "Failed to format home volume"; exit 1; }
+mkfs.ext4 /dev/mapper/volgroup0-lv_home || { echo "Failed to format home volume"; exit 1; }
 
 # Create /home directory
 mkdir -p /home || { echo "Failed to make /home directory"; exit 1; }
