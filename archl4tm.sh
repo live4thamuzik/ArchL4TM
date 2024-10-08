@@ -506,7 +506,7 @@ sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev autodetect modconf block encrypt lv
 mkinitcpio -p linux
 
 
-echo -ne 
+echo -ne "
 +------------------+
 | Setting up /home |
 +------------------+
