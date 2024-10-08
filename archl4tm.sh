@@ -584,16 +584,19 @@ echo -ne "
 "
 
  # Create user home directory
-    if ! useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$USERNAME"; then
-        echo "Error creating user $USERNAME. Check /var/log/arch_install.log for details." >&2
-        exit 1
+    useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$USERNAME" 
+    if [[ $? -ne 0 ]]; then 
+        log_error "Error creating user $USERNAME" $?
+        exit $?  # Exit with the useradd exit code
     fi
 
     # Set user password
-    if ! echo "$USERNAME:$PASSWORD" | chpasswd; then
-        echo "Error setting password for user $USERNAME. Check /var/log/arch_install.log for details." >&2
-        exit 1
+    echo "$USERNAME:$PASSWORD" | chpasswd
+    if [[ $? -ne 0 ]]; then
+        log_error "Error setting password for user $USERNAME" $?
+        exit $?  # Exit with the chpasswd exit code
     fi 
+
 
 # Set hostname
 echo $NAME_OF_MACHINE > /etc/hostname
