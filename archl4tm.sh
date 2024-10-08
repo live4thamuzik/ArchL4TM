@@ -240,6 +240,15 @@ mount "${disk}2" /mnt/boot || { echo "Failed to mount /boot"; exit 1; }
 mkdir -p /mnt/boot/EFI
 mount "${disk}1" /mnt/boot/EFI || { echo "Failed to mount /boot"; exit 1; }
 
+# Format home volume
+mkfs.ext4 /dev/volgroup0/lv_home || { echo "Failed to format home volume"; exit 1; }
+
+# Create /home directory
+mkdir -p /mnt/home || { echo "Failed to make /home directory"; exit 1; }
+
+# Mount home volume
+mount /dev/volgroup0/lv_home /mnt/home || { echo "Failed to mount /home"; exit 1; }
+
 # Ensure /mnt/etc exists
 mkdir -p /mnt/etc
 
@@ -273,6 +282,14 @@ echo -ne "
 
 # Install base packages 
 pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed || { echo "Failed to install base system"; exit 1; }
+
+echo -ne "
++----------+
+| Genfstab |
++----------+
+"
+# Generate FStab
+genfstab -U -p /mnt >> /mnt/etc/fstab
 
 
 echo -ne "
@@ -507,42 +524,18 @@ mkinitcpio -p linux
 
 
 echo -ne "
-+------------------+
-| Setting up /home |
-+------------------+
-"
-
-# Format home volume
-mkfs.ext4 /dev/mapper/volgroup0-lv_home || { echo "Failed to format home volume"; exit 1; }
-
-# Create /home directory
-mkdir -p /home || { echo "Failed to make /home directory"; exit 1; }
-
-# Mount home volume
-mount /dev/mapper/volgroup0-lv_home /home || { echo "Failed to mount /home"; exit 1; }
-
-
-
-echo -ne "
 +--------------------------------------------------+
 | Adding user, setting passwords, setting hostname |
 +--------------------------------------------------+
 "
 
- # Create user and home directory
+# Create user and home directory
 useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$USERNAME"
-if [[ $? -ne 0 ]]; then
-    log_error "Error creating user $USERNAME" $?
-    exit $?  # Exit with the useradd exit code
-fi
-
-    # Set user password
-    echo "$USERNAME:$PASSWORD" | chpasswd
-    if [[ $? -ne 0 ]]; then
-        log_error "Error setting password for user $USERNAME" $?
-        exit $?  # Exit with the chpasswd exit code
-    fi 
-
+echo "$USERNAME created"
+    
+# Set user password
+echo "$USERNAME:$PASSWORD" | chpasswd
+    
 # Set root password
 if ! echo "root:$PASSWD" | chpasswd; then
     log_error "Error setting root password" $?
@@ -551,6 +544,7 @@ fi
 
 # Set hostname
 echo $NAME_OF_MACHINE > /etc/hostname
+echo "Hostname set to $NAME_OF_MACHINE"
 
 # Call defined functions
 update_sudoers
