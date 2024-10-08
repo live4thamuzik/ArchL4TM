@@ -674,6 +674,9 @@ echo -ne "
 # Remove chroot setup script
 rm -rf /mnt/chroot-setup.sh
 
+# Keep log file
+cp /var/log/arch_install.log /mnt/var/log/arch_install.log
+
 # Unmount all partitions under /mnt
 echo "Unmounting partitions..."
 umount -R /mnt
