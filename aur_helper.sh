@@ -35,14 +35,20 @@ install_aur_helper() {
         exit 1
     fi
 
-    # Build the package using makepkg -s (as nobody)
+    # Allow nobody to run makepkg with sudo without a password
+    echo "nobody ALL=(ALL) NOPASSWD: /usr/bin/makepkg" >> /etc/sudoers
+
+    # Build the package using makepkg -s (as nobody, with sudo)
     sudo -u nobody bash -c "
         cd '$temp_dir' &&
-        makepkg -s --noconfirm
+        sudo makepkg -s --noconfirm  # Run makepkg with sudo
     " || {
         echo "Failed to build $aur_helper. Check the installation logs for more details."
         exit 1
     }
+
+    # Remove the sudoers entry for nobody
+    sed -i '$ d' /etc/sudoers
 
     # Install the package using pacman -U (as root)
     sudo pacman -U --noconfirm "$temp_dir"/*.pkg.tar.* || {
