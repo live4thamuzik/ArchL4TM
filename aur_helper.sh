@@ -30,8 +30,8 @@ install_aur_helper() {
     # Change ownership of the cloned directory to the temporary user
     chown -R "$temp_user":"$temp_user" "$temp_dir"
 
-    # Switch to the temporary user
-    su "$temp_user" -c "
+    # Switch to the temporary user using 'su' with login shell (-l)
+    su -l "$temp_user" -c "
         cd '$temp_dir' &&
         fakeroot makepkg -si --noconfirm
     " || {
