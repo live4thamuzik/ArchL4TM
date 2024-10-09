@@ -29,6 +29,10 @@ install_aur_helper() {
 
     echo "Installing $aur_helper"
 
+    # Ensure correct permissions on .cargo directory
+    chown $USER:$USER ~/.cargo
+    chmod 0755 ~/.cargo
+
     # Clone the repo
     if ! git clone "$repo_url" "$temp_dir"; then
         echo "Failed to clone $aur_helper repository from $repo_url. Please check your internet connection and try again."
