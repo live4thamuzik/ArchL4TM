@@ -552,7 +552,7 @@ update_sudoers
 
 echo -ne "
 +------------+
-| AUR Helper |
+| AUR Helper | SKIPPED
 +------------+
 "
 
@@ -563,7 +563,7 @@ install_aur_helper() {
 }
 
 # Call the AUR helper installation function here
-install_aur_helper 
+#install_aur_helper 
 
 
 echo -ne "
