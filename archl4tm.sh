@@ -559,7 +559,7 @@ echo -ne "
 # Source AUR Helper script
 install_aur_helper() {
     # Execute the AUR helper script inside chroot
-    arch-chroot /mnt /bin/bash -c "./aur_helper.sh" 
+    /bin/bash -c "./aur_helper.sh"
 }
 
 # Call the AUR helper installation function here
