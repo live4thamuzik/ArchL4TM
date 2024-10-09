@@ -95,11 +95,6 @@ rootpasswd () {
     export PASSWD=$PASSWD1
 }
 
-# Source AUR Helper script
-install_aur_helper() {
-    # Execute the AUR helper script inside chroot
-    arch-chroot /mnt /bin/bash -c "./aur_helper.sh" 
-}
 
 echo -ne "
 +-------------------+
@@ -560,6 +555,12 @@ echo -ne "
 | AUR Helper |
 +------------+
 "
+
+# Source AUR Helper script
+install_aur_helper() {
+    # Execute the AUR helper script inside chroot
+    arch-chroot /mnt /bin/bash -c "./aur_helper.sh" 
+}
 
 # Call the AUR helper installation function here
 install_aur_helper 
