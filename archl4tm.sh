@@ -631,6 +631,8 @@ EOF
 
 
 # Make chroot-setup.sh and aur_helper.sh executable
+cp ./aur_helper.sh /mnt
+chmod +x /mnt/aur_helper.sh
 chmod +x /mnt/chroot-setup.sh
 
 # Execute the script inside chroot, passing $disk as an argument
