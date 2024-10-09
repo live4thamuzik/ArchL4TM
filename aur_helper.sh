@@ -18,6 +18,7 @@ chgrp nobody /opt/build
 chmod g+ws /opt/build
 setfacl -m u::rwx,g::rwx /opt/build
 setfacl -d --set u::rwx,g::rwx,o::- /opt/build
+local user_home="/home/$USER"  # Get the home directory path
 
 # Temporarily allow 'nobody' to run sudo without a password
 echo "nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
@@ -29,9 +30,8 @@ install_aur_helper() {
 
     echo "Installing $aur_helper"
 
-    # Ensure correct permissions on .cargo directory
-    chown $USER:$USER ~/.cargo
-    chmod 0755 ~/.cargo
+    # Temporarily grant 'nobody' write access to the user's home directory
+    setfacl -m u:nobody:rwx $user_home
 
     # Clone the repo
     if ! git clone "$repo_url" "$temp_dir"; then
@@ -47,6 +47,9 @@ install_aur_helper() {
         echo "Failed to build and install $aur_helper. Check the installation logs for more details."
         exit 1
     }
+
+    # Remove temporary write access for 'nobody'
+    setfacl -x u:nobody $user_home
 
     # Clean up
     rm -rf "$temp_dir"
