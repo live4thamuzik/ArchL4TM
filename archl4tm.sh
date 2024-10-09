@@ -28,7 +28,7 @@ log_error() {
     local message="$1"
     local err_code="$2"
     echo "Error: $message (exit code: $err_code)" >&2
-    # Add more error handling logic if needed (e.g., send an email alert)
+    # Add more error handling logic if needed
 }
 
 # Create username and password
