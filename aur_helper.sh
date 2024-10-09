@@ -10,16 +10,24 @@ echo -ne "
 # Install dependencies for makepkg
 pacman -Sy --noconfirm --needed fakeroot debugedit
 
+# Create the build directory
+mkdir -p /opt/build
+
+# Set permissions
+chgrp nobody /opt/build
+chmod g+ws /opt/build
+setfacl -m u::rwx,g::rwx /opt/build
+setfacl -d --set u::rwx,g::rwx,o::- /opt/build
+
+# Temporarily allow 'nobody' to run sudo without a password
+echo "nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
+
 install_aur_helper() {
     local aur_helper="$1"
     local repo_url="$2"
-    local temp_dir="/opt/$aur_helper"
-    local temp_user="aur_builder"
+    local temp_dir="/opt/build/$aur_helper" # Use the common build directory
 
     echo "Installing $aur_helper"
-
-    # Create a temporary user
-    useradd -m -G wheel -s /bin/bash "$temp_user"
 
     # Clone the repo
     if ! git clone "$repo_url" "$temp_dir"; then
@@ -27,13 +35,10 @@ install_aur_helper() {
         exit 1
     fi
 
-    # Change ownership of the cloned directory to the temporary user
-    chown -R "$temp_user":"$temp_user" "$temp_dir"
-
-    # Switch to the temporary user using 'su' with login shell (-l)
-    su -l "$temp_user" -c "
+    # Switch to the nobody user using 'sudo'
+    sudo -u nobody bash -c "
         cd '$temp_dir' &&
-        fakeroot makepkg -si --noconfirm
+        makepkg -si --noconfirm
     " || {
         echo "Failed to build and install $aur_helper. Check the installation logs for more details."
         exit 1
@@ -41,7 +46,6 @@ install_aur_helper() {
 
     # Clean up
     rm -rf "$temp_dir"
-    userdel -r "$temp_user"
 
     echo "$aur_helper installed successfully! You can now use $aur_helper to install packages from the AUR."
 }
@@ -61,3 +65,6 @@ select aur_helper in "${options[@]}"; do
     *) echo "Invalid option";;
     esac
 done
+
+# Remove temporary sudo access for 'nobody'
+sed -i '$ d' /etc/sudoers
