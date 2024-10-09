@@ -30,26 +30,26 @@ install_aur_helper() {
 
     echo "Installing $aur_helper"
 
-    # Temporarily grant 'nobody' write access to the user's home directory
-    setfacl -m u:nobody:rwx $user_home
-
     # Clone the repo
     if ! git clone "$repo_url" "$temp_dir"; then
         echo "Failed to clone $aur_helper repository from $repo_url. Please check your internet connection and try again."
         exit 1
     fi
 
-    # Switch to the nobody user using 'sudo'
+    # Build the package using makepkg -s (as nobody)
     sudo -u nobody bash -c "
         cd '$temp_dir' &&
-        makepkg -si --noconfirm
+        makepkg -s --noconfirm
     " || {
-        echo "Failed to build and install $aur_helper. Check the installation logs for more details."
+        echo "Failed to build $aur_helper. Check the installation logs for more details."
         exit 1
     }
 
-    # Remove temporary write access for 'nobody'
-    setfacl -x u:nobody $user_home
+    # Install the package using pacman -U (as root)
+    sudo pacman -U --noconfirm "$temp_dir"/*.pkg.tar.* || {
+        echo "Failed to install $aur_helper. Check the installation logs for more details."
+        exit 1
+    }
 
     # Clean up
     rm -rf "$temp_dir"
