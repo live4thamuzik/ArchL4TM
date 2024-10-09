@@ -462,7 +462,7 @@ echo -ne "
 
 # Install additional needed packages
 echo "Installing Packages"
-pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot shadow strace || { echo "Failed to install packages"; exit 1; }
+pacman -Sy --noconfirm --needed archlinux-keyring base-devel networkmanager lvm2 pipewire btop man-db man-pages texinfo tldr bash-completion openssh git parallel neovim grub efibootmgr dosfstools os-prober mtools python kmod debugedit fakeroot shadow || { echo "Failed to install packages"; exit 1; }
 
 
 echo -ne "
@@ -556,10 +556,33 @@ echo -ne "
 +------------+
 "
 
-# Source AUR Helper script
 install_aur_helper() {
-    # Execute the AUR helper script inside chroot
-    /bin/bash -c "./aur_helper.sh"
+    local aur_helper="$1"
+    local repo_url="$2"
+    local temp_dir="/opt/$aur_helper"
+
+    echo "Installing $aur_helper"
+
+    # Clone the repo with retry
+    while ! git clone "$repo_url" "$temp_dir"; do
+        echo "Failed to clone $aur_helper repository. Check your internet connection."
+        read -p "Retry cloning? (y/N) " retry
+        if [[ "${retry,,}" != "y" ]]; then
+            echo "Skipping $aur_helper installation."
+            return 1 
+        fi
+    done
+
+    # Build and install with fakeroot and error checking
+    if ! fakeroot makepkg -si --noconfirm; then  # Use fakeroot here
+        echo "Failed to build and install $aur_helper."
+        echo "Check the build logs in /tmp/makepkg for details."
+        exit 1
+    fi
+
+    # Clean up
+    cd ~ && rm -rf "$temp_dir"
+    echo "$aur_helper installed successfully!"
 }
 
 # Call the AUR helper installation function here
