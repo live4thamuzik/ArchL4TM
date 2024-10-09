@@ -25,7 +25,7 @@ install_aur_helper() {
     fi
 
     # Build and install the AUR helper (with --noconfirm)
-    cd "$temp_dir" && makepkg -si --noconfirm || {
+    cd "$temp_dir" && fakeroot makepkg -si --noconfirm || {
         echo "Failed to build and install $aur_helper. Check the installation logs for more details."
         exit 1
     }
