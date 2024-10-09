@@ -18,7 +18,6 @@ chgrp nobody /opt/build
 chmod g+ws /opt/build
 setfacl -m u::rwx,g::rwx /opt/build
 setfacl -d --set u::rwx,g::rwx,o::- /opt/build
-local user_home="/home/$USER"  # Get the home directory path
 
 # Temporarily allow 'nobody' to run sudo without a password
 echo "nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
@@ -66,7 +65,7 @@ select aur_helper in "${options[@]}"; do
         install_aur_helper "Yay" "https://aur.archlinux.org/yay.git"
         ;;
     "Paru")
-        pacman -Sy --noconfirm --needed cargo
+        pacman -Sy --noconfirm --needed rust cargo
         install_aur_helper "Paru" "https://aur.archlinux.org/paru.git"
         ;;
     *) echo "Invalid option";;
