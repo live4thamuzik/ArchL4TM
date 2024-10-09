@@ -565,6 +565,7 @@ install_aur_helper() {
 # Call the AUR helper installation function here
 install_aur_helper 
 
+
 echo -ne "
 +-----------------+
 | Installing GRUB |
