@@ -10,24 +10,39 @@ echo -ne "
 # Install dependencies for makepkg
 pacman -Sy --noconfirm --needed fakeroot debugedit
 
+# Create home directory for nobody if it doesn't exist
+if [ ! -d "/home/nobody" ]; then
+    usermod -d /home/nobody nobody
+    mkdir /home/nobody
+    chown nobody:nobody /home/nobody
+    chmod 700 /home/nobody
+fi
+
 # Create the build directory
-mkdir -p /opt/build
+mkdir -p /home/nobody/build
 
 # Set permissions
-chgrp nobody /opt/build
-chmod g+ws /opt/build
-setfacl -m u::rwx,g::rwx /opt/build
-setfacl -d --set u::rwx,g::rwx,o::- /opt/build
+chgrp nobody /home/nobody/build
+chmod g+ws /home/nobody/build
+setfacl -m u::rwx,g::rwx /home/nobody/build
+setfacl -d --set u::rwx,g::rwx,o::- /home/nobody/build
 
 # Temporarily allow 'nobody' to run sudo without a password
-echo "nobody ALL=(ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
+echo "nobody ALL=(ALL) NOPASSWD: /usr/bin/makepkg" >> /etc/sudoers
 
 install_aur_helper() {
     local aur_helper="$1"
     local repo_url="$2"
-    local temp_dir="/opt/build/$aur_helper" # Use the common build directory
+    local temp_dir="/home/nobody/build/$aur_helper"
 
     echo "Installing $aur_helper"
+
+    # Create the build directory if it doesn't exist
+    if [ ! -d "$temp_dir" ]; then
+        mkdir -p "$temp_dir"
+        chown nobody:nobody "$temp_dir"
+        chmod 700 "$temp_dir"
+    fi
 
     # Clone the repo
     if ! git clone "$repo_url" "$temp_dir"; then
@@ -35,31 +50,22 @@ install_aur_helper() {
         exit 1
     fi
 
-    # Allow nobody to run makepkg with sudo without a password
-    echo "nobody ALL=(ALL) NOPASSWD: /usr/bin/makepkg" >> /etc/sudoers
-
-    # Build the package using makepkg -s (as nobody, with sudo)
-    sudo -u nobody bash -c "
+    # Build and install the package using makepkg -si (as nobody, with sudo)
+    if sudo -u nobody bash -c "
         cd '$temp_dir' &&
-        sudo makepkg -s --noconfirm  # Run makepkg with sudo
-    " || {
-        echo "Failed to build $aur_helper. Check the installation logs for more details."
+        sudo makepkg -si --noconfirm 
+    "; then
+        # Clean up (only if makepkg -si was successful)
+        rm -rf "$temp_dir"
+
+        echo "$aur_helper installed successfully! You can now use $aur_helper to install packages from the AUR."
+    else
+        echo "Failed to build and install $aur_helper. Check the installation logs for more details. The temporary build directory '$temp_dir' has been preserved for debugging."
         exit 1
-    }
+    fi
 
     # Remove the sudoers entry for nobody
     sed -i '$ d' /etc/sudoers
-
-    # Install the package using pacman -U (as root)
-    sudo pacman -U --noconfirm "$temp_dir"/*.pkg.tar.* || {
-        echo "Failed to install $aur_helper. Check the installation logs for more details."
-        exit 1
-    }
-
-    # Clean up
-    rm -rf "$temp_dir"
-
-    echo "$aur_helper installed successfully! You can now use $aur_helper to install packages from the AUR."
 }
 
 # Ask the user which AUR helper they want
