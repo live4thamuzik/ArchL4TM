@@ -53,7 +53,7 @@ install_aur_helper() {
     # Build and install the package using makepkg -si (as nobody, with sudo)
     if sudo -u nobody bash -c "
         cd '$temp_dir' &&
-        sudo makepkg -si --noconfirm 
+        makepkg -si --noconfirm 
     "; then
         # Clean up (only if makepkg -si was successful)
         rm -rf "$temp_dir"
