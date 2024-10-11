@@ -50,8 +50,8 @@ install_aur_helper() {
         exit 1
     fi
 
-    # Build and install the package using makepkg -si (as nobody, with sudo)
-    if sudo -u nobody bash -c "
+    # Build and install the package using makepkg -si (as nobody)
+    if su nobody bash -c "
         cd '$temp_dir' &&
         makepkg -si --noconfirm 
     "; then
