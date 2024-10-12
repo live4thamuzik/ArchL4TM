@@ -153,6 +153,12 @@ setup_lvm() {
         exit 1
     fi
 
+    # Create mount points (This was moved up)
+    if ! mkdir -p /mnt/boot /mnt/boot/EFI /mnt/home; then
+        log_error "Failed to create mount points" $?
+        exit 1
+    fi
+
     # Load kernel module
     modprobe dm_mod
 
@@ -169,12 +175,6 @@ setup_lvm() {
     if ! mkfs.ext4 /dev/volgroup0/lv_root || \
        ! mkfs.ext4 /dev/volgroup0/lv_home; then
         log_error "Failed to format logical volumes" $?
-        exit 1
-    fi
-
-    # Create mount points
-    if ! mkdir -p /mnt/boot /mnt/boot/EFI /mnt/home; then
-        log_error "Failed to create mount points" $?
         exit 1
     fi
 
