@@ -166,6 +166,8 @@ install_aur_helper
 
 # --- Installation Steps ---
 
+log_info "Starting installation process..."
+
 partition_disk "$DISK" "$EFI_SIZE" "$BOOT_SIZE"
 setup_lvm "$DISK" "$ENCRYPTION_PASSWORD"
 
