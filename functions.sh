@@ -181,9 +181,13 @@ install_aur_helper() {
 
 cleanup() {
     log_output "Cleaning up..."
-    if ! rm -rf /mnt/chroot-setup.sh || \
-       ! cp /var/log/arch_install.log /mnt/var/log/arch_install.log; then
-        log_error "Failed to perform cleanup" $?
-        # Consider not exiting here, as this is a non-critical step
+    if ! rm -rf /mnt/chroot-setup.sh; then
+        log_error "Failed to remove chroot-setup.sh" $?
+    fi
+
+    if ! cp /var/log/arch_install.log /mnt/var/log/arch_install.log || \
+       ! cp /var/log/arch_install_error.log /mnt/var/log/arch_install_error.log; then
+        log_warning "Failed to copy log files to the installed system" $?
+        # Do not exit here, as this is not a critical step
     fi
 }
