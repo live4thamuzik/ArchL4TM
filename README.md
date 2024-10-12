@@ -6,11 +6,11 @@ The script will install Arch Linux on EFI systems with minimal config and packag
 
 # Configuration 
   # Drive layout: (these can be modified in the script before running as needed. see lines 78-101)
-  - Partition 1 - 2GB (EFI)
-  - Partition 2 - 5GB (boot) GRUB is installed here
-  - Partition 3 - 100%Free (LVM) "volgroup0"
-  - lv_root = 100GB
-  - lv_home = 100%FREE
+  - Partition 1 - EFI
+  - Partition 2 - boot (GRUB is installed here)
+  - Partition 3 - LVM "volgroup0"
+  - lv_root 
+  - lv_home 
 
   # Bootloader
   - GRUB
@@ -23,7 +23,6 @@ The script will install Arch Linux on EFI systems with minimal config and packag
   - linux
   - linux-headers
   - linux-firmware
-  - archlinux-keyring
   - base-devel
   - networkmanager
   - lvm2
@@ -44,11 +43,8 @@ The script will install Arch Linux on EFI systems with minimal config and packag
   - os-prober
   - mtools
   - python
-  - kmod
   - debugedit
-  - kmod
-  - fakeroot
-  - shadow
+ 
 
   # Microcode detection for AMD and Intel processors
   - Script will use lscpu to detect and install the correct microcode needed
@@ -126,6 +122,6 @@ git clone https://github.com/live4thamuzik/ArchL4TM.git
 # Run script:
 ```
 cd ArchL4TM/
-chmod +x archl4tm.sh
-./archl4tm.sh
+chmod +x install.sh config.sh 
+./install.sh
 ```
