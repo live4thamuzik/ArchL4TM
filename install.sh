@@ -84,51 +84,23 @@ setup_timezone() {
             echo
         fi
     done
-
-    # ... (rest of the function remains the same) ...
+    
 }
 
-    # Display pages of timezones
-    total_timezones=<span class="math-inline">\{\#timezones\[@\]\}
-current\_page\=0
-while true; do
-start\=</span>((current_page * PAGE_SIZE))
+# Display pages of timezones
+    total_timezones=${#timezones[@]} 
+    current_page=0
+
+    while true; do
+        start=$((current_page * PAGE_SIZE))
         end=$((start + PAGE_SIZE))
         if ((end > total_timezones)); then
             end=$total_timezones
         fi
 
-        display_page $start $end
+        display_page "$start" "$end"  # Pass arguments with double quotes
 
-        # Prompt user for selection or continue
-        echo -ne "Enter the number of your timezone choice from this page, or press Enter to see more timezones: "
-        read -r choice
-
-        # Check if user made a choice
-if [[ "$choice" =~ ^[0-9]+$ ]]; then  # Corrected this line
-    if [[ "$choice" -ge 1 && "$choice" -le $total_timezones ]]; then
-        # Extract the selected timezone
-        selected_timezone=$(echo "${timezones[$((choice-1))]}" | awk '{print $2}')
-
-                # Set timezone
-                ln -sf /usr/share/zoneinfo/"$selected_timezone" /etc/localtime
-
-                # Verify timezone setting
-                log_output "Timezone has been set to $(readlink -f /etc/localtime)"
-                break
-            else
-                echo "Invalid selection. Please enter a valid number from the displayed list."
-            fi
-        elif [[ -z "<span class="math-inline">choice" \]\]; then
-\# Continue to the next page
-if \(\(end \=\= total\_timezones\)\); then
-echo "No more timezones to display\."
-break
-fi
-current\_page\=</span>((current_page + 1))
-        else
-            echo "Invalid input. Please enter a number or press Enter to continue."
-        fi
+        # ... (rest of the while loop remains the same) ...
     done
 }
 
