@@ -224,6 +224,7 @@ install_gui() {
 install_gui
 
 # --- AUR Installation ---
+
 install_aur_helper
 
 # --- Cleanup and Reboot ---
