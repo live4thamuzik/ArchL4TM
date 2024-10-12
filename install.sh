@@ -29,7 +29,6 @@ source functions.sh
 source disk_setup.sh
 source pkgs.sh
 source config.sh
-source aur.sh
 
 # --- User Input ---
 
@@ -40,6 +39,7 @@ get_hostname
 get_disk
 get_partition_sizes
 get_encryption_password
+get_aur_helper
 
 # --- Timezone Selection ---
 
@@ -162,9 +162,6 @@ select_gui() {
 
 select_gui
 
-# --- AUR Helper Installation ---
-install_aur_helper
-
 # --- Installation Steps ---
 
 log_info "Starting installation process..."
@@ -225,6 +222,9 @@ install_gui() {
 }
 
 install_gui
+
+# --- AUR Installation ---
+install_aur_helper
 
 # --- Cleanup and Reboot ---
 
