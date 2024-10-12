@@ -33,7 +33,8 @@ source config.sh
 # --- User Input ---
 
 get_username
-get_password
+get_user_password
+get_root_password
 get_hostname
 get_disk
 get_partition_sizes
