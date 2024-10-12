@@ -24,6 +24,43 @@ get_disk() {
     done
 }
 
+get_partition_sizes() {
+    while true; do
+        read -p "Enter EFI partition size (e.g., 2G, 512M): " efi_size
+        read -p "Enter boot partition size (e.g., 5G, 1G): " boot_size
+
+        # Basic validation (you might want to add more robust checks)
+        if [[ "$efi_size" =~ ^[0-9]+(G|M|K)$ ]] && \
+           [[ "$boot_size" =~ ^[0-9]+(G|M|K)$ ]]; then
+            export EFI_SIZE="$efi_size"
+            export BOOT_SIZE="$boot_size"
+            log_output "EFI partition size: $EFI_SIZE"
+            log_output "Boot partition size: $BOOT_SIZE"
+            break
+        else
+            log_error "Invalid partition size(s). Please use a format like 2G or 512M." 1
+        fi
+    done
+}
+
+get_encryption_password() {
+    while true; do
+        read -rs -p "Enter encryption password: " password
+        echo
+        read -rs -p "Confirm encryption password: " confirm_password
+        echo
+
+        if [[ "$password" != "$confirm_password" ]]; then
+            log_error "Passwords do not match." 1
+            continue
+        fi
+
+        export ENCRYPTION_PASSWORD="$password"
+        log_output "Encryption password set."  # Avoid logging the password itself
+        break
+    done
+}
+
 partition_disk() {
     local disk="$1"
     local efi_size="$2"
