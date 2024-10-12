@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Source global functions (if needed)
-source functions.sh  # Uncomment if you need logging functions
+source functions.sh
 
 aur_helper="$1"
 
