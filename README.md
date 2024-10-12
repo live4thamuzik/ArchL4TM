@@ -122,6 +122,6 @@ git clone https://github.com/live4thamuzik/ArchL4TM.git
 # Run script:
 ```
 cd ArchL4TM/
-chmod +x install.sh config.sh 
+chmod +x install.sh config.sh functions.sh pkgs.sh
 ./install.sh
 ```
