@@ -77,19 +77,19 @@ get_username() {
     done
 }
 
-get_password() {
+get_user_password() { # Renamed to avoid conflict with the existing get_password function
     while true; do
-        read -rs -p "Set a password for $USERNAME: " PASSWORD1
+        read -rs -p "Set a password for $USERNAME: " USER_PASSWORD1
         echo
-        read -rs -p "Confirm password: " PASSWORD2
+        read -rs -p "Confirm password: " USER_PASSWORD2
         echo
 
-        if [[ "$PASSWORD1" != "$PASSWORD2" ]]; then
+        if [[ "$USER_PASSWORD1" != "$USER_PASSWORD2" ]]; then
             log_error "Passwords do not match." 1
             continue
         fi
 
-        export PASSWORD="$PASSWORD1"
+        export USER_PASSWORD="$USER_PASSWORD1"
         log_output "Password set for $USERNAME successfully."
         break
     done
