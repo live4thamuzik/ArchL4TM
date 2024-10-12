@@ -139,14 +139,15 @@ get_hostname() {
     done
 }
 
-# --- AUR Helper Installation ---
+# --- AUR Helper Functions ---
 
-install_aur_helper() {
-    log_output "Installing AUR helper..."
+get_aur_helper() {
+    log_output "Selecting AUR helper..."
 
     # Ask the user if they want to install an AUR helper
     if ! confirm_action "Do you want to install an AUR helper?"; then
         log_output "Skipping AUR helper installation."
+        export AUR_HELPER="none"
         return 0
     fi
 
@@ -155,23 +156,32 @@ install_aur_helper() {
     select aur_helper in "${options[@]}"; do
         case "$aur_helper" in
             yay)
-                AUR_HELPER="yay"
+                export AUR_HELPER="yay"
                 log_output "yay selected."
                 ;;
             paru)
-                AUR_HELPER="paru"
+                export AUR_HELPER="paru"
                 log_output "paru selected."
                 ;;
             *)
                 log_output "Invalid option. Skipping AUR helper installation."
+                export AUR_HELPER="none" 
                 return 1
                 ;;
         esac
         break
     done
+}
+
+install_aur_helper() {
+    if [[ "$AUR_HELPER" == "none" ]]; then
+        return 0  # No AUR helper selected, skip installation
+    fi
+
+    log_output "Installing $AUR_HELPER..."
 
     # Install the selected AUR helper
-    if ! arch-chroot /mnt /bin/bash -c "./aur.sh $AUR_HELPER"; then
+    if ! arch-chroot /mnt /bin/bash -c "./aur_helper.sh $AUR_HELPER"; then
         log_error "Failed to install AUR helper" $?
         exit 1
     fi
