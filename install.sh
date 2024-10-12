@@ -69,25 +69,24 @@ setup_timezone() {
 
     # Function to display a page of timezones in columns
     display_page() {
-        local start=$1
-        local end=<span class="math-inline">2
-local count\=0
-echo "Timezones \(</span>((start + 1)) to $end of <span class="math-inline">\{\#timezones\[@\]\}\)\:"
-for \(\(i\=start; i<end; i\+\+\)\); do
-\# Print timezones in columns with minimized gap
-printf "%\-</span>{NUMBER_WIDTH}s%-<span class="math-inline">\{COLUMN\_WIDTH\}s" "</span>{timezones[<span class="math-inline">i\]\}" ""
-count\=</span>((count + 1))
+    local start=$1
+    local end=$2  # Corrected this line
+    local count=0
 
-            if ((count % COLS == 0)); then
-                echo
-            fi
-        done
+    echo "Timezones ($((start + 1)) to $end of ${#timezones[@]}):"
 
-        # Add a newline at the end if the last line isn't fully filled
-        if ((count % COLS != 0)); then
+    for ((i=start; i<end; i++)); do
+        # Print timezones in columns with minimized gap
+        printf "%-${NUMBER_WIDTH}s%-${COLUMN_WIDTH}s" "${timezones[$i]}" ""
+        count=$((count + 1))
+
+        if ((count % COLS == 0)); then
             echo
         fi
-    }
+    done
+
+    # ... (rest of the function remains the same) ...
+}
 
     # Display pages of timezones
     total_timezones=<span class="math-inline">\{\#timezones\[@\]\}
