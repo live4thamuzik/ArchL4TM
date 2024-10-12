@@ -159,7 +159,7 @@ install_aur_helper() {
     done
 
     # Install the selected AUR helper
-    if ! arch-chroot /mnt /bin/bash -c "./aur_helper.sh $AUR_HELPER"; then
+    if ! arch-chroot /mnt /bin/bash -c "./aur.sh $AUR_HELPER"; then
         log_error "Failed to install AUR helper" $?
         exit 1
     fi
