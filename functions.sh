@@ -126,3 +126,41 @@ get_hostname() {
         break
     done
 }
+
+# --- AUR Helper Installation ---
+
+install_aur_helper() {
+    log_output "Installing AUR helper..."
+
+    # Ask the user if they want to install an AUR helper
+    if ! confirm_action "Do you want to install an AUR helper?"; then
+        log_output "Skipping AUR helper installation."
+        return 0
+    fi
+
+    # Ask the user which AUR helper they want
+    options=("yay" "paru")
+    select aur_helper in "${options[@]}"; do
+        case "$aur_helper" in
+            yay)
+                AUR_HELPER="yay"
+                log_output "yay selected."
+                ;;
+            paru)
+                AUR_HELPER="paru"
+                log_output "paru selected."
+                ;;
+            *)
+                log_output "Invalid option. Skipping AUR helper installation."
+                return 1
+                ;;
+        esac
+        break
+    done
+
+    # Install the selected AUR helper
+    if ! arch-chroot /mnt /bin/bash -c "./aur_helper.sh $AUR_HELPER"; then
+        log_error "Failed to install AUR helper" $?
+        exit 1
+    fi
+}
