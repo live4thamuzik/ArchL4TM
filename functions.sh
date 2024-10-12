@@ -13,8 +13,20 @@ log_error() {
     echo "$(date +"%Y-%m-%d %H:%M:%S") - Error: $message (exit code: $err_code)" >&2
 }
 
-# ... (add log_debug, log_info, log_warning if needed) ...
+log_debug() {
+    local message="$1"
+    echo "$(date +"%Y-%m-%d %H:%M:%S") - Debug: $message" >&2
+}
 
+log_info() {
+    local message="$1"
+    echo "$(date +"%Y-%m-%d %H:%M:%S") - Info: $message"
+}
+
+log_warning() {
+    local message="$1"
+    echo "$(date +"%Y-%m-%d %H:%M:%S") - Warning: $message" >&2
+}
 
 # --- Input Validation Functions ---
 
