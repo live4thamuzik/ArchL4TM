@@ -88,21 +88,22 @@ setup_timezone() {
 }
 
 # Display pages of timezones
-    total_timezones=${#timezones[@]} 
-    current_page=0
+total_timezones=${#timezones[@]}
+current_page=0
 
-    while true; do
-        start=$((current_page * PAGE_SIZE))
-        end=$((start + PAGE_SIZE))
-        if ((end > total_timezones)); then
-            end=$total_timezones
-        fi
+while true; do
+    start=$((current_page * PAGE_SIZE))
+    end=$((start + PAGE_SIZE))
+    if ((end > total_timezones)); then
+        end=$total_timezones
+    fi
 
-        display_page "$start" "$end"  # Pass arguments with double quotes
+    display_page "$start" "$end"
 
-        # ... (rest of the while loop remains the same) ...
-    done
-}
+    # Prompt user for selection or continue
+    read -p "Enter the number of your timezone choice from this page, or press Enter to see more timezones: " choice
+
+done
 
 setup_timezone
 
