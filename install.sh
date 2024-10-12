@@ -87,23 +87,48 @@ setup_timezone() {
     
 }
 
-# Display pages of timezones
-total_timezones=${#timezones[@]}
-current_page=0
+ # Display pages of timezones
+    total_timezones=${#timezones[@]}
+    current_page=0
 
-while true; do
-    start=$((current_page * PAGE_SIZE))
-    end=$((start + PAGE_SIZE))
-    if ((end > total_timezones)); then
-        end=$total_timezones
-    fi
+    while true; do
+        start=$((current_page * PAGE_SIZE))
+        end=$((start + PAGE_SIZE))
+        if ((end > total_timezones)); then
+            end=$total_timezones
+        fi
 
-    display_page "$start" "$end"
+        display_page "$start" "$end"
 
-    # Prompt user for selection or continue
-    read -p "Enter the number of your timezone choice from this page, or press Enter to see more timezones: " choice
+        # Prompt user for selection or continue
+        read -p "Enter the number of your timezone choice from this page, or press Enter to see more timezones: " choice
 
-done
+        # Check if user made a choice
+        if [[ "$choice" =~ ^[0-9]+$ ]]; then 
+            if ((choice >= 1 && choice <= total_timezones)); then 
+                # Extract the selected timezone
+                selected_timezone=$(echo "${timezones[$((choice-1))]}" | awk '{print $2}')
+
+                # Set timezone
+                ln -sf /usr/share/zoneinfo/"$selected_timezone" /etc/localtime
+
+                # Verify timezone setting
+                log_output "Timezone has been set to $(readlink -f /etc/localtime)"
+                break  # Exit the loop if a valid selection is made
+            else
+                echo "Invalid selection. Please enter a valid number from the displayed list."
+            fi
+        elif [[ -z "$choice" ]]; then  # User pressed Enter, go to the next page
+            if ((end == total_timezones)); then  # If this is the last page, loop back to the beginning
+                current_page=0
+            else
+                current_page=$((current_page + 1))
+            fi
+        else
+            echo "Invalid input. Please enter a number or press Enter to continue."
+        fi
+    done
+}
 
 setup_timezone
 
