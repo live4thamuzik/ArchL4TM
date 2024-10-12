@@ -79,7 +79,7 @@ get_username() {
 
 get_password() {
     while true; do
-        read -rs -p "Set a password: " PASSWORD1
+        read -rs -p "Set a password for $USERNAME: " PASSWORD1
         echo
         read -rs -p "Confirm password: " PASSWORD2
         echo
@@ -90,7 +90,39 @@ get_password() {
         fi
 
         export PASSWORD="$PASSWORD1"
-        log_output "Password set successfully."
+        log_output "Password set for $USERNAME successfully."
+        break
+    done
+}
+
+get_root_password() {
+    while true; do
+        read -rs -p "Set root password: " ROOT_PASSWORD1
+        echo
+        read -rs -p "Confirm root password: " ROOT_PASSWORD2
+        echo
+
+        if [[ "$ROOT_PASSWORD1" != "$ROOT_PASSWORD2" ]]; then
+            log_error "Passwords do not match." 1
+            continue
+        fi
+
+        export ROOT_PASSWORD="$ROOT_PASSWORD1"
+        log_output "Root password set successfully."
+        break
+    done
+}
+
+get_hostname() {
+    while true; do
+        read -r -p "Enter a hostname: " hostname
+
+        if ! validate_hostname "$hostname"; then
+            continue
+        fi
+
+        export HOSTNAME="$hostname"
+        log_output "Hostname set to: $HOSTNAME"
         break
     done
 }
