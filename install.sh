@@ -161,6 +161,10 @@ select_gui() {
 
 select_gui
 
+# --- AUR Helper Installation ---
+
+install_aur_helper
+
 # --- Installation Steps ---
 
 partition_disk "$DISK" "$EFI_SIZE" "$BOOT_SIZE"
