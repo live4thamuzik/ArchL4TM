@@ -66,7 +66,9 @@ confirm_action() {
     local message="$1"
     read -r -p "$message (Y/n) " confirm
     confirm=${confirm,,}  # Convert to lowercase
-    if [[ "$confirm" == "y" ]]; then  # Check for explicit "y"
+
+    # Check if confirm is "y" or empty
+    if [[ "$confirm" == "y" ]] || [[ -z "$confirm" ]]; then  
         return 0  # True
     else
         return 1  # False
