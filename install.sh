@@ -105,10 +105,10 @@ start\=</span>((current_page * PAGE_SIZE))
         read -r choice
 
         # Check if user made a choice
-        if [[ "<span class="math-inline">choice" \=\~ ^\[0\-9\]\+</span> ]]; then
-            if [[ "$choice" -ge 1 && "$choice" -le <span class="math-inline">total\_timezones \]\]; then
-\# Extract the selected timezone
-selected\_timezone\=</span>(echo "<span class="math-inline">\{timezones\[</span>((choice-1))]}" | awk '{print $2}')
+if [[ "$choice" =~ ^[0-9]+$ ]]; then  # Corrected this line
+    if [[ "$choice" -ge 1 && "$choice" -le $total_timezones ]]; then
+        # Extract the selected timezone
+        selected_timezone=$(echo "${timezones[$((choice-1))]}" | awk '{print $2}')
 
                 # Set timezone
                 ln -sf /usr/share/zoneinfo/"$selected_timezone" /etc/localtime
