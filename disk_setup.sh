@@ -3,6 +3,27 @@
 # Source global functions
 source functions.sh
 
+get_disk() {
+    # List Disks
+    log_output "Available disks:"
+    fdisk -l | grep "Disk /"  # Only list whole disks
+
+    while true; do
+        read -p "Enter the disk to use (e.g., /dev/sda): " disk
+
+        if ! validate_disk "$disk"; then  # Use the validate_disk function from functions.sh
+            continue
+        fi
+
+        # Confirm Disk Selection using confirm_action from functions.sh
+        if confirm_action "You have selected $disk. Is this correct?"; then
+            export DISK="$disk"
+            log_output "Disk set to: $DISK"
+            break
+        fi
+    done
+}
+
 partition_disk() {
     local disk="$1"
     local efi_size="$2"
