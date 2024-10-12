@@ -27,8 +27,9 @@ echo -ne "
 # --- Source Functions ---
 source functions.sh
 source disk_setup.sh
-source packages.sh
+source pkgs.sh
 source config.sh
+source aur.sh
 
 # --- User Input ---
 
