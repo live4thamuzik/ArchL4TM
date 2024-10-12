@@ -164,3 +164,14 @@ install_aur_helper() {
         exit 1
     fi
 }
+
+# --- Cleanup Function ---
+
+cleanup() {
+    log_output "Cleaning up..."
+    if ! rm -rf /mnt/chroot-setup.sh || \
+       ! cp /var/log/arch_install.log /mnt/var/log/arch_install.log; then
+        log_error "Failed to perform cleanup" $?
+        # Consider not exiting here, as this is a non-critical step
+    fi
+}
