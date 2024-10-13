@@ -169,7 +169,8 @@ setup_lvm "$DISK" "$ENCRYPTION_PASSWORD"
 install_prerequisites
 configure_mirrors
 install_base_packages
-generate_fstab
+
+genfstab -U -p /mnt >> /mnt/etc/fstab
 
 chroot_and_configure
 
