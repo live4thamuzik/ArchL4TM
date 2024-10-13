@@ -174,7 +174,15 @@ genfstab -U -p /mnt >> /mnt/etc/fstab
 
 chroot_and_configure() {
     log_output "Entering chroot and configuring system..."
-    if ! arch-chroot /mnt /bin/bash -c "./chroot-setup.sh $DISK"; then
+
+    # Create a source directory in the chroot
+    mkdir -p /mnt/source
+
+    # Copy all scripts to the source directory
+    cp *.sh /mnt/source/
+    cp package-list.txt /mnt/source/
+
+    if ! arch-chroot /mnt /bin/bash -c "cd /source && ./chroot-setup.sh $DISK"; then
         log_error "Failed to run chroot configuration" $?
         exit 1
     fi
