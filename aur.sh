@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Source global functions (if needed)
 source functions.sh
 
 aur_helper="$1"
@@ -9,9 +8,10 @@ case "$aur_helper" in
     yay)
         log_output "Installing yay..."
         if ! pacman -S --noconfirm --needed base-devel git go || \
-           ! git clone https://aur.archlinux.org/yay.git /tmp/yay || \
+           ! runuser -u nobody git clone https://aur.archlinux.org/yay.git /tmp/yay || \
+           ! chown nobody:nobody /tmp/yay || \
            ! cd /tmp/yay || \
-           ! makepkg -si --noconfirm || \
+           ! runuser -u nobody makepkg -si --noconfirm || \
            ! rm -rf /tmp/yay; then
             log_error "Failed to install yay" $?
             exit 1
@@ -20,9 +20,10 @@ case "$aur_helper" in
     paru)
         log_output "Installing paru..."
         if ! pacman -S --noconfirm --needed base-devel git rust cargo || \
-           ! git clone https://aur.archlinux.org/paru.git /tmp/paru || \
+           ! runuser -u nobody git clone https://aur.archlinux.org/paru.git /tmp/paru || \
+           ! chown nobody:nobody /tmp/paru || \
            ! cd /tmp/paru || \
-           ! makepkg -si --noconfirm || \
+           ! runuser -u nobody makepkg -si --noconfirm || \
            ! rm -rf /tmp/paru; then
             log_error "Failed to install paru" $?
             exit 1
