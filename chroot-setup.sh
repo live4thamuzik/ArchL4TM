@@ -12,8 +12,14 @@ DISK="$1"
 # --- System Configuration ---
 
 configure_pacman
-install_microcode
+install_microcode 
+
+# --- Install Additional Packages ---
+install_additional_packages
+
+# --- Enable services --- 
 enable_services
+
 set_locale
 update_initramfs
 create_user "$USERNAME"  # Make sure USERNAME is exported
