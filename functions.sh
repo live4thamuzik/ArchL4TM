@@ -193,7 +193,8 @@ install_aur_helper() {
 
 cleanup() {
     log_output "Cleaning up..."
-    if ! rm -rf /mnt/chroot-setup.sh; then
+    if ! rm -rf /mnt/source || \
+       ! rm -rf /mnt/chroot-setup.sh; then
         log_error "Failed to remove chroot-setup.sh" $?
     fi
 
