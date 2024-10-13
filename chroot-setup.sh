@@ -5,6 +5,10 @@ set -e
 
 # Source functions
 source /source/config.sh  # Source your config.sh script from /source
+source /source/functions.sh  # Source your functions.sh script from /source
+source /source/config.sh  # Source your pkgs.sh script from /source
+source /source/config.sh  # Source your pkglst.txt script from /source
+source /source/aur.sh  # Source your aur.sh script from /source
 
 # Get disk from argument
 DISK="$1"
