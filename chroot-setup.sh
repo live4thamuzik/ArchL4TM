@@ -70,4 +70,4 @@ install_gui
 
 # --- AUR Installation ---
 
-install_aur_helper
+#install_aur_helper
