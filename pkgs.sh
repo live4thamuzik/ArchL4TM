@@ -30,7 +30,7 @@ install_base_packages() {
 
 install_additional_packages() {
     log_output "Installing additional packages..."
-    if ! pacman -Sy --noconfirm --needed - < pkglst.txt; then 
+    if ! pacman -Sy --noconfirm --needed - < /source/pkglst.txt; then  # Changed path
         log_error "Failed to install additional packages" $?
         exit 1
     fi
