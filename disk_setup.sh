@@ -165,25 +165,60 @@ setup_lvm() {
         exit 1
     fi
 
-    # Format logical volumes
-    if ! mkfs.ext4 /dev/volgroup0/lv_root || \
-       ! mkfs.ext4 /dev/volgroup0/lv_home; then
-        log_error "Failed to format logical volumes" $?
+    # Format root volume
+    if ! mkfs.ext4 /dev/volgroup0/lv_root; then
+        log_error "Failed to format root volume" $?
         exit 1
     fi
 
-    # Create mount points (This was moved down)
-    if ! mkdir -p /mnt/boot /mnt/boot/EFI /mnt/home; then
-        log_error "Failed to create mount points" $?
+    # Mount root volume
+    if ! mount /dev/volgroup0/lv_root /mnt; then
+        log_error "Failed to mount root volume" $?
         exit 1
     fi
 
-    # Mount partitions and logical volumes
-    if ! mount /dev/volgroup0/lv_root /mnt || \
-       ! mount "${disk}2" /mnt/boot || \
-       ! mount "${disk}1" /mnt/boot/EFI || \
-       ! mount /dev/volgroup0/lv_home /mnt/home; then
-        log_error "Failed to mount partitions/volumes" $?
+    # Create /boot directory and mount partition 2
+    if ! mkdir -p /mnt/boot; then
+        log_error "Failed to create /boot directory" $?
         exit 1
     fi
+    if ! mount "${disk}2" /mnt/boot; then
+        log_error "Failed to mount /boot" $?
+        exit 1
+    fi
+
+    # Create /boot/EFI directory and mount partition 1
+    if ! mkdir -p /mnt/boot/EFI; then
+        log_error "Failed to create /boot/EFI directory" $?
+        exit 1
+    fi
+    if ! mount "${disk}1" /mnt/boot/EFI; then
+        log_error "Failed to mount /boot/EFI" $?
+        exit 1
+    fi
+
+    # Format home volume
+    if ! mkfs.ext4 /dev/volgroup0/lv_home; then
+        log_error "Failed to format home volume" $?
+        exit 1
+    fi
+
+    # Create /home directory
+    if ! mkdir -p /mnt/home; then
+        log_error "Failed to create /home directory" $?
+        exit 1
+    fi
+
+    # Mount home volume
+    if ! mount /dev/volgroup0/lv_home /mnt/home; then
+        log_error "Failed to mount /home" $?
+        exit 1
+    fi
+
+    # Ensure /mnt/etc exists
+    if ! mkdir -p /mnt/etc; then
+        log_error "Failed to create /mnt/etc directory" $?
+        exit 1
+    fi
+
 }
