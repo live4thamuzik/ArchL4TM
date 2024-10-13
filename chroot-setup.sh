@@ -11,7 +11,9 @@ source /source/config.sh  # Source your pkglst.txt script from /source
 source /source/aur.sh  # Source your aur.sh script from /source
 
 # Get disk from argument
+
 DISK="$1"
+AUR_HELPER="$2"
 
 # --- System Configuration ---
 
