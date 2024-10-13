@@ -28,6 +28,10 @@ chroot_and_configure() {
         # Source the required files
         source /sources/functions.sh
         source /sources/config.sh
+        source /sources/chroot.sh
+        source /sources/pkgs.sh
+        source /sources/pkglst.txt
+        source /sources/aur.sh
 
         # --- System Configuration ---
         configure_pacman
