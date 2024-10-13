@@ -30,7 +30,7 @@ install_base_packages() {
 
 install_additional_packages() {
     log_output "Installing additional packages..."
-    if ! pacman -S --noconfirm --needed - < package-list.txt; then 
+    if ! pacman -S --noconfirm --needed - < pkglst.txt; then 
         log_error "Failed to install additional packages" $?
         exit 1
     fi
