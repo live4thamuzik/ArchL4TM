@@ -17,10 +17,10 @@ chroot_and_configure() {
     fi
 
     # Create a sources directory in the chroot environment
-    mkdir -p "$root_mount/sources"
+  #  mkdir -p "$root_mount/sources"
 
     # Copy necessary configuration scripts to the sources directory
-    cp /sources/config.sh /sources/pkglist.txt /sources/functions.sh /sources/aur.sh "$root_mount/sources/"
+  #  cp /sources/config.sh /sources/pkglist.txt /sources/functions.sh /sources/aur.sh "$root_mount/sources/"
     
     # Chroot into the new system
     log_output "Chrooting into the new system at $root_mount"
