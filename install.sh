@@ -182,7 +182,7 @@ chroot_and_configure() {
     cp *.sh /mnt/source/
     cp pkglst.txt /mnt/source/
 
-    if ! arch-chroot /mnt /bin/bash -c "cd /source && ./chroot-setup.sh $DISK" "$AUR_HELPER"; then
+    if ! arch-chroot /mnt /bin/bash -c "cd /source && ./chroot-setup.sh $DISK" "$AUR_HELPER" "$GUI_CHOICE"; then
         log_error "Failed to run chroot configuration" $?
         exit 1
     fi
