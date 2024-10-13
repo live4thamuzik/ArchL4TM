@@ -29,7 +29,7 @@ install_nvidia_drivers  # Make sure DISK is exported
 install_gui() {
     if [[ "$GUI_CHOICE" == "gnome" ]]; then
         log_output "Installing GNOME desktop environment..."
-        if ! pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox; then
+        if ! pacman -Sy --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox; then
             log_error "Failed to install GNOME packages" $?
             exit 1
         fi
@@ -40,7 +40,7 @@ install_gui() {
         log_output "GNOME installed and gdm enabled."
     elif [[ "$GUI_CHOICE" == "kde" ]]; then
         log_output "Installing KDE Plasma desktop environment..."
-        if ! pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance; then
+        if ! pacman -Sy --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance; then
             log_error "Failed to install KDE Plasma packages" $?
             exit 1
         fi
