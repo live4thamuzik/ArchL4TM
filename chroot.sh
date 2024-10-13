@@ -16,18 +16,15 @@ chroot_and_configure() {
         exit 1
     fi
 
-    # Create a sources directory in the chroot environment
-    mkdir -p "$root_mount/sources"
-
-    # Copy necessary configuration scripts to the sources directory
-    cp /sources/config.sh /sources/pkglist.txt /sources/functions.sh /sources/aur.sh "$root_mount/sources/"
-    
     # Chroot into the new system
     log_output "Chrooting into the new system at $root_mount"
     arch-chroot "$root_mount" /bin/bash <<EOF
         # Source the required files
         source /sources/functions.sh
         source /sources/config.sh
+        source /sources/pkgs.sh
+        source /sources/pkgs.sh
+        source /sources/aur.sh
 
         # --- System Configuration ---
         configure_pacman
