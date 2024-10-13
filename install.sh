@@ -181,4 +181,4 @@ cp ./chroot.sh ./aur.sh ./config.sh ./functions.sh ./pkglst.txt ./pkgs.sh /mnt/s
 
 
 # Call chroot_and_configure from chroot.sh
-bash chroot.sh "/mnt" "$USERNAME" "$HOSTNAME" "$ROOT_PASSWORD" "$GUI_CHOICE"
+bash -c ./chroot.sh "$USERNAME" "$HOSTNAME" "$ROOT_PASSWORD" "$GUI_CHOICE"
