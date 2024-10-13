@@ -4,7 +4,7 @@
 set -e
 
 # Source functions
-source config.sh  # Source your config.sh script
+source /source/config.sh  # Source your config.sh script from /source
 
 # Get disk from argument
 DISK="$1"
