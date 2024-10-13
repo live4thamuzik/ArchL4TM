@@ -24,21 +24,6 @@ install_grub
 configure_grub  # Make sure DISK is exported
 install_nvidia_drivers  # Make sure DISK is exported
 
-# --- System Configuration ---
-
-configure_pacman
-install_microcode
-enable_services
-set_locale
-update_initramfs
-create_user "$USERNAME"
-set_passwords  # Assuming ROOT_PASSWORD is set in get_password
-set_hostname "$HOSTNAME"
-update_sudoers
-install_grub
-configure_grub
-install_nvidia_drivers
-
 # --- GUI Installation ---
 
 install_gui() {
