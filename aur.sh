@@ -7,7 +7,7 @@ aur_helper="$1"
 case "$aur_helper" in
     yay)
         log_output "Installing yay..."
-        if ! pacman -S --noconfirm --needed base-devel git go || \
+        if ! pacman -Sy --noconfirm --needed base-devel git go || \
            ! runuser -u nobody git clone https://aur.archlinux.org/yay.git /tmp/yay || \
            ! chown nobody:nobody /tmp/yay || \
            ! cd /tmp/yay || \
@@ -19,7 +19,7 @@ case "$aur_helper" in
         ;;
     paru)
         log_output "Installing paru..."
-        if ! pacman -S --noconfirm --needed base-devel git rust cargo || \
+        if ! pacman -Sy --noconfirm --needed base-devel git rust cargo || \
            ! runuser -u nobody git clone https://aur.archlinux.org/paru.git /tmp/paru || \
            ! chown nobody:nobody /tmp/paru || \
            ! cd /tmp/paru || \
