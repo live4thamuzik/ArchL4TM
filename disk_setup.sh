@@ -105,10 +105,15 @@ setup_lvm() {
 
     log_output "Setting up LVM on disk: $disk"
 
-    # Format partitions 
-    if ! mkfs.fat -F32 "${disk}1" || \
-       ! mkfs.ext4 "${disk}2"; then
-        log_error "Failed to format partitions" $?
+    # Format EFI partition
+    if ! mkfs.fat -F32 "${disk}1"; then
+        log_error "Failed to format EFI partition" $?
+        exit 1
+    fi
+
+    # Format boot partition
+    if ! mkfs.ext4 "${disk}2"; then
+        log_error "Failed to format boot partition" $?
         exit 1
     fi
 
@@ -165,13 +170,12 @@ setup_lvm() {
         exit 1
     fi
 
-    # Format root volume
+    # Format and mount root volume
     if ! mkfs.ext4 /dev/volgroup0/lv_root; then
         log_error "Failed to format root volume" $?
         exit 1
     fi
 
-    # Mount root volume
     if ! mount /dev/volgroup0/lv_root /mnt; then
         log_error "Failed to mount root volume" $?
         exit 1
@@ -220,5 +224,4 @@ setup_lvm() {
         log_error "Failed to create /mnt/etc directory" $?
         exit 1
     fi
-
 }
