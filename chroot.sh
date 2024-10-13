@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Source required functions
-source /sources/functions.sh
+source functions.sh
 
 chroot_and_configure() {
     local root_mount="$1"
