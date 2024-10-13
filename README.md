@@ -1,12 +1,12 @@
-# Arch L4TM
+# ArchL4TM
 
 This is a semi-interactive Arch Linux minimal installation bash script.
 
 The script will install Arch Linux on EFI systems with minimal config and packages using LVM, LUKS and ext4. (no swap)
 
 # Configuration 
-  # Drive layout: (these can be modified in the script before running as needed. see lines 78-101)
-  - Partition 1 - EFI
+  # Drive layout:
+  - Partition 1 - EFI (mounted to /boot/EFI)
   - Partition 2 - boot (GRUB is installed here)
   - Partition 3 - LVM "volgroup0"
   - lv_root 
@@ -49,7 +49,7 @@ The script will install Arch Linux on EFI systems with minimal config and packag
   # Microcode detection for AMD and Intel processors
   - Script will use lscpu to detect and install the correct microcode needed
 
-  # Locale is set to en_US.UTF-8 UTF-8  (see line 486 to make changes)
+  # Locale is set to en_US.UTF-8 UTF-8  (see config.sh to make changes)
 
   # Timezone can be selected from a list
 
@@ -60,11 +60,11 @@ The script will install Arch Linux on EFI systems with minimal config and packag
   - ParallelDownloads
   - MultiLib
 
-  # AUR Helper options:   (Removed - Not working)
+  # AUR Helper options:
   - Paru
   - Yay
 
-  # Detection for NVIDIA GPU
+  # Detection for NVIDIA GPU:
   - Script will use lspci to detect and install NVIDIA drivers
   - nvidia-dkms
   - libglnvd
