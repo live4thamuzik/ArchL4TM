@@ -172,6 +172,14 @@ install_base_packages
 
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
+chroot_and_configure() {
+    log_output "Entering chroot and configuring system..."
+    if ! arch-chroot /mnt /bin/bash -c "./chroot-setup.sh $DISK"; then
+        log_error "Failed to run chroot configuration" $?
+        exit 1
+    fi
+}
+
 chroot_and_configure
 
 # --- System Configuration ---
