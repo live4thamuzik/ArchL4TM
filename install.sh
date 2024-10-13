@@ -177,7 +177,7 @@ genfstab -U -p /mnt >> /mnt/etc/fstab
 # --- Create sources directory ---
 
 mkdir -p /mnt/sources
-cp aur.sh config.sh functions.sh pkglst.txt pkgs.sh
+cp aur.sh config.sh functions.sh pkglst.txt pkgs.sh /mnt/sources
 
 
 # Call chroot_and_configure from chroot.sh
