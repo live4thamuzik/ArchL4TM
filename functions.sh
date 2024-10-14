@@ -154,16 +154,16 @@ get_aur_helper() {
     fi
 
     # Ask the user which AUR helper they want
-    options=("yay" "paru")
+    options=("paru" "yay" "none")
     select aur_helper in "${options[@]}"; do
         case "$aur_helper" in
-            yay)
-                export AUR_HELPER="yay"
-                log_output "yay selected."
-                ;;
             paru)
                 export AUR_HELPER="paru"
                 log_output "paru selected."
+                ;;
+            yay)
+                export AUR_HELPER="yay"
+                log_output "yay selected."
                 ;;
             none)
                 export AUR_HELPER="none"
