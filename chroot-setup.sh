@@ -72,4 +72,8 @@ install_gui
 
 # --- AUR Installation ---
 
+if [[ "$AUR_HELPER" != "none" ]]; then
+    install_aur_helper
+fi
+
 install_aur_helper
