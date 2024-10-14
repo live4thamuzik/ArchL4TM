@@ -182,6 +182,9 @@ chroot_and_configure() {
     cp *.sh /mnt/source/
     cp pkglst.txt /mnt/source/
 
+    # Make scripts executable
+    chmod +x /mnt/source/*.sh 
+
     if ! arch-chroot /mnt /bin/bash -c "cd /source && ./chroot-setup.sh '$hostname' '$username' '$userpass' '$rootpass' '$encpass' '$GUI_CHOICE' '$AUR_HELPER'"; then
         log_error "Failed to run chroot configuration" $?
         exit 1
