@@ -183,39 +183,62 @@ install_aur_helper() {
     log_output "Installing AUR helper..."
 
     # Create a temporary user
-    useradd -m -G wheel -s /bin/bash tempuser
+    if ! useradd -m -G wheel -s /bin/bash tempuser; then
+        log_error "Failed to create temporary user" $?
+        return 1
+    fi
 
     # Generate and set a random password for the temporary user
-    head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13 ; echo '' | passwd tempuser --stdin
+    if ! head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13 ; echo '' | passwd tempuser --stdin; then
+        log_error "Failed to set password for temporary user" $?
+        return 1
+    fi
 
     # Switch to the temporary user
     su tempuser <<EOF
 
     # Install git if not already installed
     if ! pacman -Qi git &> /dev/null; then
-        sudo pacman -S --noconfirm git
+        if ! sudo pacman -S --noconfirm git; then
+            log_error "Failed to install git" $?
+            exit 1
+        fi
     fi
 
-    # Install the chosen AUR helper (example with yay)
+    # Install the chosen AUR helper
     if [[ "$AUR_HELPER" == "yay" ]]; then
-        git clone https://aur.archlinux.org/yay.git
+        if ! git clone https://aur.archlinux.org/yay.git; then
+            log_error "Failed to clone yay repository" $?
+            exit 1
+        fi
         cd yay
-        makepkg -si --noconfirm
+        if ! makepkg -si --noconfirm; then
+            log_error "Failed to build and install yay" $?
+            exit 1
+        fi
         cd ..
         rm -rf yay
     elif [[ "$AUR_HELPER" == "paru" ]]; then
-        git clone https://aur.archlinux.org/paru.git
+        if ! git clone https://aur.archlinux.org/paru.git; then
+            log_error "Failed to clone paru repository" $?
+            exit 1
+        fi
         cd paru
-        makepkg -si --noconfirm
+        if ! makepkg -si --noconfirm; then
+            log_error "Failed to build and install paru" $?
+            exit 1
+        fi
         cd ..
         rm -rf paru
-    # Add more AUR helper options here if needed
     fi
 
 EOF
 
     # Switch back to root and remove the temporary user
-    userdel -r tempuser
+    if ! userdel -r tempuser; then
+        log_error "Failed to remove temporary user" $?
+        return 1
+    fi
 
     log_output "AUR helper installed."
 }
