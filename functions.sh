@@ -176,17 +176,44 @@ get_aur_helper() {
 }
 
 install_aur_helper() {
-    if [[ "$AUR_HELPER" == "none" ]]; then
-        return 0  # No AUR helper selected, skip installation
+    log_output "Installing AUR helper..."
+
+    # Create a temporary user
+    useradd -m -G wheel -s /bin/bash tempuser
+
+    # Generate and set a random password for the temporary user
+    head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13 ; echo '' | passwd tempuser --stdin
+
+    # Switch to the temporary user
+    su tempuser <<EOF
+
+    # Install git if not already installed
+    if ! pacman -Qi git &> /dev/null; then
+        sudo pacman -S --noconfirm git
     fi
 
-    log_output "Installing $AUR_HELPER..."
-
-    # Install the selected AUR helper
-    if ! arch-chroot /mnt /bin/bash -c "./aur_helper.sh $AUR_HELPER"; then
-        log_error "Failed to install AUR helper" $?
-        exit 1
+    # Install the chosen AUR helper (example with yay)
+    if [[ "$AUR_HELPER" == "yay" ]]; then
+        git clone https://aur.archlinux.org/yay.git
+        cd yay
+        makepkg -si --noconfirm
+        cd ..
+        rm -rf yay
+    elif [[ "$AUR_HELPER" == "paru" ]]; then
+        git clone https://aur.archlinux.org/paru.git
+        cd paru
+        makepkg -si --noconfirm
+        cd ..
+        rm -rf paru
+    # Add more AUR helper options here if needed
     fi
+
+EOF
+
+    # Switch back to root and remove the temporary user
+    userdel -r tempuser
+
+    log_output "AUR helper installed."
 }
 
 # --- Cleanup Function ---
