@@ -178,11 +178,11 @@ chroot_and_configure() {
     # Create a source directory in the chroot
     mkdir -p /mnt/source
 
-    # Copy all scripts to the source directory
+    # Copy all scripts and package list to the source directory
     cp *.sh /mnt/source/
     cp pkglst.txt /mnt/source/
 
-    if ! arch-chroot /mnt /bin/bash -c "cd /source && ./chroot-setup.sh $DISK" "$AUR_HELPER" "$GUI_CHOICE"; then
+    if ! arch-chroot /mnt /bin/bash -c "cd /source && ./chroot-setup.sh '$hostname' '$username' '$userpass' '$rootpass' '$encpass' '$GUI_CHOICE' '$AUR_HELPER'"; then
         log_error "Failed to run chroot configuration" $?
         exit 1
     fi
