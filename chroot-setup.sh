@@ -12,11 +12,10 @@ AUR_HELPER=$7
 set -e
 
 # Source functions
-source /source/config.sh  # Source your config.sh script from /source
-source /source/functions.sh  # Source your functions.sh script from /source
-source /source/config.sh  # Source your pkgs.sh script from /source
-source /source/config.sh  # Source your pkglst.txt script from /source
-source /source/aur.sh  # Source your aur.sh script from /source
+source /config.sh
+source /functions.sh
+source /pkgs.sh 
+source /aur.sh
 
 # Get disk from argument
 
@@ -36,9 +35,9 @@ enable_services
 
 set_locale
 update_initramfs
-create_user "$USERNAME"  # Make sure USERNAME is exported
-set_passwords  # Make sure ROOT_PASSWORD and USER_PASSWORD are exported
-set_hostname "$HOSTNAME"  # Make sure HOSTNAME is exported
+create_user "$username"
+set_passwords
+set_hostname "$hostname"
 update_sudoers
 install_grub
 configure_grub  # Make sure DISK is exported
