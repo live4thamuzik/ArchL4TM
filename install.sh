@@ -39,7 +39,7 @@ get_hostname
 get_disk
 get_partition_sizes
 get_encryption_password
-#get_aur_helper
+get_aur_helper
 
 # --- Timezone Selection ---
 
