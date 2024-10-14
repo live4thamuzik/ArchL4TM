@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Assign variables
 hostname=$1
 username=$2
 userpass=$3
@@ -7,6 +8,10 @@ rootpass=$4
 encpass=$5
 GUI_CHOICE=$6
 AUR_HELPER=$7
+
+# Export passwords
+export USER_PASSWORD="$userpass"
+export ROOT_PASSWORD="$rootpass"
 
 # Exit on any command failure
 set -e
