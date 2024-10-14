@@ -1,5 +1,13 @@
 #!/bin/bash
 
+hostname=$1
+username=$2
+userpass=$3
+rootpass=$4
+encpass=$5
+GUI_CHOICE=$6
+AUR_HELPER=$7
+
 # Exit on any command failure
 set -e
 
