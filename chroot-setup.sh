@@ -5,8 +5,8 @@ username=$2
 userpass=$3
 rootpass=$4
 encpass=$5
-GUI_CHOICE=$6
-AUR_HELPER=$7
+#GUI_CHOICE=$6
+#AUR_HELPER=$7
 
 # Exit on any command failure
 set -e
@@ -68,12 +68,12 @@ install_gui() {
     fi
 }
 
-install_gui
+#install_gui
 
 # --- AUR Installation ---
 
-if [[ "$AUR_HELPER" != "none" ]]; then
+#if [[ "$AUR_HELPER" != "none" ]]; then
     install_aur_helper
-fi
+#fi
 
-install_aur_helper
+#install_aur_helper
