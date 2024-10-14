@@ -5,8 +5,8 @@ username=$2
 userpass=$3
 rootpass=$4
 encpass=$5
-#GUI_CHOICE=$6
-#AUR_HELPER=$7
+GUI_CHOICE=$6
+AUR_HELPER=$7
 
 # Exit on any command failure
 set -e
@@ -15,7 +15,7 @@ set -e
 source ./config.sh
 source ./functions.sh
 source ./pkgs.sh 
-#source ./aur.sh
+source ./aur.sh
 
 # --- System Configuration ---
 
@@ -68,12 +68,12 @@ install_gui() {
     fi
 }
 
-#install_gui
+install_gui
 
 # --- AUR Installation ---
 
-#if [[ "$AUR_HELPER" != "none" ]]; then
-    #install_aur_helper
-#fi
+if [[ "$AUR_HELPER" != "none" ]]; then
+    install_aur_helper
+fi
 
-#install_aur_helper
+install_aur_helper
