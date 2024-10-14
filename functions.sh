@@ -165,15 +165,19 @@ get_aur_helper() {
                 export AUR_HELPER="paru"
                 log_output "paru selected."
                 ;;
+            none)
+                export AUR_HELPER="none"
+                log_output "No AUR helper selected."
+            ;;    
             *)
                 log_output "Invalid option. Skipping AUR helper installation."
                 export AUR_HELPER="none" 
                 return 1
                 ;;
-        esac
-        break
-    done
-}
+            esac
+            break
+        done
+    }
 
 install_aur_helper() {
     log_output "Installing AUR helper..."
