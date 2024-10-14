@@ -168,7 +168,7 @@ get_aur_helper() {
             none)
                 export AUR_HELPER="none"
                 log_output "No AUR helper selected."
-            ;;    
+                ;;    
             *)
                 log_output "Invalid option. Skipping AUR helper installation."
                 export AUR_HELPER="none" 
