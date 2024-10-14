@@ -15,7 +15,7 @@ set -e
 source ./config.sh
 source ./functions.sh
 source ./pkgs.sh 
-source ./aur.sh
+#source ./aur.sh
 
 # --- System Configuration ---
 
