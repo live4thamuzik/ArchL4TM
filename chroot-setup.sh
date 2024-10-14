@@ -17,11 +17,6 @@ source /functions.sh
 source /pkgs.sh 
 source /aur.sh
 
-# Get disk from argument
-
-DISK="$1"
-AUR_HELPER="$2"
-
 # --- System Configuration ---
 
 configure_pacman
@@ -40,8 +35,8 @@ set_passwords
 set_hostname "$hostname"
 update_sudoers
 install_grub
-configure_grub  # Make sure DISK is exported
-install_nvidia_drivers  # Make sure DISK is exported
+configure_grub
+install_nvidia_drivers
 
 # --- GUI Installation ---
 
