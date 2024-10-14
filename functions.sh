@@ -170,13 +170,13 @@ get_aur_helper() {
                 log_output "No AUR helper selected."
                 ;;
             *)
-                log_output "Invalid option. Skipping AUR helper installation."
-                export AUR_HELPER="none"
-                return 1
-                ;;
-        esac
-        break
-    done
+            log_output "Invalid option. Skipping AUR helper installation."
+            export AUR_HELPER="none"
+            exit 1  # Exit the script if the option is invalid
+            ;;
+    esac
+    break
+done
 }
 
 install_aur_helper() {
