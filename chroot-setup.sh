@@ -12,10 +12,10 @@ AUR_HELPER=$7
 set -e
 
 # Source functions
-source /config.sh
-source /functions.sh
-source /pkgs.sh 
-source /aur.sh
+source ./config.sh
+source ./functions.sh
+source ./pkgs.sh 
+source ./aur.sh
 
 # --- System Configuration ---
 
