@@ -186,7 +186,7 @@ chroot_and_configure() {
     # Make scripts executable
     chmod +x /mnt/source/*.sh 
 
-    if ! arch-chroot /mnt /bin/bash -c "cd /source && ./chroot-setup.sh '$hostname' '$username' '$userpass' '$rootpass' '$encpass' '$GUI_CHOICE' '$AUR_HELPER'"; then
+    if ! arch-chroot /mnt /bin/bash -c "cd /source && ./chroot-setup.sh '$hostname' '$username' '$userpass' '$rootpass' '$encpass' '$GUI_CHOICE' '$aur_helper'"; then
         log_error "Failed to run chroot configuration" $?
         exit 1
     fi
