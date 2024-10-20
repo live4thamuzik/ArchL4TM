@@ -8,4 +8,4 @@ export timezone="$timezone"
 export locale="$locale"
 export keymap="$keymap"
 export keymap="$GUI_CHOICE"
-export keymap="$AUR_HELPER
+export keymap="$AUR_HELPER"
