@@ -1,6 +1,7 @@
 #!/bin/bash
 
-source ./functions.sh  # Source functions.sh from the current directory
+source ./functions.sh
+source ./variables.sh
 
 aur_helper="$1"
 
