@@ -74,7 +74,7 @@ create_user() {
 set_passwords() {
     log_output "Setting passwords..."
     # Make sure USERNAME and PASSWORD are exported before calling this function
-    if ! echo "$USERNAME:$PASSWORD" | chpasswd || \
+    if ! echo "$USERNAME:$USER_PASSWORD" | chpasswd || \
        ! echo "root:$ROOT_PASSWORD" | chpasswd; then  # Assuming ROOT_PASSWORD is exported
         log_error "Failed to set passwords" $?
         exit 1
