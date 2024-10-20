@@ -29,6 +29,7 @@ source functions.sh
 source disk_setup.sh
 source pkgs.sh
 source config.sh
+source variables.sh
 
 # --- User Input ---
 
