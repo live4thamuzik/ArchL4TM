@@ -52,7 +52,7 @@ export EFI_SIZE
 export BOOT_SIZE
 export ENCRYPTION_PASSWORD
 
-# --- Installation Steps ---
+### Installation Steps ###
 log_info "Starting installation process..."
 
 # --- Disk Preperation ---
