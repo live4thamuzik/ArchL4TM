@@ -763,18 +763,18 @@ install_aur_helper() {
         # Install the chosen AUR helper
         case \"$AUR_HELPER\" in
             yay)
-                mkdir opt
-                chown -R nobody:nobody opt
-                cd opt
+                mkdir tmp
+                chown -R nobody:nobody tmp
+                cd tmp
                 git clone https://aur.archlinux.org/yay.git || { log_error \"Failed to clone yay repository\" 4; exit 4; }
                 chown -R nobody:nobody yay
                 cd yay
                 makepkg -si --noconfirm -C yay || { log_error \"Failed to build and install yay\" 5; exit 5; }
                 ;;
             paru)
-                mkdir opt
-                chown -R nobody:nobody opt
-                cd opt
+                mkdir tmp
+                chown -R nobody:nobody tmp
+                cd tmp
                 git clone https://aur.archlinux.org/paru.git || { log_error \"Failed to clone paru repository\" 6; exit 6; }
                 chown -R nobody:nobody paru
                 cd paru
