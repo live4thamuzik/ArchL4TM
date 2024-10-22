@@ -72,8 +72,8 @@ install_base_packages
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
 # --- Copy sources to /mnt and make script executable
-cp ./global_functions.sh ./pkgs.lst /mnt
-chmod +x /mnt/global_functions.sh
+cp ./global_functions.sh ./chroot.sh ./pkgs.lst /mnt
+chmod +x /mnt/*.sh
 
 # --- Chroot Setup ---
 ./chroot.sh
