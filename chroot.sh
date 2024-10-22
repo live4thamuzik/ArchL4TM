@@ -1,6 +1,7 @@
 #!/bin/bash
 
 ### Chroot Setup ###
+set -x
 
 # --- Enter Chroot ---
 arch-chroot /mnt /bin/bash
@@ -9,60 +10,60 @@ arch-chroot /mnt /bin/bash
 source /global_functions.sh
 
 # --- Pacman Configuration ---
-echo "Configuring pacman"
+echo -ne "Configuring pacman"
 configure_pacman
 
-echo "Installing microcode"
+echo -ne "Installing microcode"
 install_microcode 
 
 # --- Install Additional Packages ---
-echo "Installing packages"
+echo -ne "Installing packages"
 install_additional_packages
 
 # --- Enable services --- 
-echo "Enabling services"
+echo -ne "Enabling services"
 enable_services
 
 # --- Essential System Setup ---
-echo "Setting locale"
+echo -ne "Setting locale"
 set_locale
 
-echo "Update intiramfs"
+echo -ne "Update intiramfs"
 update_initramfs
 
 # --- User and Hostname Configuration ---
-echo "Creating user"
+echo -ne "Creating user"
 create_user "$USERNAME"
 
-echo "Setting passwords"
+echo -ne "Setting passwords"
 set_passwords "$USERNAME" "$USER_PASSWORD" "$ROOT_PASSWORD"
 
-echo "Setting hostname"
+echo -ne "Setting hostname"
 set_hostname "$HOSTNAME"
 
-echo "Updating Sudoers"
+echo -ne "Updating Sudoers"
 update_sudoers
 
 # --- Bootloader ---
-echo "Installing GRUB"
+echo -ne "Installing GRUB"
 install_grub
 
-echo "Configuring GRUB"
+echo -ne "Configuring GRUB"
 configure_grub "$DISK"
 
-echo "Looking for NVIDIA GPU, DKMS drivers will be installed if GPU found."
+echo -ne "Looking for NVIDIA GPU, DKMS drivers will be installed if GPU found."
 install_nvidia_drivers
 
 # --- GUI Installation ---
-echo "Installing Desktop/Server Environment"
+echo -ne "Installing Desktop/Server Environment"
 install_gui "$GUI_CHOICE"
 
 # --- AUR Installation ---
-echo "Installing AUR"
+echo -ne "Installing AUR"
 install_aur_helper "$AUR_HELPER"
 
 # --- Exit Chroot ---
-echo "Done"
+echo -ne "Done"
 exit
 
 ### END ###
