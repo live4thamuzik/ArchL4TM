@@ -96,7 +96,7 @@ echo "Running genfstab"
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
 # --- Copy sources to /mnt and make script executable
-cp ./global_functions.sh pkgs.lst /mnt
+cp ./global_functions.sh ./pkgs.lst /mnt
 chmod +x /mnt/global_functions.sh
 
 # --- Chroot Setup ---
