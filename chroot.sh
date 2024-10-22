@@ -7,7 +7,7 @@ set -x
 arch-chroot /mnt
 
 # --- Sources ---
-source /global_functions.sh
+source ./global_functions.sh
 
 # --- Pacman Configuration ---
 configure_pacman
