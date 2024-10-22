@@ -388,7 +388,6 @@ setup_timezone() {
 configure_pacman() {
     log_output "Configuring pacman..."
 
-    # Example pacman configuration (replace with your actual settings)
     if ! sed -i "/^#Color/c\Color\nILoveCandy" /etc/pacman.conf || \
        ! sed -i "/^#VerbosePkgLists/c\VerbosePkgLists" /etc/pacman.conf || \
        ! sed -i "/^#ParallelDownloads/c\ParallelDownloads = 5" /etc/pacman.conf || \
