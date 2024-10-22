@@ -3,9 +3,6 @@
 ### Chroot Setup ###
 set -x
 
-# --- Enter Chroot ---
-#arch-chroot /mnt /bin/bash
-
 # --- Sources ---
 source ./global_functions.sh
 
