@@ -31,22 +31,31 @@ source ./global_functions.sh
 # --- User Input ---
 echo "Please enter a username."
 get_username
+
 echo "Please set your password."
 get_user_password
+
 echo "Please set the root password."
 get_root_password
+
 echo "Please name your system."
 get_hostname
+
 echo "Please select a disk to use for installation"
 get_disk
+
 echo "Please set partition sizes"
 get_partition_sizes
+
 echo "The disk is encrypted with LUKS. Please set a password to unlock the disk"
 get_encryption_password
+
 echo "Please choose your timezone."
 setup_timezone
+
 echo "Would you like a Desktop Enviornment?"
 select_gui
+
 echo "Please choose an AUR helper"
 get_aur_helper
 
