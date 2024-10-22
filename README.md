@@ -49,7 +49,7 @@ The script will install Arch Linux on EFI systems with minimal config and packag
   # Microcode detection for AMD and Intel processors
   - Script will use lscpu to detect and install the correct microcode needed
 
-  # Locale is set to en_US.UTF-8 UTF-8  (see config.sh to make changes)
+  # Locale is set to en_US.UTF-8 UTF-8  (see global_functions.sh to make changes)
 
   # Timezone can be selected from a list
 
