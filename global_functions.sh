@@ -754,7 +754,7 @@ install_aur_helper() {
     if ! runuser -u $USERNAME -- /home/$USERNAME/ -c "
         # Install git if not already installed
         if ! pacman -Qi git &> /dev/null; then
-            if ! echo $USER_PASSWORD | sudo pacman -S --noconfirm git; then
+            if ! echo '$USER_PASSWORD' | sudo pacman -S --noconfirm git; then
                 log_error \"Failed to install git\" 3
                 exit 3
             fi
@@ -765,28 +765,28 @@ install_aur_helper() {
             yay)
                 mkdir -p tmp
                 cd tmp && git clone https://aur.archlinux.org/yay.git || { log_error \"Failed to clone yay repository\" 4; exit 4; }
-                cd yay && echo $USER_PASSWORD | makepkg -si --noconfirm -C yay || { log_error \"Failed to build and install yay\" 5; exit 5; }
+                cd yay && echo '$USER_PASSWORD' | makepkg -si --noconfirm -C yay || { log_error \"Failed to build and install yay\" 5; exit 5; }
                 ;;
             paru)
                 mkdir -p tmp
                 cd tmp && git clone https://aur.archlinux.org/paru.git || { log_error \"Failed to clone paru repository\" 6; exit 6; }
-                cd paru && echo $USER_PASSWORD | makepkg -si --noconfirm -C paru || { log_error \"Failed to build and install paru\" 7; exit 7; }
+                cd paru && echo '$USER_PASSWORD' | makepkg -si --noconfirm -C paru || { log_error \"Failed to build and install paru\" 7; exit 7; }
                 ;;
             *)
                 log_error \"Invalid AUR helper specified\" 8
                 exit 8
                 ;;
         esac
-    "#; then
-#        log_error "Failed to switch to temporary user" 9
-#        return 9
-#    fi
+    "; then
+        log_error "Failed to switch to temporary user" 9
+        return 9
+    fi
 
     # Switch back to root and remove the temporary user
-#    if ! userdel -r tempuser; then
-#        log_error "Failed to remove temporary user" 10
-#        return 10
-#    fi
+    if ! userdel -r tempuser; then
+        log_error "Failed to remove temporary user" 10
+        return 10
+    fi
 
     log_output "AUR helper installed."
 }
