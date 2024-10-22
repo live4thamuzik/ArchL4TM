@@ -1,0 +1,99 @@
+#!/bin/bash
+
+# Exit on any command failure
+set -e
+
+# Log all output to separate log files with timestamps
+exec > >(tee -a /var/log/arch_install.log) 2> >(tee -a /var/log/arch_install_error.log >&2)
+
+# --- Welcome Message ---
+echo -ne "
++--------------------------------+
+| Arch Linux Installation Script |
++--------------------------------+
+"
+
+echo -ne "
+
+ █████╗ ██████╗  ██████╗██╗  ██╗██╗██╗  ██╗████████╗███╗   ███╗
+██╔══██╗██╔══██╗██╔════╝██║  ██║██║██║  ██║╚══██╔══╝████╗ ████║
+███████║██████╔╝██║     ███████║██║███████║   ██║   ██╔████╔██║
+██╔══██║██╔══██╗██║     ██╔══██║██║╚════██║   ██║   ██║╚██╔╝██║
+██║  ██║██║  ██║╚██████╗██║  ██║███████╗██║   ██║   ██║ ╚═╝ ██║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝   ╚═╝   ╚═╝     ╚═╝
+                                                               
+"
+
+# --- Source Functions ---
+source ./global_functions.sh
+
+
+# --- User Input ---
+get_username
+get_user_password
+get_root_password
+get_hostname
+get_disk
+get_partition_sizes
+get_encryption_password
+setup_timezone
+select_gui
+get_aur_helper
+
+# --- Export Variables --- 
+export HOSTNAME
+export USERNAME
+export USER_PASSWORD
+export ROOT_PASSWORD
+export GUI_CHOICE
+export AUR_HELPER 
+export DISK
+export EFI_SIZE
+export BOOT_SIZE
+export ENCRYPTION_PASSWORD
+
+# --- Installation Steps ---
+log_info "Starting installation process..."
+
+# --- Disk Preperation ---
+partition_disk "$DISK" "$EFI_SIZE" "$BOOT_SIZE"
+setup_lvm "$DISK" "$ENCRYPTION_PASSWORD"
+
+# --- Install pacman-contrib reflector rsync python ---
+install_prerequisites
+
+# --- Make /etc/pacman.d/mirrorlist.backup and run reflector on /etc/pacman.d/mirrorlist ---
+configure_mirrors
+
+# --- run pacstrap ---
+install_base_packages
+
+# --- Generate FSTab ---
+genfstab -U -p /mnt >> /mnt/etc/fstab
+
+# --- Copy sources to /mnt and make script executable
+cp ./global_functions.sh pkgs.lst /mnt
+chmod +x /mnt/global_functions.sh
+
+# --- Chroot Setup ---
+./chroot.sh
+
+# --- Cleanup ---
+cleanup
+
+# --- Unmount everything ---
+umount -R /mnt
+
+# --- Comment ---
+echo "Installation is complete, reboot system."
+
+echo -ne "
+
+ █████╗ ██████╗  ██████╗██╗  ██╗██╗██╗  ██╗████████╗███╗   ███╗
+██╔══██╗██╔══██╗██╔════╝██║  ██║██║██║  ██║╚══██╔══╝████╗ ████║
+███████║██████╔╝██║     ███████║██║███████║   ██║   ██╔████╔██║
+██╔══██║██╔══██╗██║     ██╔══██║██║╚════██║   ██║   ██║╚██╔╝██║
+██║  ██║██║  ██║╚██████╗██║  ██║███████╗██║   ██║   ██║ ╚═╝ ██║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝   ╚═╝   ╚═╝     ╚═╝
+                                                               
+"
