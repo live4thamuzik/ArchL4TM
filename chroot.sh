@@ -4,7 +4,7 @@
 set -x
 
 # --- Enter Chroot ---
-arch-chroot /mnt /bin/bash
+arch-chroot /mnt
 
 # --- Sources ---
 source /global_functions.sh
