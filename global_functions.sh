@@ -751,7 +751,7 @@ install_aur_helper() {
     fi
 
     # Switch to the temporary user
-    if ! su tempuser sh -c "
+    if ! su tempuser /bin/bash -c "
         # Install git if not already installed
         if ! pacman -Qi git &> /dev/null; then
             if ! sudo pacman -S --noconfirm git; then
