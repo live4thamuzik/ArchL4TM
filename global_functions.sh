@@ -751,23 +751,25 @@ install_aur_helper() {
 #    fi
 
     # Switch to the temporary user
-#    if ! runuser -u tempuser -- /home/tempuser/ -c "
+    if ! runuser -u $USERNAME -- /home/$USERNAME/ -c "
         # Install git if not already installed
-#        if ! pacman -Qi git &> /dev/null; then
-#            if ! sudo pacman -S --noconfirm git; then
-#                log_error \"Failed to install git\" 3
-#                exit 3
-#            fi
-#        fi
+        if ! pacman -Qi git &> /dev/null; then
+            if ! sudo pacman -S --noconfirm git; then
+                log_error \"Failed to install git\" 3
+                exit 3
+            fi
+        fi
 
         # Install the chosen AUR helper
         case \"$AUR_HELPER\" in
             yay)
-                git clone https://aur.archlinux.org/yay.git || { log_error \"Failed to clone yay repository\" 4; exit 4; }
+                mkdir -p tmp
+                cd tmp && git clone https://aur.archlinux.org/yay.git || { log_error \"Failed to clone yay repository\" 4; exit 4; }
                 cd yay && makepkg -si --noconfirm --no-ask-password -C yay || { log_error \"Failed to build and install yay\" 5; exit 5; }
                 ;;
             paru)
-                git clone https://aur.archlinux.org/paru.git || { log_error \"Failed to clone paru repository\" 6; exit 6; }
+                mkdir -p tmp
+                cd tmp && git clone https://aur.archlinux.org/paru.git || { log_error \"Failed to clone paru repository\" 6; exit 6; }
                 cd paru && makepkg -si --noconfirm --no-ask-password -C paru || { log_error \"Failed to build and install paru\" 7; exit 7; }
                 ;;
             *)
