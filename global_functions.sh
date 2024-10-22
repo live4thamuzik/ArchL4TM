@@ -763,22 +763,16 @@ install_aur_helper() {
         # Install the chosen AUR helper
         case \"$AUR_HELPER\" in
             yay)
-                mkdir tmp
+                mkdir -p tmp
                 chown -R tempuser:tempuser tmp
-                cd tmp
-                git clone https://aur.archlinux.org/yay.git || { log_error \"Failed to clone yay repository\" 4; exit 4; }
-                chown -R tempuser:tempuser yay
-                cd yay
-                makepkg -si --noconfirm -C yay || { log_error \"Failed to build and install yay\" 5; exit 5; }
+                cd tmp && git clone https://aur.archlinux.org/yay.git || { log_error \"Failed to clone yay repository\" 4; exit 4; }
+                cd yay && makepkg -si --noconfirm -C yay || { log_error \"Failed to build and install yay\" 5; exit 5; }
                 ;;
             paru)
-                mkdir tmp
+                mkdir -p tmp
                 chown -R tempuser:tempuser tmp
-                cd tmp
-                git clone https://aur.archlinux.org/paru.git || { log_error \"Failed to clone paru repository\" 6; exit 6; }
-                chown -R tempuser:tempuser paru
-                cd paru
-                makepkg -si --noconfirm -C paru || { log_error \"Failed to build and install paru\" 7; exit 7; }
+                cd tmp && git clone https://aur.archlinux.org/paru.git || { log_error \"Failed to clone paru repository\" 6; exit 6; }
+                cd paru && makepkg -si --noconfirm -C paru || { log_error \"Failed to build and install paru\" 7; exit 7; }
                 ;;
             *)
                 log_error \"Invalid AUR helper specified\" 8
