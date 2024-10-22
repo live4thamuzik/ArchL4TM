@@ -777,7 +777,7 @@ install_aur_helper() {
                 exit 8
                 ;;
         esac
-    "; then
+    "#; then
 #        log_error "Failed to switch to temporary user" 9
 #        return 9
 #    fi
@@ -790,8 +790,8 @@ install_aur_helper() {
 
     log_output "AUR helper installed."
 }
-# --- Cleanup Function ---
 
+# --- Cleanup Function ---
 cleanup() {
     log_output "Cleaning up..."
 
