@@ -765,12 +765,12 @@ install_aur_helper() {
             yay)
                 mkdir -p tmp
                 cd tmp && git clone https://aur.archlinux.org/yay.git || { log_error \"Failed to clone yay repository\" 4; exit 4; }
-                cd yay && echo '$USER_PASSWORD' | makepkg -si --noconfirm --no-ask-password -C yay || { log_error \"Failed to build and install yay\" 5; exit 5; }
+                cd yay && echo '$USER_PASSWORD' | makepkg -si -C yay || { log_error \"Failed to build and install yay\" 5; exit 5; }
                 ;;
             paru)
                 mkdir -p tmp
                 cd tmp && git clone https://aur.archlinux.org/paru.git || { log_error \"Failed to clone paru repository\" 6; exit 6; }
-                cd paru && echo '$USER_PASSWORD' | makepkg -si --noconfirm --no-ask-password -C paru || { log_error \"Failed to build and install paru\" 7; exit 7; }
+                cd paru && echo '$USER_PASSWORD' | makepkg -si --noconfirm -C paru || { log_error \"Failed to build and install paru\" 7; exit 7; }
                 ;;
             *)
                 log_error \"Invalid AUR helper specified\" 8
