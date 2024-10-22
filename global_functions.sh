@@ -633,14 +633,13 @@ install_aur_helper() {
     fi
 
     # Generate and set a random password for the temporary user
-    if ! head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13 ; echo '' | passwd tempuser --stdin; then
+    if ! head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13 | passwd tempuser --stdin; then
         log_error "Failed to set password for temporary user" $?
         return 1
     fi
 
     # Switch to the temporary user
     su tempuser <<EOF
-
     # Install git if not already installed
     if ! pacman -Qi git &> /dev/null; then
         if ! sudo pacman -S --noconfirm git; then
@@ -675,7 +674,6 @@ install_aur_helper() {
         cd ..
         rm -rf paru
     fi
-
 EOF
 
     # Switch back to root and remove the temporary user
@@ -699,5 +697,4 @@ cleanup() {
     # Copy log files to the installed system
     cp /var/log/arch_install.log /mnt/var/log/arch_install.log
     cp /var/log/arch_install_error.log /mnt/var/log/arch_install_error.log
-
 }
