@@ -176,6 +176,42 @@ setup_lvm() {
 
     log_output "Setting up LVM on disk: $disk"
 
+    # Format EFI partition
+    if ! mkfs.fat -F32 "${disk}1"; then
+        log_error "Failed to format EFI partition" $?
+        exit 1
+    fi
+
+    # Format boot partition
+    if ! mkfs.ext4 "${disk}2"; then
+        log_error "Failed to format boot partition" $?
+        exit 1
+    fi
+
+    # Setup encryption on partition 3 using LUKS
+    if ! echo "$password" | cryptsetup luksFormat "${disk}3"; then
+        log_error "Failed to format LUKS partition" $?
+        exit 1
+    fi
+
+    # Open LUKS partition
+    if ! echo "$password" | cryptsetup open --type luks --batch-mode "${disk}3" lvm; then
+        log_error "Failed to open LUKS partition" $?
+        exit 1
+    fi
+
+    # Create physical volume for LVM on partition 3 with data alignment 1m
+    if ! pvcreate /dev/mapper/lvm; then
+        log_error "Failed to create physical volume" $?
+        exit 1
+    fi
+
+    # Create volume group called volgroup0 on partition 3
+    if ! vgcreate volgroup0 /dev/mapper/lvm; then
+        log_error "Failed to create volume group" $?
+        exit 1
+    fi
+
     # Get logical volume sizes from the user
     get_lv_sizes() {
         read -p "Enter root logical volume size (e.g., 50G, 200G): " root_lv_size
@@ -183,6 +219,82 @@ setup_lvm() {
         export ROOT_LV_SIZE="$root_lv_size"
         log_output "Root logical volume size: $ROOT_LV_SIZE"
     }
+
+    get_lv_sizes
+
+    # Create logical volumes (lv_home will use remaining space)
+    if ! lvcreate -L "$ROOT_LV_SIZE" volgroup0 -n lv_root || \
+       ! lvcreate -l 100%FREE volgroup0 -n lv_home; then
+        log_error "Failed to create logical volumes" $?
+        exit 1
+    fi
+
+    # Load kernel module
+    modprobe dm_mod
+
+    # Scan system for volume groups
+    vgscan
+
+    # Activate volume group
+    if ! vgchange -ay; then
+        log_error "Failed to activate volume group" $?
+        exit 1
+    fi
+
+    # Format and mount root volume
+    if ! mkfs.ext4 /dev/volgroup0/lv_root; then
+        log_error "Failed to format root volume" $?
+        exit 1
+    fi
+
+    if ! mount /dev/volgroup0/lv_root /mnt; then
+        log_error "Failed to mount root volume" $?
+        exit 1
+    fi
+
+    # Create /boot directory and mount partition 2
+    if ! mkdir -p /mnt/boot; then
+        log_error "Failed to create /boot directory" $?
+        exit 1
+    fi
+    if ! mount "${disk}2" /mnt/boot; then
+        log_error "Failed to mount /boot" $?
+        exit 1
+    fi
+
+    # Create /boot/EFI directory and mount partition 1
+    if ! mkdir -p /mnt/boot/EFI; then
+        log_error "Failed to create /boot/EFI directory" $?
+        exit 1
+    fi
+    if ! mount "${disk}1" /mnt/boot/EFI; then
+        log_error "Failed to mount /boot/EFI" $?
+        exit 1
+    fi
+
+    # Format home volume
+    if ! mkfs.ext4 /dev/volgroup0/lv_home; then
+        log_error "Failed to format home volume" $?
+        exit 1
+    fi
+
+    # Create /home directory
+    if ! mkdir -p /mnt/home; then
+        log_error "Failed to create /home directory" $?
+        exit 1
+    fi
+
+    # Mount home volume
+    if ! mount /dev/volgroup0/lv_home /mnt/home; then
+        log_error "Failed to mount /home" $?
+        exit 1
+    fi
+
+    # Ensure /mnt/etc exists
+    if ! mkdir -p /mnt/etc; then
+        log_error "Failed to create /mnt/etc directory" $?
+        exit 1
+    fi
 }
 
 # --- Timezone Selection ---
