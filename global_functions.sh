@@ -739,39 +739,35 @@ install_aur_helper() {
     log_output "Installing AUR helper..."
 
     # Create a temporary user
-    if ! useradd -m -G wheel -s /bin/bash tempuser; then
-        log_error "Failed to create temporary user" 1
-        return 1
-    fi
+#    if ! useradd -m -G wheel -s /bin/bash tempuser; then
+#        log_error "Failed to create temporary user" 1
+#        return 1
+#    fi
 
     # Generate and set a random password for the temporary user
-    if ! head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13 | passwd tempuser --stdin; then
-        log_error "Failed to set password for temporary user" 2
-        return 2
-    fi
+#    if ! head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13 | passwd tempuser --stdin; then
+#        log_error "Failed to set password for temporary user" 2
+#        return 2
+#    fi
 
     # Switch to the temporary user
-    if ! su tempuser /bin/bash -c "
+#    if ! runuser -u tempuser -- /home/tempuser/ -c "
         # Install git if not already installed
-        if ! pacman -Qi git &> /dev/null; then
-            if ! sudo pacman -S --noconfirm git; then
-                log_error \"Failed to install git\" 3
-                exit 3
-            fi
-        fi
+#        if ! pacman -Qi git &> /dev/null; then
+#            if ! sudo pacman -S --noconfirm git; then
+#                log_error \"Failed to install git\" 3
+#                exit 3
+#            fi
+#        fi
 
         # Install the chosen AUR helper
         case \"$AUR_HELPER\" in
             yay)
-                mkdir -p tmp
-                chown -R tempuser:tempuser tmp
-                cd tmp && git clone https://aur.archlinux.org/yay.git || { log_error \"Failed to clone yay repository\" 4; exit 4; }
+                git clone https://aur.archlinux.org/yay.git || { log_error \"Failed to clone yay repository\" 4; exit 4; }
                 cd yay && makepkg -si --noconfirm --no-ask-password -C yay || { log_error \"Failed to build and install yay\" 5; exit 5; }
                 ;;
             paru)
-                mkdir -p tmp
-                chown -R tempuser:tempuser tmp
-                cd tmp && git clone https://aur.archlinux.org/paru.git || { log_error \"Failed to clone paru repository\" 6; exit 6; }
+                git clone https://aur.archlinux.org/paru.git || { log_error \"Failed to clone paru repository\" 6; exit 6; }
                 cd paru && makepkg -si --noconfirm --no-ask-password -C paru || { log_error \"Failed to build and install paru\" 7; exit 7; }
                 ;;
             *)
@@ -780,15 +776,15 @@ install_aur_helper() {
                 ;;
         esac
     "; then
-        log_error "Failed to switch to temporary user" 9
-        return 9
-    fi
+#        log_error "Failed to switch to temporary user" 9
+#        return 9
+#    fi
 
     # Switch back to root and remove the temporary user
-    if ! userdel -r tempuser; then
-        log_error "Failed to remove temporary user" 10
-        return 10
-    fi
+#    if ! userdel -r tempuser; then
+#        log_error "Failed to remove temporary user" 10
+#        return 10
+#    fi
 
     log_output "AUR helper installed."
 }
