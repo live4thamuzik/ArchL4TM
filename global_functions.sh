@@ -183,6 +183,7 @@ setup_lvm() {
         export ROOT_LV_SIZE="$root_lv_size"
         log_output "Root logical volume size: $ROOT_LV_SIZE"
     }
+}
 
 # --- Timezone Selection ---
 setup_timezone() {
