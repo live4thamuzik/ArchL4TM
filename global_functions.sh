@@ -641,7 +641,7 @@ install_base_packages() {
 
 install_additional_packages() {
     log_output "Installing additional packages..."
-    if ! pacman -Sy --noconfirm --needed - < /pkgs.lst; then
+    if ! pacman -Sy --noconfirm --needed - < ./pkgs.lst; then
         log_error "Failed to install additional packages" $?
         exit 1
     fi
