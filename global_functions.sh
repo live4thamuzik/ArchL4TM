@@ -765,6 +765,7 @@ install_aur_helper() {
             yay)
                 mkdir opt
                 chown -R nobody:nobody opt
+                cd opt
                 git clone https://aur.archlinux.org/yay.git || { log_error \"Failed to clone yay repository\" 4; exit 4; }
                 chown -R nobody:nobody yay
                 cd yay
@@ -773,6 +774,7 @@ install_aur_helper() {
             paru)
                 mkdir opt
                 chown -R nobody:nobody opt
+                cd opt
                 git clone https://aur.archlinux.org/paru.git || { log_error \"Failed to clone paru repository\" 6; exit 6; }
                 chown -R nobody:nobody paru
                 cd paru
