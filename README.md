@@ -64,7 +64,7 @@ The script will install Arch Linux on EFI systems with minimal config and packag
   - Paru
   - Yay
 
-  # Detection for NVIDIA GPU:
+  # Detection for NVIDIA GPU: (I use a custom kernel and hyprland, if you don't want dkms just update global_functions.sh)
   - Script will use lspci to detect and install NVIDIA drivers
   - nvidia-dkms
   - libglnvd
