@@ -738,19 +738,7 @@ done
 install_aur_helper() {
     log_output "Installing AUR helper..."
 
-    # Create a temporary user
-#    if ! useradd -m -G wheel -s /bin/bash tempuser; then
-#        log_error "Failed to create temporary user" 1
-#        return 1
-#    fi
-
-    # Generate and set a random password for the temporary user
-#    if ! head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13 | passwd tempuser --stdin; then
-#        log_error "Failed to set password for temporary user" 2
-#        return 2
-#    fi
-
-    # Switch to the temporary user
+    # Switch to the created user
     if ! runuser -u $USERNAME -- /bin/bash -c "
         # Install git if not already installed
         if ! pacman -Qi git &> /dev/null; then
@@ -782,12 +770,6 @@ install_aur_helper() {
         return 9
     fi
 
-    # Switch back to root and remove the temporary user
-#    if ! userdel -r tempuser; then
-#        log_error "Failed to remove temporary user" 10
-#        return 10
-#    fi
-
     log_output "AUR helper installed."
 }
 
@@ -798,6 +780,7 @@ cleanup() {
     # Remove temporary files and directories created during the installation
     rm -rf /mnt/global_functions.sh
     rm -rf /mnt/chroot.sh
+    rm -rf /mnt/tmp
 
     # Copy log files to the installed system
     cp /var/log/arch_install.log /mnt/var/log/arch_install.log
