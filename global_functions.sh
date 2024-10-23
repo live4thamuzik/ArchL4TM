@@ -778,15 +778,15 @@ install_aur_helper() {
                 ;;
         esac
     "; then
-        log_error "Failed to switch to temporary user" 9
+        log_error "Failed to switch to user" 9
         return 9
     fi
 
     # Switch back to root and remove the temporary user
-    if ! userdel -r tempuser; then
-        log_error "Failed to remove temporary user" 10
-        return 10
-    fi
+#    if ! userdel -r tempuser; then
+#        log_error "Failed to remove temporary user" 10
+#        return 10
+#    fi
 
     log_output "AUR helper installed."
 }
