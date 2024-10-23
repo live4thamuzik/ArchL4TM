@@ -80,7 +80,7 @@ get_disk() {
     fdisk -l | grep "Disk /"  # Only list whole disks
 
     while true; do
-        read -p "Enter the disk to use (e.g., /dev/sda): " disk
+        read -r -p "Enter the disk to use (e.g., /dev/sda): " disk
 
         if ! validate_disk "$disk"; then  # Use the validate_disk function from functions.sh
             continue
@@ -97,8 +97,8 @@ get_disk() {
 
 get_partition_sizes() {
     while true; do
-        read -p "Enter EFI partition size (e.g., 2G, 512M): " efi_size
-        read -p "Enter boot partition size (e.g., 5G, 1G): " boot_size
+        read -r -p "Enter EFI partition size (e.g., 2G, 512M): " efi_size
+        read -r -p "Enter boot partition size (e.g., 5G, 1G): " boot_size
 
         # Basic validation (you might want to add more robust checks)
         if [[ "$efi_size" =~ ^[0-9]+(G|M|K)$ ]] && \
@@ -214,7 +214,7 @@ setup_lvm() {
 
     # Get logical volume sizes from the user
     get_lv_sizes() {
-        read -p "Enter root logical volume size (e.g., 50G, 200G): " root_lv_size
+        read -r -p "Enter root logical volume size (e.g., 50G, 200G): " root_lv_size
         # You might want to add validation here for $root_lv_size
         export ROOT_LV_SIZE="$root_lv_size"
         log_output "Root logical volume size: $ROOT_LV_SIZE"
@@ -356,7 +356,7 @@ setup_timezone() {
         display_page "$start" "$end"
 
         # Prompt user for selection or continue
-        read -p "Enter the number of your timezone choice from this page, or press Enter to see more timezones: " choice
+        read -r -p "Enter the number of your timezone choice from this page, or press Enter to see more timezones: " choice
 
         # Check if user made a choice
         if [[ "$choice" =~ ^[0-9]+$ ]]; then 
@@ -742,7 +742,7 @@ install_aur_helper() {
      echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
     # Switch to the created user
-    if ! runuser -u $USERNAME -- /bin/bash -c "
+    if ! runuser -u "$USERNAME" -- /bin/bash -c "
         # Install git if not already installed
         if ! pacman -Qi git &> /dev/null; then
             if ! sudo pacman -S --noconfirm git; then
