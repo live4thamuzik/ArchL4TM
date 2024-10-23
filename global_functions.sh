@@ -751,7 +751,7 @@ install_aur_helper() {
 #    fi
 
     # Switch to the temporary user
-    if ! runuser -u $USERNAME -- / /bin/bash -c "
+    if ! runuser -u $USERNAME -- /bin/bash -c "
         # Install git if not already installed
         if ! pacman -Qi git &> /dev/null; then
             if ! echo '$USER_PASSWORD' | sudo pacman -S --noconfirm git; then
