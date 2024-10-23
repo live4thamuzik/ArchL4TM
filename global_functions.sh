@@ -738,6 +738,9 @@ done
 install_aur_helper() {
     log_output "Installing AUR helper..."
 
+     # Temporarily allow the user to run sudo without a password
+     echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
     # Switch to the created user
     if ! runuser -u $USERNAME -- /bin/bash -c "
         # Install git if not already installed
@@ -769,6 +772,9 @@ install_aur_helper() {
         log_error "Failed to switch to user" 9
         return 9
     fi
+
+    # Remove the temporary sudoers entry
+    sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
 
     log_output "AUR helper installed."
 }
