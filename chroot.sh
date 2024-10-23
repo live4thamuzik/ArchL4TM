@@ -1,7 +1,6 @@
 #!/bin/bash
 
 ### Chroot Setup ###
-set -x
 
 # --- Sources ---
 source ./global_functions.sh
