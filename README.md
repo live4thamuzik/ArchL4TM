@@ -6,7 +6,7 @@ The script will install Arch Linux on EFI systems with minimal config and packag
 
 # Configuration 
   # Drive layout:
-  - Partition 1 - EFI (mounted to /boot/EFI)
+  - Partition 1 - EFI (mounted to /boot/efi)
   - Partition 2 - boot (GRUB is installed here)
   - Partition 3 - LVM "volgroup0"
   - lv_root 
