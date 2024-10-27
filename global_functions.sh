@@ -263,11 +263,11 @@ setup_lvm() {
     fi
 
     # Create /boot/EFI directory and mount partition 1
-    if ! mkdir -p /mnt/boot/EFI; then
+    if ! mkdir -p /mnt/boot/efi; then
         log_error "Failed to create /boot/EFI directory" $?
         exit 1
     fi
-    if ! mount "${disk}1" /mnt/boot/EFI; then
+    if ! mount "${disk}1" /mnt/boot/efi; then
         log_error "Failed to mount /boot/EFI" $?
         exit 1
     fi
