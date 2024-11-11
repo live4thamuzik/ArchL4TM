@@ -589,7 +589,7 @@ install_nvidia_drivers() {
         log_output "Installing NVIDIA drivers..."
 
         # Install NVIDIA drivers and related packages
-        if ! pacman -Sy --noconfirm --needed nvidia libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings; then 
+        if ! pacman -Sy --noconfirm --needed nvidia-dkms libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings; then 
             log_error "Failed to install NVIDIA packages" $?
             exit 1
         fi
