@@ -4,8 +4,7 @@ This is a semi-interactive Arch Linux minimal installation bash script.
 
 The script will install Arch Linux on EFI systems with minimal config and packages using LVM, LUKS and ext4. (no swap)
 
-# Disclaimer: This script is not intented for new users. If you are new to Linux or Arch you should read the wiki and be able to successfully install Arch the manual way. Running a script that you do not understand is not advised!
-https://wiki.archlinux.org/title/Installation_guide
+# Disclaimer: This script is not intented for new users. If you are new to Linux or Arch you should read the wiki and be able to successfully install Arch the manual way. Running a script that you do not understand is not advised! https://wiki.archlinux.org/title/Installation_guide
 
 # Configuration 
   # Drive layout:
