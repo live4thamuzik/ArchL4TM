@@ -48,7 +48,6 @@ export ROOT_PASSWORD
 export GUI_CHOICE
 export AUR_HELPER 
 export DISK
-export partition_suffix
 export EFI_SIZE
 export BOOT_SIZE
 export ENCRYPTION_PASSWORD
@@ -58,7 +57,7 @@ log_info "Starting installation process..."
 
 # --- Disk Preperation ---
 partition_disk "$DISK" "$EFI_SIZE" "$BOOT_SIZE"
-setup_lvm "$DISK$partition_suffix" "$ENCRYPTION_PASSWORD"
+setup_lvm "$DISK" "$ENCRYPTION_PASSWORD"
 
 # --- Install pacman-contrib reflector rsync python ---
 install_prerequisites
