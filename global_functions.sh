@@ -176,30 +176,34 @@ setup_lvm() {
 
     log_output "Setting up LVM on disk: $disk"
 
+    # Determine partition suffix for NVMe drives
+    local partition_suffix=""
+    [[ "$disk" == *nvme* ]] && partition_suffix="p"
+
     # Format EFI partition
-    if ! mkfs.fat -F32 "${disk}1"; then
+    if ! mkfs.fat -F32 "${disk}${partition_suffix}1"; then
         log_error "Failed to format EFI partition" $?
         exit 1
     fi
 
     # Format boot partition
-    if ! mkfs.ext4 "${disk}2"; then
+    if ! mkfs.ext4 "${disk}${partition_suffix}2"; then
         log_error "Failed to format boot partition" $?
         exit 1
     fi
 
     # Setup encryption on partition 3 using LUKS
-    if ! echo "$password" | cryptsetup luksFormat "${disk}3"; then
+    if ! echo "$password" | cryptsetup luksFormat "${disk}${partition_suffix}3"; then
         log_error "Failed to format LUKS partition" $?
         exit 1
     fi
 
     # Open LUKS partition
-    if ! echo "$password" | cryptsetup open --type luks --batch-mode "${disk}3" lvm; then
+    if ! echo "$password" | cryptsetup open --type luks --batch-mode "${disk}${partition_suffix}3" lvm; then
         log_error "Failed to open LUKS partition" $?
         exit 1
     fi
-
+    
     # Create physical volume for LVM on partition 3 with data alignment 1m
     if ! pvcreate /dev/mapper/lvm; then
         log_error "Failed to create physical volume" $?
@@ -257,7 +261,7 @@ setup_lvm() {
         log_error "Failed to create /boot directory" $?
         exit 1
     fi
-    if ! mount "${disk}2" /mnt/boot; then
+    if ! mount "${disk}${partition_suffix}2" /mnt/boot; then
         log_error "Failed to mount /boot" $?
         exit 1
     fi
@@ -267,7 +271,7 @@ setup_lvm() {
         log_error "Failed to create /boot/efi directory" $?
         exit 1
     fi
-    if ! mount "${disk}1" /mnt/boot/efi; then
+    if ! mount "${disk}${partition_suffix}1" /mnt/boot/efi; then
         log_error "Failed to mount /boot/efi" $?
         exit 1
     fi
@@ -562,7 +566,7 @@ configure_grub() {
 
     # Make sure DISK is exported and available in the environment
     if ! sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved' /etc/default/grub || \
-       ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice='"$DISK"'3:volgroup0 loglevel=3"' /etc/default/grub || \
+       ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice='"$DISK$partition_suffix"'3:volgroup0 loglevel=3"' /etc/default/grub || \
        ! sed -i '/^#GRUB_ENABLE_CRYPTODISK=y/c\GRUB_ENABLE_CRYPTODISK=y' /etc/default/grub || \
        ! sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub || \
        ! cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale.en.mo || \
@@ -603,7 +607,7 @@ install_nvidia_drivers() {
 
         # Update GRUB configuration with NVIDIA settings
         # Make sure DISK is exported and available in the environment
-        if ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=\/dev\/'"$DISK"'3:volgroup0 loglevel=3"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=\/dev\/'"$DISK"'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || \
+        if ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=\/dev\/'"$DISK$partition_suffix"'3:volgroup0 loglevel=3"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=\/dev\/'"$DISK$partition_suffix"'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || \
            ! grub-mkconfig -o /boot/grub/grub.cfg; then
             log_error "Failed to update GRUB configuration with NVIDIA settings" $?
             exit 1
