@@ -29,7 +29,7 @@ update_sudoers
 
 # --- Bootloader ---
 install_grub
-configure_grub "$DISK"
+configure_grub "$DISK$partition_suffix"
 
 # --- Install NVIDA drivers if GPU found ---
 install_nvidia_drivers
