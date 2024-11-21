@@ -35,6 +35,7 @@ get_root_password
 get_hostname
 get_disk
 get_partition_sizes
+get_partitions
 get_encryption_password
 setup_timezone
 select_gui
@@ -50,6 +51,9 @@ export AUR_HELPER
 export DISK
 export EFI_SIZE
 export BOOT_SIZE
+export PART1
+export PART2
+export PART3
 export ENCRYPTION_PASSWORD
 
 ### Installation Steps ###
@@ -57,7 +61,7 @@ log_info "Starting installation process..."
 
 # --- Disk Preperation ---
 partition_disk "$DISK" "$EFI_SIZE" "$BOOT_SIZE"
-setup_lvm "$DISK" "$ENCRYPTION_PASSWORD"
+setup_lvm "$DISK" "$PART1" "$PART2" "$PART3" "$ENCRYPTION_PASSWORD"
 
 # --- Install pacman-contrib reflector rsync python ---
 install_prerequisites
