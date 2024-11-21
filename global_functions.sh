@@ -171,17 +171,43 @@ partition_disk() {
 }
 
 get_partitions() {
-    local disk="$1"
+    # Identify the base device
+    local base_device
+    base_device=$(lsblk -dno NAME | grep -E '^sd|^nvme')
 
-    if [[ "$disk" == *nvme* ]]; then
-        export PART1="${disk}p1"
-        export PART2="${disk}p2"
-        export PART3="${disk}p3"
-    else
-        export PART1="${disk}1"
-        export PART2="${disk}2"
-        export PART3="${disk}3"
+    # Error handling: check if a base device was found
+    if [[ -z "$base_device" ]]; then
+        echo "Error: No suitable base device found (e.g., SATA or NVMe)." >&2
+        return 1
     fi
+
+    # Build the full device paths
+    if [[ "$base_device" == nvme* ]]; then
+        # NVMe drives require a 'p' before the partition number
+        PART1="/dev/${base_device}p1"
+        PART2="/dev/${base_device}p2"
+        PART3="/dev/${base_device}p3"
+    else
+        # Standard SATA/ATA drives
+        PART1="/dev/${base_device}1"
+        PART2="/dev/${base_device}2"
+        PART3="/dev/${base_device}3"
+    fi
+
+    # Validate if the partitions exist
+    for part in "$PART1" "$PART2" "$PART3"; do
+        if [[ ! -b "$part" ]]; then
+            echo "Error: Partition $part does not exist or is not a block device." >&2
+            return 1
+        fi
+    done
+
+    # Debug output (only if successful)
+    echo "Base Device: /dev/$base_device"
+    echo "Partition 1: $PART1"
+    echo "Partition 2: $PART2"
+    echo "Partition 3: $PART3"
+    return 0
 }
 
 setup_lvm() {
