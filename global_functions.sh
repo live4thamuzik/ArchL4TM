@@ -187,29 +187,32 @@ get_partitions() {
 setup_lvm() {
     local disk="$1"
     local password="$2"  # Pass the encryption password as an argument
+    local part1="$3"
+    local part2="$4"
+    local part3="$5"
 
     log_output "Setting up LVM on disk: $disk"
 
     # Format EFI partition
-    if ! mkfs.fat -F32 "$PART1"; then
+    if ! mkfs.fat -F32 "$part1"; then
         log_error "Failed to format EFI partition" $?
         exit 1
     fi
 
     # Format boot partition
-    if ! mkfs.ext4 "$PART2"; then
+    if ! mkfs.ext4 "$part2"; then
         log_error "Failed to format boot partition" $?
         exit 1
     fi
 
     # Setup encryption on partition 3 using LUKS
-    if ! echo "$password" | cryptsetup luksFormat "$PART3"; then
+    if ! echo "$password" | cryptsetup luksFormat "$part3"; then
         log_error "Failed to format LUKS partition" $?
         exit 1
     fi
 
     # Open LUKS partition
-    if ! echo "$password" | cryptsetup open --type luks --batch-mode "$PART3" lvm; then
+    if ! echo "$password" | cryptsetup open --type luks --batch-mode "$part3" lvm; then
         log_error "Failed to open LUKS partition" $?
         exit 1
     fi
@@ -271,7 +274,7 @@ setup_lvm() {
         log_error "Failed to create /boot directory" $?
         exit 1
     fi
-    if ! mount "$PART2" /mnt/boot; then
+    if ! mount "$part2" /mnt/boot; then
         log_error "Failed to mount /boot" $?
         exit 1
     fi
@@ -281,7 +284,7 @@ setup_lvm() {
         log_error "Failed to create /boot/EFI directory" $?
         exit 1
     fi
-    if ! mount "$PART1" /mnt/boot/EFI; then
+    if ! mount "$part1" /mnt/boot/EFI; then
         log_error "Failed to mount /boot/EFI" $?
         exit 1
     fi
