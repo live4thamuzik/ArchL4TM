@@ -61,7 +61,7 @@ log_info "Starting installation process..."
 
 # --- Disk Preperation ---
 partition_disk "$DISK" "$EFI_SIZE" "$BOOT_SIZE"
-setup_lvm "$DISK" "$PART1" "$PART2" "$PART3" "$ENCRYPTION_PASSWORD"
+setup_lvm "$DISK" "$ENCRYPTION_PASSWORD" "$PART1" "$PART2" "$PART3"
 
 # --- Install pacman-contrib reflector rsync python ---
 install_prerequisites
