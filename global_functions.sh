@@ -80,7 +80,7 @@ get_disk() {
     fdisk -l | grep "Disk /"  # Only list whole disks
 
     while true; do
-        read -r -p "Enter the disk to use (e.g., /dev/sda): " disk
+        read -r -p "Enter the disk to use (e.g. /dev/nvme0n1 , /dev/sda): " disk
 
         if ! validate_disk "$disk"; then  # Use the validate_disk function from functions.sh
             continue
@@ -171,9 +171,9 @@ partition_disk() {
 }
 
 get_partitions() {
-    # Identify the base device
+    # Identify the base device (first disk detected matching sd* or nvme*)
     local base_device
-    base_device=$(lsblk -dno NAME | grep -E '^sd|^nvme')
+    base_device=$(lsblk -dno NAME | grep -E '^sd|^nvme' | head -n 1)
 
     # Error handling: check if a base device was found
     if [[ -z "$base_device" ]]; then
@@ -182,7 +182,7 @@ get_partitions() {
     fi
 
     # Build the full device paths
-    if [[ "$base_device" == nvme* ]]; then
+    if [[ "$base_device" =~ ^nvme ]]; then
         # NVMe drives require a 'p' before the partition number
         PART1="/dev/${base_device}p1"
         PART2="/dev/${base_device}p2"
