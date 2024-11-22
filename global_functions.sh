@@ -602,29 +602,30 @@ install_grub() {
 }
 
 configure_grub() {
-    log_output "Configuring GRUB..."
+  log_output "Configuring GRUB..."
 
-    # Make sure DISK is exported and available in the environment
-    if [[ $disk =~ nvme ]]; then
-      if ! sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved' /etc/default/grub || \
-         ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice='"$DISK"'p3:volgroup0 loglevel=3"' /etc/default/grub || \
-         ! sed -i '/^#GRUB_ENABLE_CRYPTODISK=y/c\GRUB_ENABLE_CRYPTODISK=y' /etc/default/grub || \
-         ! sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub || \
-         ! cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale.en.mo || \
-         ! grub-mkconfig -o /boot/grub/grub.cfg; then
-          log_error "Failed to configure GRUB" $?
-          exit 1
-      fi
-    else
-      if ! sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved' /etc/default/grub || \
-         ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice='"$DISK"'3:volgroup0 loglevel=3"' /etc/default/grub || \
-         ! sed -i '/^#GRUB_ENABLE_CRYPTODISK=y/c\GRUB_ENABLE_CRYPTODISK=y' /etc/default/grub || \
-         ! sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub || \
-         ! cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale.en.mo || \
-         ! grub-mkconfig -o /boot/grub/grub.cfg; then
-          log_error "Failed to configure GRUB" $?
-          exit 1
-      fi
+  # Make sure DISK is exported and available in the environment
+  if [[ $disk =~ nvme ]]; then
+    if ! sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved' /etc/default/grub || \
+       ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice='"$DISK"'p3:volgroup0 loglevel=3"' /etc/default/grub || \
+       ! sed -i '/^#GRUB_ENABLE_CRYPTODISK=y/c\GRUB_ENABLE_CRYPTODISK=y' /etc/default/grub || \
+       ! sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub || \
+       ! cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale.en.mo || \
+       ! grub-mkconfig -o /boot/grub/grub.cfg; then
+      log_error "Failed to configure GRUB" $?
+      exit 1
+    fi
+  else
+    if ! sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved' /etc/default/grub || \
+       ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice='"$DISK"'3:volgroup0 loglevel=3"' /etc/default/grub || \
+       ! sed -i '/^#GRUB_ENABLE_CRYPTODISK=y/c\GRUB_ENABLE_CRYPTODISK=y' /etc/default/grub || \
+       ! sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub || \
+       ! cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale.en.mo || \
+       ! grub-mkconfig -o /boot/grub/grub.cfg; then
+      log_error "Failed to configure GRUB" $?
+      exit 1
+    fi
+  fi
 }
 
 
