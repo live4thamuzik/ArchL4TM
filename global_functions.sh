@@ -446,13 +446,13 @@ install_microcode() {
     proc_type=$(lscpu | grep -oP '^Vendor ID:\s+\K\w+')
     if [ "$proc_type" = "GenuineIntel" ]; then
         log_output "Installing Intel microcode"
-        if ! pacman -Sy --noconfirm --needed intel-ucode; then
+        if ! pacman -S --noconfirm --needed intel-ucode; then
             log_error "Failed to install Intel microcode" $?
             exit 1
         fi
     elif [ "$proc_type" = "AuthenticAMD" ]; then
         log_output "Installing AMD microcode"
-        if ! pacman -Sy --noconfirm --needed amd-ucode; then
+        if ! pacman -S --noconfirm --needed amd-ucode; then
             log_error "Failed to install AMD microcode" $?
             exit 1
         fi
@@ -645,7 +645,7 @@ install_nvidia_drivers() {
         log_output "Installing NVIDIA drivers..."
 
         # Install NVIDIA drivers and related packages
-        if ! pacman -Sy --noconfirm --needed nvidia libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings; then 
+        if ! pacman -S --noconfirm --needed nvidia libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings; then 
             log_error "Failed to install NVIDIA packages" $?
             exit 1
         fi
@@ -702,7 +702,7 @@ install_base_packages() {
 
 install_additional_packages() {
     log_output "Installing additional packages..."
-    if ! pacman -Sy --noconfirm --needed - < ./pkgs.lst; then
+    if ! pacman -S --noconfirm --needed - < ./pkgs.lst; then
         log_error "Failed to install additional packages" $?
         exit 1
     fi
@@ -735,7 +735,7 @@ select_gui() {
 install_gui() {
     if [[ "$GUI_CHOICE" == "gnome" ]]; then
         log_output "Installing GNOME desktop environment..."
-        if ! pacman -Sy --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox; then
+        if ! pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox; then
             log_error "Failed to install GNOME packages" $?
             exit 1
         fi
@@ -746,7 +746,7 @@ install_gui() {
         log_output "GNOME installed and gdm enabled."
     elif [[ "$GUI_CHOICE" == "kde" ]]; then
         log_output "Installing KDE Plasma desktop environment..."
-        if ! pacman -Sy --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance; then
+        if ! pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance; then
             log_error "Failed to install KDE Plasma packages" $?
             exit 1
         fi
