@@ -607,7 +607,7 @@ configure_grub() {
   # Make sure DISK is exported and available in the environment
   if [[ $disk =~ nvme ]]; then
     if ! sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved' /etc/default/grub || \
-       ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice='"$DISK"'p3:volgroup0 loglevel=3"' /etc/default/grub || \
+       ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice='"$DISK"p3':volgroup0 loglevel=3"' /etc/default/grub || \
        ! sed -i '/^#GRUB_ENABLE_CRYPTODISK=y/c\GRUB_ENABLE_CRYPTODISK=y' /etc/default/grub || \
        ! sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub || \
        ! cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale.en.mo || \
@@ -659,7 +659,7 @@ install_nvidia_drivers() {
 
         # Update GRUB configuration with NVIDIA settings
         if [[ $DISK =~ nvme ]]; then
-            if ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=\/dev\/'"$DISK"'p3:volgroup0 loglevel=3"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=\/dev\/'"$DISK"'p3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || \
+            if ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=\/dev\/'"$DISK"p3':volgroup0 loglevel=3"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=\/dev\/'"$DISK"p3':volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || \
                ! grub-mkconfig -o /boot/grub/grub.cfg; then
                 log_error "Failed to update GRUB configuration with NVIDIA settings" $?
             fi
