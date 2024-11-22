@@ -80,7 +80,7 @@ get_disk() {
     fdisk -l | grep "Disk /"  # Only list whole disks
 
     while true; do
-        read -r -p "Enter the disk to use (e.g., /dev/sda): " disk
+        read -r -p "Enter the disk to use (e.g. /dev/nvme0n1 , /dev/sda): " disk
 
         if ! validate_disk "$disk"; then  # Use the validate_disk function from functions.sh
             continue
