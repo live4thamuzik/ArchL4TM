@@ -658,24 +658,22 @@ install_nvidia_drivers() {
         fi
 
         # Update GRUB configuration with NVIDIA settings
-        # Make sure DISK is exported and available in the environment
-        if [[ $disk =~ nvme ]]; then
-          if ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=\/dev\/'"$DISK"'p3:volgroup0 loglevel=3"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=\/dev\/'"$DISK"'p3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || \
-             ! grub-mkconfig -o /boot/grub/grub.cfg; then
-              log_error "Failed to update GRUB configuration with NVIDIA settings" $?
-              exit 1
-          fi
-        else
-          fi ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=\/dev\/'"$DISK"'3:volgroup0 loglevel=3"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=\/dev\/'"$DISK"'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || \
-             ! grub-mkconfig -o /boot/grub/grub.cfg; then
-              log_error "Failed to update GRUB configuration with NVIDIA settings" $?
-              exit 1
+        if [[ $DISK =~ nvme ]]; then
+            if ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=\/dev\/'"$DISK"'p3:volgroup0 loglevel=3"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=\/dev\/'"$DISK"'p3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || \
+               ! grub-mkconfig -o /boot/grub/grub.cfg; then
+                log_error "Failed to update GRUB configuration with NVIDIA settings" $?
             fi
-          fi
-      else
-          log_output "No NVIDIA GPUs detected. Skipping NVIDIA driver installation."
-      fi
-}
+        else
+            if ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=\/dev\/'"$DISK"'3:volgroup0 loglevel=3"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=\/dev\/'"$DISK"'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || \
+               ! grub-mkconfig -o /boot/grub/grub.cfg; then
+                log_error "Failed to update GRUB configuration with NVIDIA settings" $?
+            fi
+        fi
+
+        else
+            log_output "No NVIDIA GPUs detected. Skipping NVIDIA driver installation."
+        fi
+    }
 
 install_prerequisites() {
     log_output "Installing prerequisite packages..."
