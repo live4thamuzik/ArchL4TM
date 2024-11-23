@@ -97,10 +97,10 @@ get_disk() {
 
 get_partition_sizes() {
     while true; do
-        read -r -p "Enter EFI partition size (e.g., 2G, 512M): " efi_size
-        read -r -p "Enter boot partition size (e.g., 5G, 1G): " boot_size
+        read -r -p "Enter EFI partition size (e.g., 512M, 1G): " efi_size
+        read -r -p "Enter boot partition size (e.g., 512M, 1G): " boot_size
 
-        # Basic validation (you might want to add more robust checks)
+        # Basic validation
         if [[ "$efi_size" =~ ^[0-9]+(G|M|K)$ ]] && \
            [[ "$boot_size" =~ ^[0-9]+(G|M|K)$ ]]; then
             export EFI_SIZE="$efi_size"
@@ -109,7 +109,7 @@ get_partition_sizes() {
             log_output "Boot partition size: $BOOT_SIZE"
             break
         else
-            log_error "Invalid partition size(s). Please use a format like 2G or 512M." 1
+            log_error "Invalid partition size(s). Please use a format like 512M or 1G." 1
         fi
     done
 }
@@ -242,7 +242,7 @@ setup_lvm() {
 
     # Get logical volume sizes from the user
     get_lv_sizes() {
-        read -r -p "Enter root logical volume size (e.g., 50G, 200G): " root_lv_size
+        read -r -p "Enter root logical volume size (e.g., 50G, 100G): " root_lv_size
         export ROOT_LV_SIZE="$root_lv_size"
         log_output "Root logical volume size: $ROOT_LV_SIZE"
     }
