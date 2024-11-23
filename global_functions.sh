@@ -446,13 +446,13 @@ install_microcode() {
     proc_type=$(lscpu | grep -oP '^Vendor ID:\s+\K\w+')
     if [ "$proc_type" = "GenuineIntel" ]; then
         log_output "Installing Intel microcode"
-        if ! pacman -S --noconfirm --needed intel-ucode; then
+        if ! pacman -Sy --noconfirm --needed intel-ucode; then
             log_error "Failed to install Intel microcode" $?
             exit 1
         fi
     elif [ "$proc_type" = "AuthenticAMD" ]; then
         log_output "Installing AMD microcode"
-        if ! pacman -S --noconfirm --needed amd-ucode; then
+        if ! pacman -Sy --noconfirm --needed amd-ucode; then
             log_error "Failed to install AMD microcode" $?
             exit 1
         fi
