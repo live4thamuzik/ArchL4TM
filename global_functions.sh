@@ -618,7 +618,6 @@ configure_grub() {
       log_error "Failed to configure GRUB" $?
       exit 1
     fi
-  fi
 }
 
 
