@@ -659,8 +659,7 @@ install_nvidia_drivers() {
                ! grub-mkconfig -o /boot/grub/grub.cfg; then
                 log_error "Failed to update GRUB configuration with NVIDIA settings" $?
             fi
-        fi
-
+        
         else
             log_output "No NVIDIA GPUs detected. Skipping NVIDIA driver installation."
         fi
