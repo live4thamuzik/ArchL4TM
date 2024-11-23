@@ -82,7 +82,7 @@ get_disk() {
     while true; do
         read -r -p "Enter the disk to use (e.g. /dev/nvme0n1 , /dev/sda): " disk
 
-        if ! validate_disk "$disk"; then  # Use the validate_disk function from functions.sh
+        if ! validate_disk "$disk"; then
             continue
         fi
 
@@ -243,7 +243,6 @@ setup_lvm() {
     # Get logical volume sizes from the user
     get_lv_sizes() {
         read -r -p "Enter root logical volume size (e.g., 50G, 200G): " root_lv_size
-        # You might want to add validation here for $root_lv_size
         export ROOT_LV_SIZE="$root_lv_size"
         log_output "Root logical volume size: $ROOT_LV_SIZE"
     }
@@ -369,7 +368,7 @@ setup_timezone() {
     # Function to display a page of timezones in columns
     display_page() {
     local start=$1
-    local end=$2  # Corrected this line
+    local end=$2
     local count=0
 
     echo "Timezones ($((start + 1)) to $end of ${#timezones[@]}):"
@@ -493,7 +492,7 @@ get_username() {
         read -r -p "Enter a username: " username
 
         if ! validate_username "$username"; then
-            continue  # No need to log here, validate_username already logs
+            continue
         fi
 
         export USERNAME="$username"
@@ -502,7 +501,7 @@ get_username() {
     done
 }
 
-get_user_password() { # Renamed to avoid conflict with the existing get_password function
+get_user_password() {
     while true; do
         read -rs -p "Set a password for $USERNAME: " USER_PASSWORD1
         echo
@@ -563,9 +562,8 @@ create_user() {
 
 set_passwords() {
     log_output "Setting passwords..."
-    # Make sure USERNAME and PASSWORD are exported before calling this function
     if ! echo "$USERNAME:$USER_PASSWORD" | chpasswd || \
-       ! echo "root:$ROOT_PASSWORD" | chpasswd; then  # Assuming ROOT_PASSWORD is exported
+       ! echo "root:$ROOT_PASSWORD" | chpasswd; then
         log_error "Failed to set passwords" $?
         exit 1
     fi
