@@ -651,6 +651,8 @@ install_nvidia_drivers() {
       exit 1
     fi
 
+    echo "NVIDIA installed..."
+    
     log_output "Updating GRUB configuration..."
 
     # Update GRUB configuration with NVIDIA settings
