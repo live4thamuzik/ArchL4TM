@@ -41,7 +41,7 @@ install_gui "$GUI_CHOICE"
 install_aur_helper "$AUR_HELPER"
 
 # --- Exit Chroot ---
-echo -ne "Done"
+echo "Done"
 exit
 
 ### END ###
