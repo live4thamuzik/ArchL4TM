@@ -26,6 +26,7 @@ echo "
 # --- Source Functions ---
 source ./global_functions.sh
 
+sleep 1
 
 # --- User Input ---
 get_username
