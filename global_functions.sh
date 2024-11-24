@@ -659,7 +659,7 @@ install_nvidia_drivers() {
     else
       PART_PREFIX=""
     fi
-    if ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice='${DISK}${PART_PREFIX}'3:volgroup0 loglevel=3"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice='${DISK}${PART_PREFIX}'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || \
+    if ! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice='"${DISK}${PART_PREFIX}"'3:volgroup0 loglevel=3"|GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice='"${DISK}${PART_PREFIX}"'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"' /etc/default/grub || \
        ! grub-mkconfig -o /boot/grub/grub.cfg; then
       log_error "Failed to update GRUB configuration with NVIDIA settings" $?
       exit 1
