@@ -741,7 +741,7 @@ install_nvidia_drivers() {
 #  CRYPT_UUID=$(blkid -s UUID -o value /dev/${DISK}${PART_PREFIX}3)
 #  ROOT_UUID=$(blkid -s UUID -o value /dev/volgroup0/lv_root)
 
-#    if ! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=UUID='${CRPYT_UUID}':volgroup0 root=UUID='${ROOT_UUID}' loglevel=3"' /etc/default/grub|GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=UUID='${CRPYT_UUID}':volgroup0 root=UUID='${ROOT_UUID}' nvidia_drm_modeset=1 loglevel=3"|' /etc/default/grub || \
+#    if ! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=UUID='"${CRPYT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' loglevel=3"|GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=UUID='"${CRPYT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' nvidia_drm_modeset=1 loglevel=3"|' /etc/default/grub || \
 #       ! grub-mkconfig -o /boot/grub/grub.cfg; then
 #      log_error "Failed to update GRUB configuration with NVIDIA settings" $?
 #      exit 1
