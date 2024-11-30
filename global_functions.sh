@@ -630,10 +630,10 @@ configure_grub() {
 #    PART_PREFIX=""
 #  fi
 
-#  ENCRYPTED_PARTITION="/dev/${DISK}${PART_PREFIX}3"
+#  ENCRYPTED_PARTITION="${DISK}${PART_PREFIX}3"
 
 #  # Make sure DISK is exported and available in the environment
-#  CRYPT_UUID=$(blkid -s UUID -o value "/dev/${ENCRYPTED_PARTITION}")
+#  CRYPT_UUID=$(blkid -s UUID -o value "${ENCRYPTED_PARTITION}")
 #  ROOT_UUID=$(blkid -s UUID -o value /dev/volgroup0/lv_root)
     
 #    if ! sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved' /etc/default/grub || \
