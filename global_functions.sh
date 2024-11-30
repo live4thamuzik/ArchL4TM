@@ -735,7 +735,7 @@ install_nvidia_drivers() {
 #    PART_PREFIX="p"
 #  else
 #    PART_PREFIX=""
-#    fi
+#  fi
 
 #  # Make sure DISK is exported and available in the environment
 #  CRYPT_UUID=$(blkid -s UUID -o value "/dev/${DISK}${PART_PREFIX}3")
