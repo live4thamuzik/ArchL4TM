@@ -739,10 +739,10 @@ install_nvidia_drivers() {
 #    PART_PREFIX=""
 #  fi
 
-#  ENCRYPTED_PARTITION="/dev/${DISK}${PART_PREFIX}3"
+#  ENCRYPTED_PARTITION="${DISK}${PART_PREFIX}3"
 
 #  # Make sure DISK is exported and available in the environment
-#  CRYPT_UUID=$(blkid -s UUID -o value "/dev/${ENCRYPTED_PARTITION}")
+#  CRYPT_UUID=$(blkid -s UUID -o value "${ENCRYPTED_PARTITION}")
 #  ROOT_UUID=$(blkid -s UUID -o value /dev/volgroup0/lv_root)
 
 #    if ! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=UUID='"${ENCRYPTED_PARTITION}"':volgroup0 root=UUID='"${ROOT_UUID}"' loglevel=3"|GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=UUID='"${ENCRYPTED_PARTITION}"':volgroup0 root=UUID='"${ROOT_UUID}"' nvidia_drm_modeset=1 loglevel=3"|' /etc/default/grub || \
