@@ -631,7 +631,7 @@ configure_grub() {
 #    fi
 
 #  # Make sure DISK is exported and available in the environment
-#  CRYPT_UUID=$(blkid -s UUID -o value /dev/${DISK}${PART_PREFIX})
+#  CRYPT_UUID=$(blkid -s UUID -o value /dev/${DISK}${PART_PREFIX}3)
 #  ROOT_UUID=$(blkid -s UUID -o value /dev/volgroup0/lv_root)
     
 #    if ! sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved' /etc/default/grub || \
@@ -730,10 +730,18 @@ install_nvidia_drivers() {
     
 #    log_output "Updating GRUB configuration..."
 
-#    # Update GRUB configuration with NVIDIA settings
-#    ROOT_UUID=$(blkid -s UUID -o value /dev/volgroup0/lv_root)
+#  # Make sure DISK is exported and available in the environment
+#  if [[ $DISK == "/dev/nvme"* ]]; then
+#    PART_PREFIX="p"
+#  else
+#    PART_PREFIX=""
+#    fi
 
-#    if ! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=UUID='"${ROOT_UUID}"'3:volgroup0 loglevel=3"|GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=UUID='"${ROOT_UUID}"'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"|' /etc/default/grub || \
+#  # Make sure DISK is exported and available in the environment
+#  CRYPT_UUID=$(blkid -s UUID -o value /dev/${DISK}${PART_PREFIX}3)
+#  ROOT_UUID=$(blkid -s UUID -o value /dev/volgroup0/lv_root)
+
+#    if ! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=UUID='${CRPYT_UUID}':volgroup0 root=UUID=${ROOT_UUID} loglevel=3"' /etc/default/grub|GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=UUID='${CRPYT_UUID}':volgroup0 root=UUID=${ROOT_UUID} nvidia_drm_modeset=1 loglevel=3"|' /etc/default/grub || \
 #       ! grub-mkconfig -o /boot/grub/grub.cfg; then
 #      log_error "Failed to update GRUB configuration with NVIDIA settings" $?
 #      exit 1
