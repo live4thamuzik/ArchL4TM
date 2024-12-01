@@ -608,9 +608,18 @@ configure_grub() {
   else
     PART_PREFIX=""
   fi
-    
+
+  ENCRYPTED_PARTITION="${DISK}${PART_PREFIX}3"
+  CRYPT_UUID=$(blkid -s UUID -o value "${ENCRYPTED_PARTITION}")
+  ROOT_UUID=$(blkid -s UUID -o value /dev/volgroup0/lv_root)
+
+  if [[ -z $CRYPT_UUID || -z $ROOT_UUID ]]; then
+    log_error "Failed to retrieve UUID's for cryptdevice or root partition"
+    exit 1
+  fi
+
     if ! sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved' /etc/default/grub || \
-       ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice='${DISK}${PART_PREFIX}'3:volgroup0 loglevel=3"' /etc/default/grub || \
+       ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=UUID='${CRYPT_UUID}':volgroup0 root=UUID='${ROOT_UUID}' loglevel=3"' /etc/default/grub || \
        ! sed -i '/^#GRUB_ENABLE_CRYPTODISK=y/c\GRUB_ENABLE_CRYPTODISK=y' /etc/default/grub || \
        ! sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub || \
        ! cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale.en.mo || \
@@ -619,36 +628,6 @@ configure_grub() {
       exit 1
     fi
 }
-
-#configure_grub() {
-#  log_output "Configuring GRUB..."
-
-  # Make sure DISK is exported and available in the environment
-#  if [[ $DISK == "/dev/nvme"* ]]; then
-#    PART_PREFIX="p"
-#  else
-#    PART_PREFIX=""
-#  fi
-
-#  ENCRYPTED_PARTITION="${DISK}${PART_PREFIX}3"
-#  CRYPT_UUID=$(blkid -s UUID -o value "${ENCRYPTED_PARTITION}")
-#  ROOT_UUID=$(blkid -s UUID -o value /dev/volgroup0/lv_root)
-
-#  if [[ -z $CRYPT_UUID || -z $ROOT_UUID ]]; then
-#    log_error "Failed to retrieve UUID's for cryptdevice or root partition"
-#    exit 1
-#  fi
-
-#    if ! sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved' /etc/default/grub || \
-#       ! sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=UUID='${CRYPT_UUID}':volgroup0 root=UUID='${ROOT_UUID}' loglevel=3"' /etc/default/grub || \
-#       ! sed -i '/^#GRUB_ENABLE_CRYPTODISK=y/c\GRUB_ENABLE_CRYPTODISK=y' /etc/default/grub || \
-#       ! sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub || \
-#       ! cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale.en.mo || \
-#       ! grub-mkconfig -o /boot/grub/grub.cfg; then
-#      log_error "Failed to configure GRUB" $?
-#      exit 1
-#    fi
-#}
 
 install_nvidia_drivers() {
   log_output "Detecting NVIDIA GPUs..."
@@ -681,16 +660,26 @@ install_nvidia_drivers() {
     fi
 
     echo "NVIDIA installed..."
-    
+   
     log_output "Updating GRUB configuration..."
 
-    # Update GRUB configuration with NVIDIA settings
-    if [[ $DISK == "/dev/nvme"* ]]; then
-      PART_PREFIX="p"
-    else
-      PART_PREFIX=""
-    fi
-    if ! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice='"${DISK}${PART_PREFIX}"'3:volgroup0 loglevel=3"|GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice='"${DISK}${PART_PREFIX}"'3:volgroup0 nvidia_drm_modeset=1 loglevel=3"|' /etc/default/grub || \
+  # Make sure DISK is exported and available in the environment
+  if [[ $DISK == "/dev/nvme"* ]]; then
+    PART_PREFIX="p"
+  else
+    PART_PREFIX=""
+  fi
+
+  ENCRYPTED_PARTITION="${DISK}${PART_PREFIX}3"
+  CRYPT_UUID=$(blkid -s UUID -o value "${ENCRYPTED_PARTITION}")
+  ROOT_UUID=$(blkid -s UUID -o value /dev/volgroup0/lv_root)
+
+  if [[ -z $CRYPT_UUID || -z $ROOT_UUID ]]; then
+    log_error "Failed to retrieve UUID's for cryptdevice or root partition"
+    exit 1
+  fi
+
+    if ! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' loglevel=3"|GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' nvidia_drm_modeset=1 loglevel=3"|' /etc/default/grub || \
        ! grub-mkconfig -o /boot/grub/grub.cfg; then
       log_error "Failed to update GRUB configuration with NVIDIA settings" $?
       exit 1
@@ -700,67 +689,6 @@ install_nvidia_drivers() {
     log_output "No NVIDIA GPUs detected. Skipping NVIDIA driver installation."
   fi
 }
-
-#install_nvidia_drivers() {
-#  log_output "Detecting NVIDIA GPUs..."
-
-#  # Detect NVIDIA GPUs
-#  readarray -t dGPU < <(lspci -k | grep -E "(VGA|3D)" | grep -i nvidia)
-
-#  # Check if any NVIDIA GPUs were found
-#  if [ ${#dGPU[@]} -gt 0 ]; then
-#    log_output "NVIDIA GPU(s) detected:"
-#    for gpu in "${dGPU[@]}"; do
-#      log_output "  $gpu"
-#    done
-
-#    log_output "Installing NVIDIA drivers..."
-
-#    # Install NVIDIA drivers and related packages
-#    if ! pacman -S --noconfirm --needed nvidia libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings; then
-#      log_error "Failed to install NVIDIA packages" $?
-#      exit 1
-#    fi
-
-#    log_output "Updating initramfs..."
-
-#    # Add NVIDIA modules to initramfs
-#    if ! sed -i '/^MODULES=()/c\MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)' /etc/mkinitcpio.conf || \
-#       ! mkinitcpio -p linux; then
-#      log_error "Failed to update initramfs with NVIDIA modules" $?
-#      exit 1
-#    fi
-
-#    echo "NVIDIA installed..."
-    
-#    log_output "Updating GRUB configuration..."
-
-#  # Make sure DISK is exported and available in the environment
-#  if [[ $DISK == "/dev/nvme"* ]]; then
-#    PART_PREFIX="p"
-#  else
-#    PART_PREFIX=""
-#  fi
-
-#  ENCRYPTED_PARTITION="${DISK}${PART_PREFIX}3"
-#  CRYPT_UUID=$(blkid -s UUID -o value "${ENCRYPTED_PARTITION}")
-#  ROOT_UUID=$(blkid -s UUID -o value /dev/volgroup0/lv_root)
-
-#  if [[ -z $CRYPT_UUID || -z $ROOT_UUID ]]; then
-#    log_error "Failed to retrieve UUID's for cryptdevice or root partition"
-#    exit 1
-#  fi
-
-#    if ! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' loglevel=3"|GRUB_CMDLINE_LINUX_DEFAULT="quiet cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' nvidia_drm_modeset=1 loglevel=3"|' /etc/default/grub || \
-#       ! grub-mkconfig -o /boot/grub/grub.cfg; then
-#      log_error "Failed to update GRUB configuration with NVIDIA settings" $?
-#      exit 1
-#    fi
-
-#  else
-#    log_output "No NVIDIA GPUs detected. Skipping NVIDIA driver installation."
-#  fi
-#}
 
 install_prerequisites() {
     log_output "Installing prerequisite packages..."
