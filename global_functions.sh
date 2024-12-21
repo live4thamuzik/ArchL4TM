@@ -428,50 +428,6 @@ setup_timezone() {
     done
 }
 
-# --- Timezone Selection ---
-#setup_timezone() {
-#  log_output "Setting up timezone..."
-
-  # Function to get a list of timezones organized by region
-#  get_timezones() {
-#    local count=1
-#    find /usr/share/zoneinfo -type f -print0 | sed 's|/usr/share/zoneinfo/||' | sort -z | while IFS= read -r -d '' timezone; do
-#      region=$(echo "$timezone" | cut -d/ -f1)
-#      printf "%s/%s\n" "$region" "$timezone"
-#    done | awk -v cnt=$count '{print cnt". "$0; cnt++}'
-#  }
-
-  # Collect timezones into an array
-#  mapfile -t timezones < <(get_timezones)
-
-  # Check if timezones were collected
-#  if [ ${#timezones[@]} -eq 0 ]; then
-#    log_error "No timezones found. Please check the timezone directory and try again." 1
-#    exit 1
-#  fi
-
-  # Build menu items for whiptail
-#  menu_items=""
-#  for i in "${!timezones[@]}"; do
-#    timezone=$(echo "${timezones[$i]}" | awk '{print $2}')
-#    menu_items+="\"$timezone\" \"${timezones[$i]}\" "
-#  done
-
-  # Display the timezone selection menu using whiptail
-#  selected_timezone=$(whiptail --title "Timezone Selection" --menu "Choose your timezone:" 20 70 10 $menu_items 3>&1 1>&2 2>&3)
-
-  # Check if a timezone was selected
-#  if [ -n "$selected_timezone" ]; then
-    # Set timezone
-#    ln -sf /usr/share/zoneinfo/"$selected_timezone" /etc/localtime
-
-    # Verify timezone setting
-#    log_output "Timezone has been set to $(readlink -f /etc/localtime)"
-#  else
-#    log_output "No timezone selected."
-#  fi
-#}
-
 configure_pacman() {
     log_output "Configuring pacman..."
 
