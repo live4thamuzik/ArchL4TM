@@ -1104,7 +1104,7 @@ install_gui() {
     "
     if [[ "$GUI_CHOICE" == "hyprland" ]]; then
         # Clone the dotfiles branch
-        git clone https://github.com/live4thamuzik/hyprland-dots.git ./hyprland-dots || {
+        git clone --progress --verbose https://github.com/live4thamuzik/hyprland-dots.git ./hyprland-dots || {
             log_error "Failed to clone dotfiles branch"
             exit 1
         }
