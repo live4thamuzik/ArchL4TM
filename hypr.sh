@@ -47,7 +47,7 @@ install_hyprland_dependencies() {
         bluemail libreoffice-fresh musikcube mpv chromium brave-bin \
         flatpak sl lolcat cmatrix asciiquarium remmina freerdp \
         auto-cpufreq bazecor appimage-installer hyprshade \
-        strawberry dfc \
+        strawberry dfc udiskie \
         anonymice-theme-git nordic-darker-theme-git \
         ttf-anonymouspro-nerd ttf-daddytime-mono-nerd ttf-firacode-nerd \
         ttf-meslo-nerd; then
