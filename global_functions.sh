@@ -302,7 +302,7 @@ setup_timezone() {
   # Function to get a list of timezones
   get_timezones() {
     local count=1
-    find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | awk -v cnt=$count '{print cnt". "$0; cnt++}'
+    find /usr/share/zoneinfo -type f | sed 's|/usr/share/zoneinfo/||' | awk '{print NR". "$0}'
   }
 
   # Collect timezones into an array
@@ -337,7 +337,6 @@ setup_timezone() {
         echo
       fi
     done
-
   }
 
   # Display pages of timezones
@@ -396,6 +395,7 @@ setup_timezone() {
     fi
   done
 }
+
 
 # --- Ask for desired server/desktop ---
 select_gui() {
