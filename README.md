@@ -125,7 +125,7 @@ pacman -Sy git
 
 # Clone repo:
 ```
-git clone --depth 1 https://github.com/live4thamuzik/ArchL4TM.git
+git clone https://github.com/live4thamuzik/ArchL4TM.git
 ```
 
 # Run script:
