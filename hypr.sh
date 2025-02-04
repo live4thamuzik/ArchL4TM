@@ -34,7 +34,7 @@ install_hyprland_dependencies() {
     fi
 
     # Run the AUR helper command
-    if ! sudo $aur_helper -S --noconfirm --needed \
+    if ! sudo $aur_helper -S --noconfirm --ask --needed \
         hyprland wayland swaybg swaylock wofi grim slurp \
         sddm qt5-quickcontrols qt5-quickcontrols2 qt5-graphicaleffects \
         rofi-wayland waybar swww hyprlock wlogout hyprpicker satty \
