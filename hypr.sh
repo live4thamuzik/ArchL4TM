@@ -18,23 +18,17 @@ check_nvidia_gpu() {
 install_hyprland_dependencies() {
     log_output "Installing Hyprland dependencies..."
 
-    # Grant NOPASSWD for ALL commands
-    echo "root ALL=(ALL:ALL) NOPASSWD: ALL" >> /etc/sudoers
-
-    # Determine AUR helper (paru or yay)
-    if command -v paru > /dev/null; then
-        aur_helper="paru"
-    elif command -v yay > /dev/null; then
-        aur_helper="yay"
-    else
-        log_error "No AUR helper found (paru or yay). Please install one and try again."
-        # Remove the temporary sudoers entry if the helper isn't found
-        sed -i "/root ALL=(ALL:ALL) NOPASSWD: ALL/d" /etc/sudoers
+    # Check for pacman
+    if ! command -v pacman > /dev/null; then
+        log_error "pacman is required but not found. Please install pacman and try again."
         exit 1
     fi
 
-    # Run the AUR helper command
-    if ! sudo $aur_helper -S --noconfirm --ask --needed \
+    # Grant NOPASSWD for pacman
+    echo "root ALL=(ALL:ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
+
+    # Install base packages using pacman
+    if ! sudo pacman -S --noconfirm --needed \
         hyprland wayland swaybg swaylock wofi grim slurp \
         sddm qt5-quickcontrols qt5-quickcontrols2 qt5-graphicaleffects \
         rofi-wayland waybar swww hyprlock wlogout hyprpicker satty \
@@ -44,23 +38,27 @@ install_hyprland_dependencies() {
         nwg-look qt5ct qt6ct kvantum kvantum-qt5 qt5-wayland qt6-wayland \
         papirus-icon-theme ttf-font-awesome noto-fonts-emoji \
         firefox kitty dolphin ark unzip code nwg-displays \
-        bluemail libreoffice-fresh musikcube mpv chromium brave-bin \
-        flatpak sl lolcat cmatrix asciiquarium remmina freerdp \
-        auto-cpufreq bazecor appimage-installer hyprshade \
-        strawberry dfc udiskie \
+        bluemail libreoffice-fresh mpv chromium flatpak sl lolcat cmatrix \
+        asciiquarium remmina freerdp strawberry dfc udiskie \
         anonymice-theme-git nordic-darker-theme-git \
         ttf-anonymouspro-nerd ttf-daddytime-mono-nerd ttf-firacode-nerd \
         ttf-meslo-nerd; then
 
-        log_error "Failed to install Hyprland dependencies. Check the output above for errors."
-        # Remove the temporary sudoers entry if the install fails
-        sed -i "/root ALL=(ALL:ALL) NOPASSWD: ALL/d" /etc/sudoers
+        log_error "Failed to install base dependencies. Check the output above for errors."
+        # Remove the temporary sudoers entry if install fails
+        sed -i "/root ALL=(ALL:ALL) NOPASSWD: /usr/bin/pacman/d" /etc/sudoers
         exit 1
     fi
 
-    # Remove the temporary sudoers entry *only once* after successful installation
-    sed -i "/root ALL=(ALL:ALL) NOPASSWD: ALL/d" /etc/sudoers
-    log_output "Hyprland dependencies installed successfully."
+    # Now, handle AUR dependencies
+    if command -v paru > /dev/null; then
+        aur_helper="paru"
+    elif command -v yay > /dev/null; then
+        aur_helper="yay"
+    else
+        log_error "No AUR helper found (paru or yay). Please install one and try again."
+        exit 1
+    fi
 }
     # Install display drivers (NVIDIA only)
     if check_nvidia_gpu; then
