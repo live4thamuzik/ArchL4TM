@@ -39,7 +39,6 @@ install_hyprland_dependencies() {
         asciiquarium remmina freerdp strawberry dfc udiskie \
         ttf-anonymouspro-nerd ttf-daddytime-mono-nerd ttf-firacode-nerd \
         ttf-meslo-nerd; then
-
         log_error "Failed to install base dependencies. Check the output above for errors."
         exit 1
     fi
@@ -58,22 +57,24 @@ install_hyprland_dependencies() {
     USERNAME=$(whoami)
 
     # Temporarily allow the user to run sudo without a password (within the chroot)
-    echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers > /dev/null
 
-    # Install AUR packages as the specified user
+    # Build and install AUR packages using the chosen AUR helper (via runuser)
+    log_output "Building and installing AUR packages..."
     if ! runuser -u "$USERNAME" -- /bin/bash -c "
-        $aur_helper -S --noconfirm --ask --needed \
+        # Install AUR packages using the selected AUR helper (yay or paru)
+        $aur_helper -S --noconfirm --needed \
             wlogout musikcube auto-cpufreq bazecore appimage-installer hyprshade brave-bin \
             python-pyamdgpuinfo bluemail anonymice-theme-git nordic-darker-theme-git
     "; then
         log_error "Failed to install AUR packages as $USERNAME. Check the output above for errors."
         # Remove the temporary sudoers entry even if the install fails
-        sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
+        sudo sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
         exit 1
     fi
 
-    # Remove the temporary sudoers entry *always*, after successful or failed installation
-    sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
+    # Remove the temporary sudoers entry after the installation
+    sudo sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
 
     log_output "Hyprland dependencies installation complete!"
 }
