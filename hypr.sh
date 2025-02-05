@@ -24,29 +24,23 @@ install_hyprland_dependencies() {
         exit 1
     fi
 
-    # Grant NOPASSWD for pacman
-    echo "root ALL=(ALL:ALL) NOPASSWD: /usr/bin/pacman" >> /etc/sudoers
-
-    # Install base packages using pacman
+    # Install base packages using pacman (with sudo)
     if ! sudo pacman -S --noconfirm --needed \
         hyprland wayland swaybg swaylock wofi grim slurp \
         sddm qt5-quickcontrols qt5-quickcontrols2 qt5-graphicaleffects \
-        rofi-wayland waybar swww hyprlock wlogout hyprpicker satty \
+        rofi-wayland waybar swww hyprlock hyprpicker satty \
         cliphist hyprsunset polkit-gnome xdg-desktop-portal-hyprland \
-        pacman-contrib python-pyamdgpuinfo parallel jq imagemagick \
+        pacman-contrib parallel jq imagemagick \
         qt5-imageformats ffmpegthumbs kde-cli-tools libnotify \
         nwg-look qt5ct qt6ct kvantum kvantum-qt5 qt5-wayland qt6-wayland \
         papirus-icon-theme ttf-font-awesome noto-fonts-emoji \
         firefox kitty dolphin ark unzip code nwg-displays \
-        bluemail libreoffice-fresh mpv chromium flatpak sl lolcat cmatrix \
+        libreoffice-fresh mpv chromium flatpak sl lolcat cmatrix \
         asciiquarium remmina freerdp strawberry dfc udiskie \
-        anonymice-theme-git nordic-darker-theme-git \
         ttf-anonymouspro-nerd ttf-daddytime-mono-nerd ttf-firacode-nerd \
         ttf-meslo-nerd; then
 
         log_error "Failed to install base dependencies. Check the output above for errors."
-        # Remove the temporary sudoers entry if install fails
-        sed -i "|root ALL=(ALL:ALL) NOPASSWD: /usr/bin/pacman/d" /etc/sudoers
         exit 1
     fi
 
@@ -60,32 +54,34 @@ install_hyprland_dependencies() {
         exit 1
     fi
 
-    # Grant NOPASSWD for AUR helper
-    echo "root ALL=(ALL:ALL) NOPASSWD: /usr/bin/$aur_helper" >> /etc/sudoers
+    # Get the current user (should be the non-root user in the chroot)
+    USERNAME=$(whoami)
 
-    # Install AUR packages
-    if ! sudo $aur_helper -S --noconfirm --ask --needed \
-        wlogout musikcube auto-cpufreq bazecore appimage-installer hyprshade brave-bin; then
-        log_error "Failed to install AUR dependencies. Check the output above for errors."
-        # Remove the temporary sudoers entry if install fails
-        sed -i "/root ALL=(ALL:ALL) NOPASSWD: /usr/bin/$aur_helper/d" /etc/sudoers
+    # Temporarily allow the user to run sudo without a password (within the chroot)
+    echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+    # Install AUR packages as the specified user
+    if ! runuser -u "$USERNAME" -- /bin/bash -c "
+        $aur_helper -S --noconfirm --ask --needed \
+            wlogout musikcube auto-cpufreq bazecore appimage-installer hyprshade brave-bin \
+            python-pyamdgpuinfo bluemail anonymice-theme-git nordic-darker-theme-git
+    "; then
+        log_error "Failed to install AUR packages as $USERNAME. Check the output above for errors."
+        # Remove the temporary sudoers entry even if the install fails
+        sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
         exit 1
     fi
 
+    # Remove the temporary sudoers entry *always*, after successful or failed installation
+    sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
+
     log_output "Hyprland dependencies installation complete!"
 }
-
-
-    # Remove the temporary sudoers entries after successful installation
-    sed -i "|root ALL=(ALL:ALL) NOPASSWD: /usr/bin/$aur_helper/d" /etc/sudoers
-    sed -i "|root ALL=(ALL:ALL) NOPASSWD: /usr/bin/pacman/d" /etc/sudoers
-    log_output "Hyprland dependencies installed successfully."
 
     # Install display drivers (NVIDIA only)
     if check_nvidia_gpu; then
         pacman -S --noconfirm --needed nvidia nvidia-utils
     fi
-
     
 # --- Clone and install SDDM themes ---
 install_sddm_themes() {
