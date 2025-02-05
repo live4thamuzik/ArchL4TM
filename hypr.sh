@@ -46,7 +46,7 @@ install_hyprland_dependencies() {
 
         log_error "Failed to install base dependencies. Check the output above for errors."
         # Remove the temporary sudoers entry if install fails
-        sed -i "/root ALL=(ALL:ALL) NOPASSWD: /usr/bin/pacman/d" /etc/sudoers
+        sed -i "|root ALL=(ALL:ALL) NOPASSWD: /usr/bin/pacman/d" /etc/sudoers
         exit 1
     fi
 
@@ -59,7 +59,28 @@ install_hyprland_dependencies() {
         log_error "No AUR helper found (paru or yay). Please install one and try again."
         exit 1
     fi
+
+    # Grant NOPASSWD for AUR helper
+    echo "root ALL=(ALL:ALL) NOPASSWD: /usr/bin/$aur_helper" >> /etc/sudoers
+
+    # Install AUR packages
+    if ! sudo $aur_helper -S --noconfirm --ask --needed \
+        wlogout musikcube auto-cpufreq bazecore appimage-installer hyprshade brave-bin; then
+        log_error "Failed to install AUR dependencies. Check the output above for errors."
+        # Remove the temporary sudoers entry if install fails
+        sed -i "/root ALL=(ALL:ALL) NOPASSWD: /usr/bin/$aur_helper/d" /etc/sudoers
+        exit 1
+    fi
+
+    log_output "Hyprland dependencies installation complete!"
 }
+
+
+    # Remove the temporary sudoers entries after successful installation
+    sed -i "|root ALL=(ALL:ALL) NOPASSWD: /usr/bin/$aur_helper/d" /etc/sudoers
+    sed -i "|root ALL=(ALL:ALL) NOPASSWD: /usr/bin/pacman/d" /etc/sudoers
+    log_output "Hyprland dependencies installed successfully."
+
     # Install display drivers (NVIDIA only)
     if check_nvidia_gpu; then
         pacman -S --noconfirm --needed nvidia nvidia-utils
@@ -95,7 +116,7 @@ install_sddm_themes() {
     }
 
     # Clean up temporary files
-    rm -rf ./tmp/sddm-candy-theme ./sddm-corners-theme
+    rm -rf ./sddm-candy-theme ./sddm-corners-theme
 }
 
 # --- Configure SDDM ---
