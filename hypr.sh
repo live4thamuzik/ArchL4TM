@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# --- Sources ---
+source ./global_functions.sh
+
 # --- Log output function ---
 log_output() {
     echo "[INFO] $1"
@@ -52,9 +55,6 @@ install_hyprland_dependencies() {
         log_error "No AUR helper found (paru or yay). Please install one and try again."
         exit 1
     fi
-
-    # Get the current user (should be the non-root user in the chroot)
-    USERNAME=$(whoami)
 
     # Temporarily allow the user to run sudo without a password (within the chroot)
     echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers > /dev/null
