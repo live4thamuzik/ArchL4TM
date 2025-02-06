@@ -74,7 +74,7 @@ install_base_packages
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
 # --- Copy sources to /mnt and make script executable
-cp -r ./global_functions.sh ./chroot.sh ./pkgs.lst ./aur_pkgs.lst ./Source/arch-glow /mnt
+cp -r ./global_functions.sh ./chroot.sh ./hypr.sh ./pkgs.lst ./aur_pkgs.lst ./Source/arch-glow /mnt
 chmod +x /mnt/*.sh
 
 # --- Chroot Setup ---
