@@ -1110,7 +1110,7 @@ install_gui() {
         }
 
         # Copy Configs to /
-        cp -r /hyprland-dots/hypr.sh /hyprland-dots/Configs  /
+        cp -r /hyprland-dots/Configs  /
 
         # Call hypr.sh
         bash ./hypr.sh
