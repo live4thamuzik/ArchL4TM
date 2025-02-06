@@ -64,8 +64,16 @@ install_hyprland_dependencies() {
     if ! runuser -u "$USERNAME" -- /bin/bash -c "
         # Install AUR packages using the selected AUR helper (yay or paru)
         $aur_helper -S --noconfirm --needed \
-            wlogout musikcube auto-cpufreq bazecor appimage-installer hyprshade brave-bin \
-            python-pyamdgpuinfo bluemail nordic-darker-theme-git
+            wlogout:wlogout \
+            musikcube:musikcube \
+            auto-cpufreq:autocpu-freq \
+            bazecor:bazecor \
+            appimage-installer:appimage-installer \
+            hyprshade:hyprshade \
+            brave-bin:brave-bin \
+            python-pyamdgpuinfo:python-pyamdgpuinfo \
+            bluemail:bluemail \
+            nordic-darker-theme-git:nordic-darker-theme-git
     "; then
         log_error "Failed to install AUR packages as $USERNAME. Check the output above for errors."
         # Remove the temporary sudoers entry even if the install fails
