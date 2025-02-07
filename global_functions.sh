@@ -1110,7 +1110,7 @@ install_gui() {
         }
 
         # Copy Configs to /
-        cd ./L4TM-HyDE
+        cd ./L4TM-HyDE/Scripts
 
         # Call hypr.sh
         bash ./install.sh
