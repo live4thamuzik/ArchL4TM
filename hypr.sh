@@ -166,14 +166,14 @@ configure_hyprland() {
         exit 1
     }
 
-    # Copy sddm.conf.d folder
+    # Copy sddm.conf.d folder to etc
     cp -r /Configs/etc/sddm.conf.d /etc || {
         log_error "Failed to copy .config folder"
         exit 1
     }
 
-    # Copy usr folder
-    cp -r /Configs/usr / || {
+    # Copy fonts and sddm folders to usr/share
+    cp -r /Configs/usr/share/* /usr/share || {
 	log_error "Failed to copy usr folder"
         exit 1
     }
