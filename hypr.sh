@@ -246,8 +246,8 @@ install_hyprland_themes() {
 # --- Main function ---
 main() {
     install_hyprland_dependencies
-    install_sddm_themes
-    configure_sddm
+   # install_sddm_themes
+   # configure_sddm
     configure_hyprland
     enable_services
     install_hyprland_themes
