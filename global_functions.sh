@@ -1110,13 +1110,10 @@ install_gui() {
         }
 
         # Copy Configs to /
-        cp -r /hyprland-dots/Configs /
+        cp -r ./hyprland-dots/Configs /
 
         # Call hypr.sh
         bash ./hypr.sh
-
-        # Remove the dotfiles directory after installation
-        rm -rf /hyprland-dots
 
     elif [[ "$GUI_CHOICE" == "gnome" ]]; then
         log_output "Installing GNOME desktop environment..."
@@ -1264,6 +1261,8 @@ cleanup() {
     rm -rf /mnt/aur_pkgs.lst
     rm -rf /mnt/tmp
     rm -rf /mnt/grub-themes
+    rm -rf /mnt/Configs
+    rm -rf /mnt/hypr.sh
 
     # Copy log files to the installed system
     cp /var/log/arch_install.log /mnt/var/log/arch_install.log
