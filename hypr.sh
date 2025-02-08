@@ -155,31 +155,31 @@ configure_hyprland() {
     log_output "Configuring Hyprland..."
 
     # Copy .bashrc file, Dygma and oh-my-posh folders
-    cp -r /Configs/.bashrc /Configs/Dygma "$HOME" || {
+    cp -r /Configs/.bashrc /Configs/Dygma /home/"$USERNAME" || {
         log_error "Failed to copy files to home directory"
         exit 1
     }
 
     # Copy .config .icons .local & .themes folders
-    cp -r /Configs/.config Configs/.icons Configs/.local Configs/.themes "$HOME" || {
+    sudo cp -r /Configs/.config Configs/.icons Configs/.local Configs/.themes /home/"$USERNAME" || {
         log_error "Failed to copy.config folder"
         exit 1
     }
 
     # Copy sddm.conf.d folder to etc
-    cp -r /Configs/etc/sddm.conf.d /etc || {
+    sudo cp -r /Configs/etc/sddm.conf.d /etc || {
         log_error "Failed to copy .config folder"
         exit 1
     }
 
     # Copy fonts and sddm folders to usr/share
-    cp -r /Configs/usr/share/* /usr/share || {
+    sudo cp -r /Configs/usr/share/* /usr/share || {
 	log_error "Failed to copy usr folder"
         exit 1
     }
 
     # Clone oh-my-posh
-    git clone https://github.com/JanDeDobbeleer/oh-my-posh.git "$HOME" || {
+    git clone https://github.com/JanDeDobbeleer/oh-my-posh.git /home/"$USERNAME" || {
         log_error "Failed to clone oh-my-posh repo"
         exit 1
     }
@@ -190,7 +190,7 @@ enable_services() {
     log_output "Enabling services..."
 
     # Enable SDDM
-    systemctl enable sddm.service
+    sudo systemctl enable sddm.service
 }
 
 # --- Install Hyprland themes and customizations ---
