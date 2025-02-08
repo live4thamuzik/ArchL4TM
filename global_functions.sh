@@ -1104,19 +1104,19 @@ install_gui() {
     "
     if [[ "$GUI_CHOICE" == "hyprland" ]]; then
         # Clone the dotfiles branch
-        git clone --progress --verbose https://github.com/live4thamuzik/L4TM-HyDE.git ./L4TM-HyDE || {
-            log_error "Failed to clone dotfiles branch"
+        git clone --progress --verbose https://github.com/live4thamuzik/hyprland-dots.git ./hyprland-dots || {
+            log_error "Failed to hyprland-dots"
             exit 1
         }
 
         # Copy Configs to /
-        cd ./L4TM-HyDE/Scripts
+        cp -r /hyprland-dots/Configs /
 
         # Call hypr.sh
-        bash ./install.sh
+        bash ./hypr.sh
 
         # Remove the dotfiles directory after installation
-        rm -rf /L4TM-HyDE
+        rm -rf /hyprland-dots
 
     elif [[ "$GUI_CHOICE" == "gnome" ]]; then
         log_output "Installing GNOME desktop environment..."
