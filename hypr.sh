@@ -62,7 +62,7 @@ install_hyprland_dependencies() {
 
         # Install AUR packages using paru
         if ! $AUR_HELPER -Sy --noconfirm --needed \
-            wlogout auto-cpufreq bazecor appimage-installer \
+            wlogout auto-cpufreq hyde-cli-git bazecor appimage-installer \
             hyprshade brave-bin python-pyamdgpuinfo bluemail nordic-darker-theme-git; then
 	    log_error \"Failed to install AUR packages\" \$?
             exit 1
@@ -190,9 +190,6 @@ configure_hyprland() {
 # --- Install Hyprland themes and customizations ---
 install_hyprland_themes() {
     log_output "Installing Hyprland themes and customizations..."
-
-    # Install hyde-cli
-    paru -S --noconfirm --needed hyde-cli-git
 
     # Install themes
     hyde-cli install AbyssGreen
