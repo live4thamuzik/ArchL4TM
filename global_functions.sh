@@ -1104,13 +1104,13 @@ install_gui() {
     "
     if [[ "$GUI_CHOICE" == "hyprland" ]]; then
         # Clone the dotfiles branch
-        git clone --progress --verbose https://github.com/live4thamuzik/hyprland-dots.git ./hyprland-dots || {
-            log_error "Failed to hyprland-dots"
+        git clone --progress --verbose https://github.com/live4thamuzik/hyprdots.git ./hyprdots || {
+            log_error "Failed to hyprdots"
             exit 1
         }
 
         # Copy Configs to /
-        cp -r ./hyprland-dots/Configs /
+        cp -r ./hyprdots/Configs /
 
         # Call hypr.sh
         bash ./hypr.sh
