@@ -85,71 +85,6 @@ install_hyprland_dependencies() {
         pacman -S --noconfirm --needed nvidia nvidia-utils
     fi
     
-# --- Clone and install SDDM themes ---
-#install_sddm_themes() {
-#    log_output "Cloning and installing SDDM themes..."
-
-    # Clone Candy theme
-#    git clone https://github.com/EliverLara/sddm-candy-theme.git ./sddm-candy-theme || {
-#        log_error "Failed to clone Candy theme"
-#        exit 1
-#    }
-
-    # Clone Corners theme
-#    git clone https://github.com/XtremeDevX/sddm-corners-theme.git ./sddm-corners-theme || {
-#        log_error "Failed to clone Corners theme"
-#        exit 1
-#    }
-
-    # Copy Candy theme to /usr/share/sddm/themes/
-#    cp -r ./sddm-candy-theme/Candy /usr/share/sddm/themes/ || {
-#        log_error "Failed to copy Candy theme to /usr/share/sddm/themes/"
-#        exit 1
-#    }
-
-    # Copy Corners theme to /usr/share/sddm/themes/
-#    cp -r ./sddm-corners-theme/Corners /usr/share/sddm/themes/ || {
-#        log_error "Failed to copy Corners theme to /usr/share/sddm/themes/"
-#        exit 1
-#    }
-
-#    # Clean up temporary files
-#    rm -rf ./sddm-candy-theme ./sddm-corners-theme
-#}
-
-# --- Configure SDDM ---
-#configure_sddm() {
-#    log_output "Configuring SDDM..."
-
-    # Get user's theme choice
-#    options=("Candy" "Corners")
-#    select theme_choice in "${options[@]}"; do
-#        case "$theme_choice" in
-#            "Candy")
-#                theme_name="Candy"
-#              ;;
-#            "Corners")
-#                theme_name="Corners"
-#              ;;
-#            *)
-#                log_error "Invalid theme choice. Skipping SDDM configuration."
-#                return 1
-#              ;;
-#        esac
-#        break
-#    done
-
-    # Apply the chosen theme
-#    theme_dir="/usr/share/sddm/themes/$theme_name"
-#    if [[ -d "$theme_dir" ]]; then
-#        sed -i "s/^Current=.*$/Current=$theme_name/" /etc/sddm.conf
-#        log_output "SDDM theme set to $theme_name."
-#    else
-#        log_error "Theme directory not found: $theme_dir"
-#        return 1
-#    fi
-#}
-
 # --- Configure Hyprland ---
 configure_hyprland() {
     log_output "Configuring Hyprland..."
@@ -246,8 +181,6 @@ install_hyprland_themes() {
 # --- Main function ---
 main() {
     install_hyprland_dependencies
-   # install_sddm_themes
-   # configure_sddm
     configure_hyprland
     enable_services
     install_hyprland_themes
