@@ -56,7 +56,7 @@ install_hyprland_dependencies() {
     if ! runuser -u "$USERNAME" -- /bin/bash -c "
         # Check if the AUR helper is installed
         if ! command -v \"$AUR_HELPER\" &> /dev/null; then
-            log_error \"AUR helper '$AUR_HELPER' not found. Make sure it's installed.\" 1
+            log_error \"AUR helper '$AUR_HELPER' not found. Make sure it's installed.\"
             exit 1
         fi
 
