@@ -28,7 +28,7 @@ install_hyprland_dependencies() {
     fi
 
     # Install base packages using pacman (with sudo)
-    if ! sudo pacman -S --noconfirm --needed \
+    if ! sudo pacman -Syu --noconfirm --needed \
         hyprland wayland swaybg swaylock wofi grim slurp \
         sddm qt5-quickcontrols qt5-quickcontrols2 qt5-graphicaleffects \
         rofi-wayland waybar swww hyprlock hyprpicker satty \
@@ -46,35 +46,36 @@ install_hyprland_dependencies() {
         exit 1
     fi
 
-    # Now, handle AUR dependencies
-    if command -v paru > /dev/null; then
-        aur_helper="paru"
-    elif command -v yay > /dev/null; then
-        aur_helper="yay"
-    else
-        log_error "No AUR helper found (paru or yay). Please install one and try again."
-        exit 1
-    fi
-
     # Temporarily allow the user to run sudo without a password (within the chroot)
     echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers > /dev/null
 
     # Build and install AUR packages using the chosen AUR helper (via runuser)
     log_output "Building and installing AUR packages..."
+    
+    # Switch to the created user and install AUR packages
     if ! runuser -u "$USERNAME" -- /bin/bash -c "
-        # Install AUR packages using the selected AUR helper (yay or paru)
-        $aur_helper -S --noconfirm --needed \
+        # Check if the AUR helper is installed
+        if ! command -v \"$AUR_HELPER\" &> /dev/null; then
+            log_error \"AUR helper '$AUR_HELPER' not found. Make sure it's installed.\" 1
+            exit 1
+        fi
+
+        # Install AUR packages using paru
+        if ! $AUR_HELPER -Sy --noconfirm --needed \
             wlogout musikcube auto-cpufreq bazecor appimage-installer \
-            hyprshade brave-bin python-pyamdgpuinfo bluemail nordic-darker-theme-git
+            hyprshade brave-bin python-pyamdgpuinfo bluemail nordic-darker-theme-git; then
+	    log_error \"Failed to install AUR packages\" \$?
+            exit 1
+        fi
     "; then
-        log_error "Failed to install AUR packages as $USERNAME. Check the output above for errors."
-        # Remove the temporary sudoers entry even if the install fails
-        sudo sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
+        log_error "Failed to install AUR packages as $USERNAME" $?
+        # Remove the temporary sudoers entry in case of failure
+        sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
         exit 1
     fi
 
-    # Remove the temporary sudoers entry after the installation
-    sudo sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
+    # Remove the temporary sudoers entry
+    sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
 
     log_output "Hyprland dependencies installation complete!"
 }
