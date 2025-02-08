@@ -155,7 +155,7 @@ configure_hyprland() {
     log_output "Configuring Hyprland..."
 
     # Copy .bashrc file, Dygma and oh-my-posh folders
-    cp -r /Configs/.bashrc /Configs/Dygma /home/"$USERNAME" || {
+    sude cp -r /Configs/.bashrc /Configs/Dygma /home/"$USERNAME" || {
         log_error "Failed to copy files to home directory"
         exit 1
     }
