@@ -185,7 +185,13 @@ configure_hyprland() {
     }
 }
 
+# --- Enable services ---
+enable_services() {
+    log_output "Enabling services..."
 
+    # Enable SDDM
+    systemctl enable sddm.service
+}
 
 # --- Install Hyprland themes and customizations ---
 install_hyprland_themes() {
@@ -237,22 +243,14 @@ install_hyprland_themes() {
     hyde-cli apply Catppuccin-Mocha
 }
 
-# --- Enable services ---
-enable_services() {
-    log_output "Enabling services..."
-
-    # Enable SDDM
-    systemctl enable sddm.service
-}
-
 # --- Main function ---
 main() {
     install_hyprland_dependencies
     install_sddm_themes
     configure_sddm
     configure_hyprland
-    install_hyprland_themes
     enable_services
+    install_hyprland_themes
 
     log_output "Hyprland installation complete!"
 }
