@@ -154,25 +154,25 @@ configure_hyprland() {
     log_output "Configuring Hyprland..."
 
     # Copy .bashrc file, Dygma and oh-my-posh folders
-    cp -r Configs/.bashrc Configs/Dygma Configs/oh-my-posh "$HOME" || {
+    cp -r /Configs/.bashrc Configs/Dygma Configs/oh-my-posh "$HOME" || {
         log_error "Failed to copy files to home directory"
         exit 1
     }
 
     # Copy .config .icons .local & .themes folders
-    cp -r Configs/.config Configs/.icons Configs/.local Configs/.themes "$HOME" || {
+    cp -r /Configs/.config Configs/.icons Configs/.local Configs/.themes "$HOME" || {
         log_error "Failed to copy.config folder"
         exit 1
     }
 
-    # Copy etc folder
-    cp -r Configs/etc /etc || {
+    # Copy sddm.conf.d folder
+    cp -r /Configs/etc/sddm.conf.d /etc || {
         log_error "Failed to copy .config folder"
         exit 1
     }
 
     # Copy usr folder
-    cp -r Configs/usr /usr || {
+    cp -r /Configs/usr / || {
 	log_error "Failed to copy usr folder"
         exit 1
     }
