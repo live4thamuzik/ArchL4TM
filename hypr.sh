@@ -62,7 +62,7 @@ install_hyprland_dependencies() {
 
         # Install AUR packages using paru
         if ! $AUR_HELPER -Sy --noconfirm --needed \
-            wlogout musikcube auto-cpufreq bazecor appimage-installer \
+            wlogout auto-cpufreq bazecor appimage-installer \
             hyprshade brave-bin python-pyamdgpuinfo bluemail nordic-darker-theme-git; then
 	    log_error \"Failed to install AUR packages\" \$?
             exit 1
