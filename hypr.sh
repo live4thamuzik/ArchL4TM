@@ -133,7 +133,7 @@ install_hyprland_themes() {
     log_output "Installing Hyprland themes and customizations..."
 
     # Install themes
-    Hyde theme import
+    Hyde-install
     #hyde-cli install AbyssGreen
     #hyde-cli install Abyssal-Wave
     #hyde-cli install Another-World
