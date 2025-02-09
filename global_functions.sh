@@ -1011,39 +1011,39 @@ install_gui() {
     # Installing Server/Desktop #
     #---------------------------#
     "
+
     if [[ "$GUI_CHOICE" == "hyprland" ]]; then
         # Clone the dotfiles branch
         git clone --progress --verbose https://github.com/live4thamuzik/L4TM-HyDE.git ./L4TM-HyDE || {
-            log_error "Failed to L4TM-HyDE"
+            log_error "Failed to clone L4TM-HyDE"
             exit 1
         }
 
         # Copy Configs to /
         cd ./L4TM-HyDE/Scripts
 
-     # Temporarily allow the user to run sudo without a password (within the chroot)
-    echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers > /dev/null
-    
+        # Temporarily allow the user to run sudo without a password (within the chroot)
+        echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers > /dev/null
+
         # Switch to the created user and install HyDE
-    if ! runuser -u "$USERNAME" -- /bin/bash -c "
-        # Call hypr.sh
-        if ! bash ./install.sh
-        log_error \"Failed to install HyDE\" \$?
-        exit 1
+        if ! runuser -u "$USERNAME" -- /bin/bash -c '
+            # Call hypr.sh
+            if ! bash ./install.sh; then
+                log_error "Failed to install HyDE" "$?"
+                exit 1
+            fi
+        '; then
+            log_error "Failed to install AUR packages as $USERNAME" "$?"
+            # Remove the temporary sudoers entry in case of failure
+            sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
+            exit 1
         fi
 
-    "; then
-        log_error "Failed to install AUR packages as $USERNAME" $?
-        # Remove the temporary sudoers entry in case of failure
+        # Remove the temporary sudoers entry
         sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
-        exit 1
-    fi
 
-    # Remove the temporary sudoers entry
-    sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
+        log_output "HyDE installation complete!"
 
-    log_output "HyDE installation complete!"
-    
     elif [[ "$GUI_CHOICE" == "gnome" ]]; then
         log_output "Installing GNOME desktop environment..."
 
