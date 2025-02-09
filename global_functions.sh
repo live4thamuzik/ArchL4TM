@@ -1030,6 +1030,8 @@ install_gui() {
         if ! bash ./install.sh
         log_error \"Failed to install HyDE\" \$?
         exit 1
+        fi
+
     "; then
         log_error "Failed to install AUR packages as $USERNAME" $?
         # Remove the temporary sudoers entry in case of failure
