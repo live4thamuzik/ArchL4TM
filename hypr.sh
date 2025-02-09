@@ -41,7 +41,7 @@ install_hyprland_dependencies() {
         libreoffice-fresh mpv chromium flatpak sl lolcat cmatrix \
         asciiquarium remmina freerdp strawberry dfc udiskie \
         ttf-anonymouspro-nerd ttf-daddytime-mono-nerd ttf-firacode-nerd \
-        ttf-meslo-nerd; then
+        ttf-meslo-nerd fastfetch; then
         log_error "Failed to install base dependencies. Check the output above for errors."
         exit 1
     fi
@@ -62,7 +62,7 @@ install_hyprland_dependencies() {
 
         # Install AUR packages using paru
         if ! $AUR_HELPER -Sy --noconfirm --needed \
-            wlogout auto-cpufreq hyde-cli-git bazecor appimage-installer \
+            wlogout auto-cpufreq hyde-cli-git bazecor appimage-installer oh-my-posh-git \
             hyprshade brave-bin python-pyamdgpuinfo bluemail nordic-darker-theme-git; then
 	    log_error \"Failed to install AUR packages\" \$?
             exit 1
@@ -78,6 +78,14 @@ install_hyprland_dependencies() {
     sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
 
     log_output "Hyprland dependencies installation complete!"
+}
+
+# --- Enable services ---
+enable_services() {
+    log_output "Enabling services..."
+
+    # Enable SDDM
+    sudo systemctl enable sddm.service
 }
 
     # Install display drivers (NVIDIA only)
@@ -114,18 +122,10 @@ configure_hyprland() {
     }
 
     # Clone oh-my-posh
-    git clone https://github.com/JanDeDobbeleer/oh-my-posh.git /home/"$USERNAME" || {
+    git clone https://github.com/JanDeDobbeleer/oh-my-posh.git /home/"$USERNAME"/oh-my-posh || {
         log_error "Failed to clone oh-my-posh repo"
         exit 1
     }
-}
-
-# --- Enable services ---
-enable_services() {
-    log_output "Enabling services..."
-
-    # Enable SDDM
-    sudo systemctl enable sddm.service
 }
 
 # --- Install Hyprland themes and customizations ---
@@ -181,8 +181,8 @@ install_hyprland_themes() {
 # --- Main function ---
 main() {
     install_hyprland_dependencies
-    configure_hyprland
     enable_services
+    configure_hyprland
     install_hyprland_themes
 
     log_output "Hyprland installation complete!"
