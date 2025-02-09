@@ -133,7 +133,6 @@ install_hyprland_themes() {
     log_output "Installing Hyprland themes and customizations..."
 
     # Install themes
-    Hyde-install
     #hyde-cli install AbyssGreen
     #hyde-cli install Abyssal-Wave
     #hyde-cli install Another-World
@@ -176,7 +175,7 @@ install_hyprland_themes() {
     #hyde-cli install Windows-11
 
     # Apply default theme
-    Hyde theme set Another-World
+    #Hyde theme set Another-World
 }
 
 # --- Main function ---
@@ -184,7 +183,7 @@ main() {
     install_hyprland_dependencies
     enable_services
     configure_hyprland
-    install_hyprland_themes
+    #install_hyprland_themes
 
     log_output "Hyprland installation complete!"
 }
