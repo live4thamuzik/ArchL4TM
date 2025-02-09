@@ -1030,7 +1030,6 @@ install_gui() {
         if ! bash ./install.sh
         log_error \"Failed to install HyDE\" \$?
         exit 1
-    fi
     "; then
         log_error "Failed to install AUR packages as $USERNAME" $?
         # Remove the temporary sudoers entry in case of failure
@@ -1189,8 +1188,6 @@ cleanup() {
     rm -rf /mnt/aur_pkgs.lst
     rm -rf /mnt/tmp
     rm -rf /mnt/grub-themes
-    rm -rf /mnt/Configs
-    rm -rf /mnt/hypr.sh
 
     # Copy log files to the installed system
     cp /var/log/arch_install.log /mnt/var/log/arch_install.log
