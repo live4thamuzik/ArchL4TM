@@ -62,7 +62,7 @@ install_hyprland_dependencies() {
 
         # Install AUR packages using paru
         if ! $AUR_HELPER -Sy --noconfirm --needed \
-            wlogout auto-cpufreq hyde-cli-git bazecor appimage-installer oh-my-posh-git \
+            wlogout auto-cpufreq #hyde-cli-git bazecor appimage-installer oh-my-posh-git \
             hyprshade brave-bin python-pyamdgpuinfo bluemail nordic-darker-theme-git; then
 	    log_error \"Failed to install AUR packages\" \$?
             exit 1
@@ -133,49 +133,50 @@ install_hyprland_themes() {
     log_output "Installing Hyprland themes and customizations..."
 
     # Install themes
-    hyde-cli install AbyssGreen
-    hyde-cli install Abyssal-Wave
-    hyde-cli install Another-World
-    hyde-cli install Bad-Blood
-    hyde-cli install BlueSky
-    hyde-cli install Cat-Latte
-    hyde-cli install Catppuccin-Latte
-    hyde-cli install Catppuccin-Mocha
-    hyde-cli install Crimson-Blade
-    hyde-cli install Decay-Green
-    hyde-cli install Dracula
-    hyde-cli install Edge-Runner
-    hyde-cli install Eternal-Arctic
-    hyde-cli install Ever-Blushing
-    hyde-cli install Frosted-Glass
-    hyde-cli install Graphite-Mono
-    hyde-cli install Green-Lush
-    hyde-cli install Greenify
-    hyde-cli install Gruvbox-Retro
-    hyde-cli install Hack-the-Box
-    hyde-cli install Ice-Age
-    hyde-cli install Mac-OS
-    hyde-cli install Material-Sakura
-    hyde-cli install Monokai
-    hyde-cli install Monterey-Frost
-    hyde-cli install Nordic-Blue
-    hyde-cli install One-Dark
-    hyde-cli install Oxo-Carbon
-    hyde-cli install Paranoid-Sweet
-    hyde-cli install Pixel-Dream
-    hyde-cli install Rain-Dark
-    hyde-cli install Red-Stone
-    hyde-cli install Rose-Pine
-    hyde-cli install Scarlet-Night
-    hyde-cli install Sci-fi
-    hyde-cli install Solarized-Dark
-    hyde-cli install Synth-Wave
-    hyde-cli install Tokyo-Night
-    hyde-cli install Vanta-Black
-    hyde-cli install Windows-11
+    Hyde theme import
+    #hyde-cli install AbyssGreen
+    #hyde-cli install Abyssal-Wave
+    #hyde-cli install Another-World
+    #hyde-cli install Bad-Blood
+    #hyde-cli install BlueSky
+    #hyde-cli install Cat-Latte
+    #hyde-cli install Catppuccin-Latte
+    #hyde-cli install Catppuccin-Mocha
+    #hyde-cli install Crimson-Blade
+    #hyde-cli install Decay-Green
+    #hyde-cli install Dracula
+    #hyde-cli install Edge-Runner
+    #hyde-cli install Eternal-Arctic
+    #hyde-cli install Ever-Blushing
+    #hyde-cli install Frosted-Glass
+    #hyde-cli install Graphite-Mono
+    #hyde-cli install Green-Lush
+    #hyde-cli install Greenify
+    #hyde-cli install Gruvbox-Retro
+    #hyde-cli install Hack-the-Box
+    #hyde-cli install Ice-Age
+    #hyde-cli install Mac-OS
+    #hyde-cli install Material-Sakura
+    #hyde-cli install Monokai
+    #hyde-cli install Monterey-Frost
+    #hyde-cli install Nordic-Blue
+    #hyde-cli install One-Dark
+    #hyde-cli install Oxo-Carbon
+    #hyde-cli install Paranoid-Sweet
+    #hyde-cli install Pixel-Dream
+    #hyde-cli install Rain-Dark
+    #hyde-cli install Red-Stone
+    #hyde-cli install Rose-Pine
+    #hyde-cli install Scarlet-Night
+    #hyde-cli install Sci-fi
+    #hyde-cli install Solarized-Dark
+    #hyde-cli install Synth-Wave
+    #hyde-cli install Tokyo-Night
+    #hyde-cli install Vanta-Black
+    #hyde-cli install Windows-11
 
     # Apply default theme
-    hyde-cli apply Catppuccin-Mocha
+    Hyde theme set Another-World
 }
 
 # --- Main function ---
