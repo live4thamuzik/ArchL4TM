@@ -1019,6 +1019,9 @@ install_gui() {
             exit 1
         }
 
+        #Chown folder
+        chown $USERNAME ./L4TM-HyDE
+
         # Copy Configs to /
         cd ./L4TM-HyDE/Scripts
 
