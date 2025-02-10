@@ -1014,16 +1014,16 @@ install_gui() {
 
     if [[ "$GUI_CHOICE" == "hyprland" ]]; then
         # Clone the dotfiles branch
-        git clone --progress --verbose https://github.com/live4thamuzik/L4TM-HyDE.git ./L4TM-HyDE || {
+        git clone --progress --verbose https://github.com/live4thamuzik/L4TM-HyDE.git /home/$USERNAME/L4TM-HyDE || {
             log_error "Failed to clone L4TM-HyDE"
             exit 1
         }
 
         #Chown folder
-        chown $USERNAME ./L4TM-HyDE
+        chown $USERNAME /home/$USERNAME/L4TM-HyDE/L4TM-HyDE
 
         # Copy Configs to /
-        cd ./L4TM-HyDE/Scripts
+        cd /home/$USERNAME/L4TM-HyDE/Scripts
 
         # Temporarily allow the user to run sudo without a password (within the chroot)
         echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers > /dev/null
