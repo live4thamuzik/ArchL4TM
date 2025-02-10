@@ -1019,8 +1019,9 @@ install_gui() {
             exit 1
         }
 
-        #Chown folder
+        #Fix permissions
         chown $USERNAME /home/$USERNAME/L4TM-HyDE
+        chmod -R 777 /home/$USERNAME/L4TM-HyDE
 
         # Copy Configs to /
         cd /home/$USERNAME/L4TM-HyDE/Scripts
