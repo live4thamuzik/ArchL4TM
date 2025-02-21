@@ -938,6 +938,41 @@ configure_grub() {
   fi
 }
 
+# --- Install/Configure AMD Radeon ---
+install_amd_gpu_drivers() {
+  echo -ne "
+  #---------------------------#
+  # Detect/Install AMD Radeon #
+  #---------------------------#
+  "
+  log_output "Detecting Radeon GPUs..."
+
+  # Detect Radeon GPUs
+  readarray -t dGPU < <(lspci -k | grep -E "(VGA|3D)" | grep -i amd)
+
+  # Check if a Radeon GPU was found
+  if [[ ${#dGPU[@]} -gt 0 ]]; then
+    log_output "Radeon GPU(s) detected:"  # More accurate wording
+    # Print details of each detected Radeon GPU
+    for gpu in "${dGPU[@]}"; do
+      log_output "$gpu" # Use log_output for consistency
+    done
+
+    log_output "Installing Radeon drivers and related packages..." # Correct wording
+
+    # Install Radeon drivers and related packages
+    if ! pacman -S --noconfirm --needed mesa vulkan-radeon xf86-video-amdgpu lib32-mesa lib32-vulkan-radeon; then # Include lib32
+      log_error "Failed to install Radeon packages" $?
+      exit 1
+    fi
+
+    log_output "Radeon drivers and related packages installed successfully." # Clearer message
+
+  else  # The 'else' should be here, aligned with the 'if'
+    log_output "No Radeon GPUs detected. Skipping Radeon driver installation."
+  fi # Close the if statement
+}
+
 # --- Install/Configure NVIDIA ---
 install_nvidia_drivers() {
   echo -ne "
