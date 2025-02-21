@@ -33,6 +33,7 @@ install_grub_themes "$GRUB_THEME"
 configure_grub "$DISK"
 
 # --- Install NVIDA drivers if GPU found ---
+install_amd_gpu_drivers
 install_nvidia_drivers
 
 # --- Set plymouth splash screen ---
