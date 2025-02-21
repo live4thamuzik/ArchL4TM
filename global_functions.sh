@@ -952,25 +952,30 @@ install_amd_gpu_drivers() {
 
   # Check if a Radeon GPU was found
   if [[ ${#dGPU[@]} -gt 0 ]]; then
-    log_output "Radeon GPU(s) detected:"  # More accurate wording
+    log_output "Radeon GPU(s) detected:"
     # Print details of each detected Radeon GPU
     for gpu in "${dGPU[@]}"; do
-      log_output "$gpu" # Use log_output for consistency
+      log_output "$gpu"
     done
 
-    log_output "Installing Radeon drivers and related packages..." # Correct wording
+    # Check for amdgpu kernel module *only if a GPU was detected*
+    if ! lsmod | grep amdgpu; then
+      log_warn "amdgpu kernel module not loaded. Reboot may be required."
+    fi
+    
+    log_output "Installing Radeon drivers and related packages..."
 
     # Install Radeon drivers and related packages
-    if ! pacman -S --noconfirm --needed mesa vulkan-radeon xf86-video-amdgpu lib32-mesa lib32-vulkan-radeon; then # Include lib32
+    if ! pacman -S --noconfirm --needed mesa vulkan-radeon xf86-video-amdgpu lib32-mesa lib32-vulkan-radeon; then
       log_error "Failed to install Radeon packages" $?
       exit 1
     fi
 
-    log_output "Radeon drivers and related packages installed successfully." # Clearer message
+    log_output "Radeon drivers and related packages installed successfully."
 
-  else  # The 'else' should be here, aligned with the 'if'
+  else
     log_output "No Radeon GPUs detected. Skipping Radeon driver installation."
-  fi # Close the if statement
+  fi
 }
 
 # --- Install/Configure NVIDIA ---
