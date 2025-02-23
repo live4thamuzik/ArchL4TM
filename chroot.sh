@@ -32,9 +32,8 @@ install_grub
 install_grub_themes "$GRUB_THEME"
 configure_grub "$DISK"
 
-# --- Install NVIDA drivers if GPU found ---
-install_amd_gpu_drivers
-install_nvidia_drivers
+# --- Install AMD or NVIDIA GPU drivers if found ---
+install_gpu_drivers
 
 # --- Set plymouth splash screen ---
 mv ./arch-glow /usr/share/plymouth/themes
