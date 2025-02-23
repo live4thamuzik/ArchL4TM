@@ -36,8 +36,6 @@ get_hostname
 get_disk
 get_partition_sizes
 get_encryption_password
-detect_and_set_timezone
-#setup_timezone
 select_gui
 get_grub_theme
 get_aur_helper
