@@ -10,13 +10,13 @@ set -e
 exec > >(tee -a /var/log/arch_install.log) 2> >(tee -a /var/log/arch_install_error.log >&2)
 
 # --- Welcome Message ---
-log_info "
+"
 +--------------------------------+
 | Arch Linux Installation Script |
 +--------------------------------+
 "
 
-log_info "
+"
 
  █████╗ ██████╗  ██████╗██╗  ██╗██╗██╗  ██╗████████╗███╗   ███╗
 ██╔══██╗██╔══██╗██╔════╝██║  ██║██║██║  ██║╚══██╔══╝████╗ ████║
@@ -97,7 +97,7 @@ fi
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
 # --- Copy sources to /mnt and make script executable
-cp -r./global_functions.sh./chroot.sh./pkgs.lst./aur_pkgs.lst./hypr.sh./Source/arch-glow /mnt
+cp -r ./global_functions.sh ./chroot.sh ./pkgs.lst ./aur_pkgs.lst ./hypr.sh ./Source/arch-glow /mnt
 chmod +x /mnt/*.sh
 
 # --- Chroot Setup ---
