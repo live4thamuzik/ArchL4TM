@@ -3,7 +3,7 @@
 ### Chroot Setup ###
 
 # --- Sources ---
-source./global_functions.sh
+source ./global_functions.sh
 
 # --- Set up log file for chroot environment ---
 LOG_FILE="arch_chroot_install.log"
