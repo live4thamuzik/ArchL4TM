@@ -966,7 +966,7 @@ install_amd_gpu_drivers() {
     log_output "Installing Radeon drivers and related packages..."
 
     # Install Radeon drivers and related packages
-    if ! pacman -S --noconfirm --needed mesa vulkan-radeon xf86-video-amdgpu lib32-mesa lib32-vulkan-radeon; then
+    if ! pacman -S --noconfirm --needed mesa amdgpu amdgpu-firmware vulkan-radeon xf86-video-amdgpu lib32-mesa lib32-vulkan-radeon; then
       log_error "Failed to install Radeon packages" $?
       exit 1
     fi
