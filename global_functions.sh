@@ -955,19 +955,21 @@ install_gpu_drivers() {
   fi
 
   for gpu in "${gpus[@]}"; do
-    if [[ "$gpu" == *"NVIDIA"* ]]; then
+    vendor=$(echo "$gpu" | grep -oE "(NVIDIA|AMD|Radeon|Vulkan)" | head -n 1)  # Extract vendor, including "Radeon" and "Vulkan"
+
+    if [[ "$vendor" == "NVIDIA" ]]; then
       log_output "NVIDIA GPU detected:"
       log_output "$gpu"
 
       log_output "Installing NVIDIA drivers..."
-      if ! pacman -S --noconfirm --needed nvidia libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings; then
+      if! pacman -S --noconfirm --needed nvidia libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings; then
         log_error "Failed to install NVIDIA packages" $?
         return 1 # Indicate failure
       fi
 
       log_output "Updating initramfs..."
-      if ! sed -i '/^MODULES=()/c\MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)' /etc/mkinitcpio.conf || \
-         ! mkinitcpio -p linux; then
+      if! sed -i '/^MODULES=()/c\MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)' /etc/mkinitcpio.conf || \
+       ! mkinitcpio -p linux; then
         log_error "Failed to update initramfs with NVIDIA modules" $?
         return 1 # Indicate failure
       fi
@@ -990,27 +992,27 @@ install_gpu_drivers() {
         return 1 # Indicate failure
       fi
 
-      if ! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' loglevel=3"|GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' nvidia_drm_modeset=1 loglevel=3"|' /etc/default/grub || \
-         ! grub-mkconfig -o /boot/grub/grub.cfg; then
+      if! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' loglevel=3"|GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' nvidia_drm_modeset=1 loglevel=3"|' /etc/default/grub || \
+       ! grub-mkconfig -o /boot/grub/grub.cfg; then
         log_error "Failed to update GRUB configuration with NVIDIA settings" $?
         return 1 # Indicate failure
       fi
-      
+
       log_output "NVIDIA drivers installed and configured successfully."
       return 0 # Exit successfully after NVIDIA installation
-      
-    elif [[ "$gpu" == *"AMD"* ]]; then
+
+    elif [[ "$vendor" == "AMD" || "$vendor" == "Radeon" || "$vendor" == "Vulkan" ]]; then  # Check for all possible AMD identifiers
       log_output "AMD Radeon GPU detected:"
       log_output "$gpu"
 
       log_output "Installing Radeon drivers and related packages..."
-      if ! pacman -S --noconfirm --needed mesa mesa-utils amdgpu amdgpu-firmware vulkan-radeon xf86-video-amdgpu lib32-mesa lib32-vulkan-radeon; then
+      if! pacman -S --noconfirm --needed mesa mesa-utils amdgpu amdgpu-firmware vulkan-radeon xf86-video-amdgpu lib32-mesa lib32-vulkan-radeon; then
         log_error "Failed to install Radeon packages" $?
         return 1 # Indicate failure
       fi
 
       # Check for amdgpu kernel module *only if a GPU was detected*
-      if ! lsmod | grep amdgpu; then
+      if! lsmod | grep amdgpu; then
         log_warn "amdgpu kernel module not loaded. Reboot may be required."
       fi
 
