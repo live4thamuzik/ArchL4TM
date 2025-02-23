@@ -204,6 +204,29 @@ get_encryption_password() {
     done
 }
 
+detect_and_set_timezone() {
+  log_output "Detecting timezone..."
+
+  # Use timedatectl to detect the timezone
+  detected_timezone=$(timedatectl timesync-status | grep "Timezone:" | awk '{print $2}')
+
+  if [[ -n "$detected_timezone" ]]; then
+    log_output "Detected timezone: $detected_timezone"
+
+    # Set the timezone using timedatectl
+    if! timedatectl set-timezone "$detected_timezone"; then
+      log_error "Failed to set timezone" $?
+      return 1
+    fi
+
+    log_output "Timezone set successfully."
+    return 0
+  else
+    log_warn "Unable to detect timezone automatically."
+    return 1
+  fi
+}
+
 # --- Timezone Selection ---
 setup_timezone() {
   log_output "Setting up timezone..."
