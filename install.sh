@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# --- Sources ---
 source./global_functions.sh
 
 # Exit on any command failure
