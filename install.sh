@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source./global_functions.sh
+
 # Exit on any command failure
 set -e
 
