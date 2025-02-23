@@ -7,13 +7,13 @@ set -e
 exec > >(tee -a /var/log/arch_install.log) 2> >(tee -a /var/log/arch_install_error.log >&2)
 
 # --- Welcome Message ---
-echo "
+log_info "
 +--------------------------------+
 | Arch Linux Installation Script |
 +--------------------------------+
 "
 
-echo "
+log_info "
 
  █████╗ ██████╗  ██████╗██╗  ██╗██╗██╗  ██╗████████╗███╗   ███╗
 ██╔══██╗██╔══██╗██╔════╝██║  ██║██║██║  ██║╚══██╔══╝████╗ ████║
@@ -24,7 +24,7 @@ echo "
 "
 
 # --- Source Functions ---
-source ./global_functions.sh
+source./global_functions.sh
 
 sleep 1
 
@@ -58,22 +58,43 @@ log_info "Starting installation process..."
 
 # --- Disk Preperation ---
 partition_disk "$DISK" "$EFI_SIZE" "$BOOT_SIZE"
+if [[ $? -ne 0 ]]; then
+    log_error "Exiting due to disk preperation error."
+    exit 1
+fi
+
 setup_lvm "$DISK" "$ENCRYPTION_PASSWORD"
+if [[ $? -ne 0 ]]; then
+    log_error "Exiting due to LVM setup error."
+    exit 1
+fi
 
 # --- Install pacman-contrib reflector rsync python ---
 install_prerequisites
+if [[ $? -ne 0 ]]; then
+    log_error "Exiting due to prerequisite installation error."
+    exit 1
+fi
 
 # --- Make /etc/pacman.d/mirrorlist.backup and run reflector on /etc/pacman.d/mirrorlist ---
 configure_mirrors
+if [[ $? -ne 0 ]]; then
+    log_error "Exiting due to mirror configuration error."
+    exit 1
+fi
 
 # --- run pacstrap ---
 install_base_packages
+if [[ $? -ne 0 ]]; then
+    log_error "Exiting due to base package installation error."
+    exit 1
+fi
 
 # --- Generate FS Tab ---
 genfstab -U -p /mnt >> /mnt/etc/fstab
 
 # --- Copy sources to /mnt and make script executable
-cp -r ./global_functions.sh ./chroot.sh ./pkgs.lst ./aur_pkgs.lst ./hypr.sh ./Source/arch-glow /mnt
+cp -r./global_functions.sh./chroot.sh./pkgs.lst./aur_pkgs.lst./hypr.sh./Source/arch-glow /mnt
 chmod +x /mnt/*.sh
 
 # --- Chroot Setup ---
@@ -86,10 +107,9 @@ cleanup
 umount -R /mnt
 
 # --- Comment ---
-echo "Installation is complete, please reboot system."
+log_info "Installation is complete, please reboot system."
 
-
-echo "
+log_info "
 
  █████╗ ██████╗  ██████╗██╗  ██╗██╗██╗  ██╗████████╗███╗   ███╗
 ██╔══██╗██╔══██╗██╔════╝██║  ██║██║██║  ██║╚══██╔══╝████╗ ████║
