@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# --- Sources ---
-source./global_functions.sh
+# --- Source Functions ---
+source ./global_functions.sh
 
 # Exit on any command failure
 set -e
@@ -25,9 +25,6 @@ log_input "
 ██║  ██║██║  ██║╚██████╗██║  ██║███████╗██║   ██║   ██║ ╚═╝ ██║
 ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝   ╚═╝   ╚═╝     ╚═╝
 "
-
-# --- Source Functions ---
-source./global_functions.sh
 
 sleep 1
 
