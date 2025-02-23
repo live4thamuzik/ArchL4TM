@@ -59,7 +59,7 @@ The script will install Arch Linux on EFI systems with minimal config and packag
 
   # Locale is set to en_US.UTF-8 UTF-8 (see global_functions.sh) [Source](https://wiki.archlinux.org/title/Locale#)
 
-  # Timezone can be selected from a list
+  # Timezone will be automatically detected and set
 
   # Pacman Configuration (The following settings are enabled in /etc/pacman.conf)
   - ILoveCandy
@@ -72,16 +72,8 @@ The script will install Arch Linux on EFI systems with minimal config and packag
   - Paru
   - Yay
 
-  # Detection for NVIDIA GPU: (I use a custom kernel and hyprland, if you don't want dkms just update global_functions.sh)
-  - Script will use lspci to detect and install NVIDIA drivers
-  - nvidia-dkms
-  - libglnvd
-  - nvidia-utils
-  - opencl-nvidia
-  - lib32-libglvnd
-  - lib32-nvidia-utils
-  - lib32-opencl-nvidia
-  - nvidia-settings
+  # Detection for Dedicated GPU:
+  - Script will use lspci to detect and install AMD or NVIDIA drivers depending on your GPU.
 
   # Desktop Environment Options:
   - Server = No DE, only installs packages listed above
