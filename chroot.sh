@@ -19,6 +19,7 @@ enable_services
 
 # --- Essential System Setup ---
 set_locale
+detect_and_set_timezone
 update_initramfs
 
 # --- User and Hostname Configuration ---
