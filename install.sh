@@ -10,13 +10,13 @@ set -e
 exec > >(tee -a /var/log/arch_install.log) 2> >(tee -a /var/log/arch_install_error.log >&2)
 
 # --- Welcome Message ---
-log_input "
+log_info "
 +--------------------------------+
 | Arch Linux Installation Script |
 +--------------------------------+
 "
 
-log_input "
+log_info "
 
  █████╗ ██████╗  ██████╗██╗  ██╗██╗██╗  ██╗████████╗███╗   ███╗
 ██╔══██╗██╔══██╗██╔════╝██║  ██║██║██║  ██║╚══██╔══╝████╗ ████║
