@@ -1123,53 +1123,80 @@ install_aur_helper() {
 }
 
 install_aur_pkgs() {
-    echo -ne "
-    #------------------------#
-    # Installing AUR Packages #
-    #------------------------#
-    "
-    log_info "Installing AUR packages..."
+  echo -ne "
+  #------------------------#
+  # Installing AUR Packages #
+  #------------------------#
+  "
+  log_info "Installing AUR packages..."
 
-    # Temporarily allow the user to run sudo without a password
-    echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+  # Determine AUR helper. Paru preferred, but checks for yay as well
+  AUR_HELPER=""
 
-    # Switch to the created user and install AUR packages
-    if ! runuser -u "$USERNAME" -- /bin/bash -c "
-        # Check if the AUR helper is installed
-        if ! command -v \"$AUR_HELPER\" &> /dev/null; then
-            log_error \"AUR helper '$AUR_HELPER' not found. Make sure it's installed.\" 1
-            exit 1
-        fi
+  if command -v paru &> /dev/null; then
+    AUR_HELPER="paru"
+    log_info "Paru found. Using Paru for AUR package installation."
+  elif command -v yay &> /dev/null; then
+    AUR_HELPER="yay"
+    log_info "Yay found. Using Yay for AUR package installation."
+  else
+    log_warn "Neither Paru nor Yay found. Skipping AUR package installation."
+    return 0 # Exit successfully because AUR packages are optional
+  fi
 
-        # Install AUR packages using paru
+  # Temporarily allow the user to run sudo without a password
+  echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+  # Switch to the created user and install AUR packages
+  if ! runuser -u "$USERNAME" -- /bin/bash -c "
+      # Install AUR packages using the selected helper
+      if [[ \"\$AUR_HELPER\" == \"paru\" ]]; then
         if ! paru -S --noconfirm --needed - < ./aur_pkgs.lst; then
-            log_error \"Failed to install AUR packages\" \$?
-            exit 1
+          log_error \"Failed to install AUR packages with \$AUR_HELPER\" \$?
+          exit 1
         fi
+      elif [[ \"\$AUR_HELPER\" == \"yay\" ]]; then # Added yay
+        if ! yay -S --noconfirm --needed - < ./aur_pkgs.lst; then
+          log_error \"Failed to install AUR packages with \$AUR_HELPER\" \$?
+          exit 1
+        fi
+      fi
     "; then
-        log_error "Failed to install AUR packages as $USERNAME" $?
-        # Remove the temporary sudoers entry in case of failure
-        sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
-        exit 1
-    fi
-
-    # Remove the temporary sudoers entry
+    log_error "Failed to install AUR packages as $USERNAME" $?
+    # Remove the temporary sudoers entry in case of failure
     sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
+    exit 1
+  fi
+
+  # Remove the temporary sudoers entry
+  sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
 }
 
-# --- Add HOOKS to mkinitcpoio.conf for numlock on boot / Update initramfs --- 
 numlock_auto_on() {
-    echo -ne "
-    #--------------------#
-    # Updating Initramfs #
-    #--------------------#
-    "
-    log_info "Updating initramfs..."
-    if ! sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev plymouth autodetect modconf numlock block encrypt lvm2 filesystems keyboard fsck)/' /etc/mkinitcpio.conf || \
-       ! mkinitcpio -p linux; then
-        log_error "Failed to update initramfs" $?
-        exit 1
+  echo -ne "
+  #--------------------#
+  # Updating Initramfs #
+  #--------------------#
+  "
+  log_info "Updating initramfs..."
+
+  # Check if mkinitcpio-numlock is installed via AUR helper
+  if [[ -n "$AUR_HELPER" ]]; then  # Check if AUR_HELPER is set
+    if ! runuser -u "$USERNAME" -- /bin/bash -c "command -v $AUR_HELPER &> /dev/null && $AUR_HELPER -Qs mkinitcpio-numlock &> /dev/null"; then
+      log_warn "mkinitcpio-numlock not found (or $AUR_HELPER issue). Skipping numlock configuration."
+      return 0
     fi
+  else
+    log_warn "No AUR helper found. Skipping mkinitcpio-numlock check and numlock configuration."
+    return 0
+  fi
+
+
+  if ! sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev plymouth autodetect modconf numlock block encrypt lvm2 filesystems keyboard fsck)/' /etc/mkinitcpio.conf || \
+     ! mkinitcpio -p linux; then
+    log_error "Failed to update initramfs" $?
+    exit 1
+  fi
 }
 
 # --- Cleanup Function ---
