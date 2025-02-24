@@ -5,6 +5,12 @@
 # --- Sources ---
 source ./global_functions.sh
 
+# Check if LOG_FILE is set; if not, set a default
+LOG_FILE="${LOG_FILE:-/var/log/arch_install.log}"
+
+# Redirect all output to the log file
+exec > >(tee -a "$LOG_FILE") 2>&1
+
 # --- Pacman Configuration ---
 configure_pacman
 if [[ $? -ne 0 ]]; then
