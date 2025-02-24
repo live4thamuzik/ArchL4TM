@@ -59,7 +59,7 @@ The script will install Arch Linux on EFI systems with minimal config and packag
 
   # Locale is set to en_US.UTF-8 UTF-8 (see global_functions.sh) [Source](https://wiki.archlinux.org/title/Locale#)
 
-  # Timezone will be automatically detected and set
+  # Timezone can be set interactively
 
   # Pacman Configuration (The following settings are enabled in /etc/pacman.conf)
   - ILoveCandy
