@@ -223,27 +223,19 @@ get_encryption_password() {
     done
 }
 
-# --- Set timezone based on location ---
-set_timezone_by_location() {
-  log_info "Setting timezone by location..."
+set_timezone() {
+  log_info "Setting timezone interactively..."
 
-  # 1. Check for interactive mode and prompt if needed:
-  if [[ ! -t 0 ]]; then  # Check if stdin is NOT a terminal (non-interactive)
-    log_warn "Running in non-interactive mode. Setting timezone to UTC."
-    timedatectl set-timezone UTC
-    return 0  # Success!
+  # Check if stdin is NOT a terminal (non-interactive)
+  if [[ ! -t 0 ]]; then
+    log_error "This script requires interactive mode for timezone selection."
+    return 1  # Indicate failure
   fi
 
-  # 2. Use `tzselect` if interactive:
-  log_info "Please select your timezone interactively.  This is the most reliable method during install."
-  tzselect  # This command guides the user through the timezone selection.
+  log_info "Please select your timezone interactively."
+  tzselect
 
-  # 3. Read the selected timezone from /etc/localtime (symlink):
   selected_timezone=$(readlink /etc/localtime)
-
-  # 4. Extract the actual timezone name (e.g., "America/New_York"):
-  # The path will be something like /usr/share/zoneinfo/America/New_York
-  # We extract the part after /usr/share/zoneinfo/
   actual_timezone="${selected_timezone#/usr/share/zoneinfo/}"
 
   if [[ -n "$actual_timezone" ]]; then
