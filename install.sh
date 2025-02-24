@@ -52,7 +52,7 @@ export USERNAME
 export USER_PASSWORD
 export ROOT_PASSWORD
 export HOSTNAME
-export ACTUAL_TIMEZONE=$(select_timezone)
+export ACTUAL_TIMEZONE
 export GUI_CHOICE
 export GRUB_THEME
 export AUR_HELPER 
