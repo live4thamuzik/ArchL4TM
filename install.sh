@@ -104,7 +104,7 @@ cp -r ./global_functions.sh ./chroot.sh ./pkgs.lst ./aur_pkgs.lst ./hypr.sh ./So
 chmod +x /mnt/*.sh
 
 # --- Chroot Setup ---
-arch-chroot /mnt /bin/bash -c "LOG_FILE=$LOG_FILE /mnt/chroot.sh"
+arch-chroot /mnt /bin/bash -c "LOG_FILE=$LOG_FILE ./chroot.sh"
 
 # --- Cleanup ---
 cleanup
