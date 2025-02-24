@@ -60,11 +60,11 @@ validate_username() {
 }
 
 validate_hostname() {
-    local hostname="<span class="math-inline">1"
-if \[\[ "</span>{hostname,,}" =~ ^[a-z][a-z0-9_.-]{0,62}[a-z0-9]$ ]]; then
+    local hostname="$1"
+    if [[ "${hostname,,}" =~ ^[a-z][a-z0-9_.-]{0,62}[a-z0-9]$ ]]; then
         return 0  # True
     else
-        log_error "Invalid hostname: $hostname"
+        log_error "Invalid hostname: $hostname" 1  # Log the error here
         return 1  # False
     fi
 }
@@ -82,11 +82,11 @@ validate_disk() {
 # --- Confirmation Function ---
 confirm_action() {
     local message="$1"
-    read -r -p "<span class="math-inline">message \(Y/n\) " confirm
-confirm\=</span>{confirm,,}  # Convert to lowercase
+    read -r -p "$message (Y/n) " confirm
+    confirm=${confirm,,}  # Convert to lowercase
 
     # Check if confirm is "y" or empty
-    if [[ "$confirm" == "y" ]] || [[ -z "$confirm" ]]; then
+    if [[ "$confirm" == "y" ]] || [[ -z "$confirm" ]]; then  
         return 0  # True
     else
         return 1  # False
