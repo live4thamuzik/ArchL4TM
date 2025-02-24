@@ -5,10 +5,6 @@
 # --- Sources ---
 source ./global_functions.sh
 
-# --- Set up log file for chroot environment ---
-LOG_FILE="arch_chroot_install.log"
-touch "$LOG_FILE"
-
 # --- Pacman Configuration ---
 configure_pacman
 if [[ $? -ne 0 ]]; then
