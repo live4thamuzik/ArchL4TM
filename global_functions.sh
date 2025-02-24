@@ -257,6 +257,11 @@ select_timezone() {
 }
 
 set_timezone() {
+    echo -ne "
+    #------------------#
+    # Setting Timezone #
+    #------------------#
+    "
     # Use $ACTUAL_TIMEZONE directly
     if [[ -z "$ACTUAL_TIMEZONE" ]]; then
         log_error "Timezone not provided. Using default (UTC)."
