@@ -34,19 +34,19 @@ log() {
 }
 
 log_debug() {
-    log "DEBUG" "$@"
+    log "DEBUG" "$1"
 }
 
 log_info() {
-    log "INFO" "$@"
+    log "INFO" "$1"
 }
 
 log_warn() {
-    log "WARN" "$@"
+    log "WARN" "$1"
 }
 
 log_error() {
-    log "ERROR" "$@"
+    log "ERROR" "$1"
 }
 
 validate_username() {
