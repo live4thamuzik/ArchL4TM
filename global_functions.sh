@@ -244,7 +244,7 @@ select_timezone() {
   fi
 }
 
-sset_timezone() {
+set_timezone() {
   local timezone="$1"
 
   if [[ -z "$timezone" ]]; then
