@@ -64,7 +64,7 @@ validate_hostname() {
     if [[ "${hostname,,}" =~ ^[a-z][a-z0-9_.-]{0,62}[a-z0-9]$ ]]; then
         return 0  # True
     else
-        log_error "Invalid hostname: $hostname" 1  # Log the error here
+        log_error "Invalid hostname: $hostname" 1
         return 1  # False
     fi
 }
@@ -166,7 +166,7 @@ get_hostname() {
 get_disk() {
     # List Disks
     log_info "Available disks:"
-    fdisk -l | grep "Disk /"  # Only list whole disks
+    fdisk -l | grep "Disk /"
 
     while true; do
         read -r -p "Enter the disk to use (e.g. /dev/nvme0n1 , /dev/sda): " disk
@@ -218,7 +218,7 @@ get_encryption_password() {
         fi
 
         export ENCRYPTION_PASSWORD="$password"
-        log_info "Encryption password set."  # Avoid logging the password itself
+        log_info "Encryption password set."
         break
     done
 }
@@ -260,7 +260,7 @@ select_gui() {
     log_info "Selecting GUI..."
 
     options=("Server (No GUI)" "Hyprland" "GNOME" "KDE Plasma")
-    select gui_choice in "${options[@]}"; do  # "in" moved outside parentheses
+    select gui_choice in "${options[@]}"; do
         case "$gui_choice" in
             "Hyprland")
                 export GUI_CHOICE="hyprland"
@@ -363,7 +363,7 @@ get_aur_helper() {
             *)
             log_info "Invalid option. Skipping AUR helper installation."
             export AUR_HELPER="none"
-            exit 1  # Exit the script if the option is invalid
+            exit 1
             ;;
     esac
     break
@@ -411,7 +411,7 @@ partition_disk() {
 
 setup_lvm() {
     local disk="$1"
-    local password="$2"  # Pass the encryption password as an argument
+    local password="$2"
 
     log_info "Setting up LVM on disk: $disk"
 
@@ -900,11 +900,11 @@ install_gpu_drivers() {
 
   if [[ ${#gpus[@]} -eq 0 ]]; then
     log_info "No GPUs detected. Skipping driver installation."
-    return 0 # Exit successfully if no GPU is found
+    return 0
   fi
 
   for gpu in "${gpus[@]}"; do
-    vendor=$(echo "$gpu" | grep -oE "(NVIDIA|AMD|Radeon|Vulkan)" | head -n 1)  # Extract vendor, including "Radeon" and "Vulkan"
+    vendor=$(echo "$gpu" | grep -oE "(NVIDIA|AMD|Radeon|Vulkan)" | head -n 1)
 
     if [[ "$vendor" == "NVIDIA" ]]; then
       log_info "NVIDIA GPU detected:"
@@ -913,14 +913,14 @@ install_gpu_drivers() {
       log_info "Installing NVIDIA drivers..."
       if ! pacman -S --noconfirm --needed nvidia libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings; then
         log_error "Failed to install NVIDIA packages" $?
-        return 1 # Indicate failure
+        return 1
       fi
 
       log_info "Updating initramfs..."
       if ! sed -i '/^MODULES=()/c\MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)' /etc/mkinitcpio.conf || \
        ! mkinitcpio -p linux; then
         log_error "Failed to update initramfs with NVIDIA modules" $?
-        return 1 # Indicate failure
+        return 1
       fi
 
       log_info "Updating GRUB configuration..."
@@ -944,20 +944,20 @@ install_gpu_drivers() {
       if ! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' loglevel=3"|GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' nvidia_drm_modeset=1 loglevel=3"|' /etc/default/grub || \
        ! grub-mkconfig -o /boot/grub/grub.cfg; then
         log_error "Failed to update GRUB configuration with NVIDIA settings" $?
-        return 1 # Indicate failure
+        return 1
       fi
 
       log_info "NVIDIA drivers installed and configured successfully."
-      return 0 # Exit successfully after NVIDIA installation
+      return 0
 
-    elif [[ "$vendor" == "AMD" || "$vendor" == "Radeon" || "$vendor" == "Vulkan" ]]; then  # Check for all possible AMD identifiers
+    elif [[ "$vendor" == "AMD" || "$vendor" == "Radeon" || "$vendor" == "Vulkan" ]]; then
       log_info "AMD Radeon GPU detected:"
       log_info "$gpu"
 
       log_info "Installing Radeon drivers and related packages..."
       if ! pacman -S --noconfirm --needed mesa mesa-utils amdgpu amdgpu-firmware vulkan-radeon xf86-video-amdgpu lib32-mesa lib32-vulkan-radeon; then
         log_error "Failed to install Radeon packages" $?
-        return 1 # Indicate failure
+        return 1
       fi
 
       # Check for amdgpu kernel module *only if a GPU was detected*
@@ -966,7 +966,7 @@ install_gpu_drivers() {
       fi
 
       log_info "Radeon drivers and related packages installed successfully."
-      return 0 # Exit successfully after AMD installation
+      return 0
 
     fi
   done
