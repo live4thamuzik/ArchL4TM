@@ -46,7 +46,7 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-set_timezone
+set_timezone $ACTUAL_TIME
 if [[ $? -ne 0 ]]; then
     log_error "Exiting due to timezone setting error."
     exit 1
