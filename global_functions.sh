@@ -14,17 +14,17 @@ log() {
     local message=$2
     local timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 
-    # Set the color based on the log level (for console output)
+    # Set the color using tput
     case "$level" in
-        DEBUG) color="\e[34m";;  # Blue for debug
-        INFO) color="\e[33m";;   # Yellow for info
-        WARN) color="\e[33m";;   # Yellow for warn
-        ERROR) color="\e[31m";;  # Red for error
-        *) color="\e[0m";;      # White (reset) for everything else
+        DEBUG) color=$(tput setaf 4);;  # Blue for debug
+        INFO) color=$(tput setaf 3);;   # Yellow for info
+        WARN) color=$(tput setaf 3);;   # Yellow for warn
+        ERROR) color=$(tput setaf 1);;  # Red for error
+        *) color=$(tput sgr0);;      # Reset color
     esac
 
-    # Format the message with timestamp, log level, and color (for console)
-    formatted_message="[${timestamp}] [${color}${level}\e[0m] ${message}"
+    # Format the message with timestamp and color
+    formatted_message="[${timestamp}] [${color}${level}${tput sgr0}] ${message}"
 
     # Print the message to the console
     echo "${formatted_message}"
