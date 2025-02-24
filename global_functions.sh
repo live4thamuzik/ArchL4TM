@@ -262,6 +262,7 @@ set_timezone() {
         log_error "Timezone not provided. Using default (UTC)."
         timedatectl set-timezone UTC
     else
+        log_info "Setting timezone to $ACTUAL_TIMEZONE"
         timedatectl set-timezone "$ACTUAL_TIMEZONE"
     fi
 }
