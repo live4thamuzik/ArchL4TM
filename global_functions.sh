@@ -123,7 +123,7 @@ get_user_password() {
         fi
 
         export USER_PASSWORD="$USER_PASSWORD1"
-        log_output "Password set for $USERNAME successfully."
+        log_info "Password set for $USERNAME successfully."
         break
     done
 }
@@ -142,7 +142,7 @@ get_root_password() {
         fi
 
         export ROOT_PASSWORD="$ROOT_PASSWORD1"
-        log_output "Root password set successfully."
+        log_info "Root password set successfully."
         break
     done
 }
@@ -157,7 +157,7 @@ get_hostname() {
         fi
 
         export HOSTNAME="$hostname"
-        log_output "Hostname set to: $HOSTNAME"
+        log_info "Hostname set to: $HOSTNAME"
         break
     done
 }
@@ -165,7 +165,7 @@ get_hostname() {
 # --- Ask which disk to use ---
 get_disk() {
     # List Disks
-    log_output "Available disks:"
+    log_info "Available disks:"
     fdisk -l | grep "Disk /"  # Only list whole disks
 
     while true; do
@@ -178,7 +178,7 @@ get_disk() {
         # Confirm Disk Selection using confirm_action from functions.sh
         if confirm_action "You have selected $disk. Is this correct?"; then
             export DISK="$disk"
-            log_output "Disk set to: $DISK"
+            log_info "Disk set to: $DISK"
             break
         fi
     done
@@ -195,8 +195,8 @@ get_partition_sizes() {
            [[ "$boot_size" =~ ^[0-9]+(G|M|K)$ ]]; then
             export EFI_SIZE="$efi_size"
             export BOOT_SIZE="$boot_size"
-            log_output "EFI partition size: $EFI_SIZE"
-            log_output "Boot partition size: $BOOT_SIZE"
+            log_info "EFI partition size: $EFI_SIZE"
+            log_info "Boot partition size: $BOOT_SIZE"
             break
         else
             log_error "Invalid partition size(s). Please use a format like 512M or 1G." 1
@@ -218,20 +218,20 @@ get_encryption_password() {
         fi
 
         export ENCRYPTION_PASSWORD="$password"
-        log_output "Encryption password set."  # Avoid logging the password itself
+        log_info "Encryption password set."  # Avoid logging the password itself
         break
     done
 }
 
 # --- Autodetect and set timezone ---
 detect_and_set_timezone() {
-  log_output "Detecting timezone..."
+  log_info "Detecting timezone..."
 
   # Use timedatectl to detect the timezone
   detected_timezone=$(timedatectl timesync-status | grep "Timezone:" | awk '{print $2}')
 
   if [[ -n "$detected_timezone" ]]; then
-    log_output "Detected timezone: $detected_timezone"
+    log_info "Detected timezone: $detected_timezone"
 
     # Set the timezone using timedatectl
     if ! timedatectl set-timezone "$detected_timezone"; then
@@ -239,7 +239,7 @@ detect_and_set_timezone() {
       return 1
     fi
 
-    log_output "Timezone set successfully."
+    log_info "Timezone set successfully."
     return 0
   else
     log_warn "Unable to detect timezone automatically."
@@ -249,26 +249,26 @@ detect_and_set_timezone() {
 
 # --- Ask for desired server/desktop ---
 select_gui() {
-    log_output "Selecting GUI..."
+    log_info "Selecting GUI..."
 
     options=("Server (No GUI)" "Hyprland" "GNOME" "KDE Plasma")
     select gui_choice in "${options[@]}"; do  # "in" moved outside parentheses
         case "$gui_choice" in
             "Hyprland")
                 export GUI_CHOICE="hyprland"
-                log_output "Hyprland selected."
+                log_info "Hyprland selected."
                 ;;
             "GNOME")
                 export GUI_CHOICE="gnome"
-                log_output "GNOME selected."
+                log_info "GNOME selected."
                 ;;
             "KDE Plasma")
                 export GUI_CHOICE="kde"
-                log_output "KDE Plasma selected."
+                log_info "KDE Plasma selected."
                 ;;
             *)
                 export GUI_CHOICE="none"
-                log_output "No GUI selected."
+                log_info "No GUI selected."
                 ;;
         esac
         break
@@ -277,11 +277,11 @@ select_gui() {
 
 # --- Ask for desired GRUB theme ---
 get_grub_theme() {
-  log_output "Selecting GRUB Theme..."
+  log_info "Selecting GRUB Theme..."
 
   # Ask the user if they want to install a GRUB Theme
   if ! confirm_action "Do you want to install a GRUB Theme?"; then
-    log_output "Skipping GRUB Theme installation."
+    log_info "Skipping GRUB Theme installation."
     export GRUB_THEME="none" 
     return 0
   fi
@@ -293,31 +293,31 @@ get_grub_theme() {
       case "$grub_theme" in
         poly-dark)
           export GRUB_THEME="poly-dark" 
-          log_output "poly-dark selected."
+          log_info "poly-dark selected."
           break 
           ;;
         CyberEXS)
           export GRUB_THEME="CyberEXS" 
-          log_output "CyberEXS selected."
+          log_info "CyberEXS selected."
           break 
           ;;
         Cyberpunk)
           export GRUB_THEME="Cyberpunk"
-          log_output "Cyberpunk selected."
+          log_info "Cyberpunk selected."
           break 
           ;;
         HyperFluent)
           export GRUB_THEME="HyperFluent" 
-          log_output "HyperFluent selected."
+          log_info "HyperFluent selected."
           break 
           ;;
         none)
           export GRUB_THEME="none" 
-          log_output "No GRUB Theme selected."
+          log_info "No GRUB Theme selected."
           break 
           ;;
         *)
-          log_output "Invalid option. Please select a valid theme." 
+          log_info "Invalid option. Please select a valid theme." 
           ;; 
       esac
     done
@@ -327,11 +327,11 @@ get_grub_theme() {
 
 # --- Ask for desired AUR helper ---
 get_aur_helper() {
-    log_output "Selecting AUR helper..."
+    log_info "Selecting AUR helper..."
 
     # Ask the user if they want to install an AUR helper
     if ! confirm_action "Do you want to install an AUR helper?"; then
-        log_output "Skipping AUR helper installation."
+        log_info "Skipping AUR helper installation."
         export AUR_HELPER="none"
         return 0
     fi
@@ -342,18 +342,18 @@ get_aur_helper() {
         case "$aur_helper" in
             paru)
                 export AUR_HELPER="paru"
-                log_output "paru selected."
+                log_info "paru selected."
                 ;;
             yay)
                 export AUR_HELPER="yay"
-                log_output "yay selected."
+                log_info "yay selected."
                 ;;
             none)
                 export AUR_HELPER="none"
-                log_output "No AUR helper selected."
+                log_info "No AUR helper selected."
                 ;;
             *)
-            log_output "Invalid option. Skipping AUR helper installation."
+            log_info "Invalid option. Skipping AUR helper installation."
             export AUR_HELPER="none"
             exit 1  # Exit the script if the option is invalid
             ;;
@@ -368,7 +368,7 @@ partition_disk() {
     local efi_size="$2"
     local boot_size="$3"
 
-    log_output "Partitioning disk: $disk"
+    log_info "Partitioning disk: $disk"
 
     # Create new GPT partition table
     if ! sgdisk --zap-all "$disk"; then
@@ -405,7 +405,7 @@ setup_lvm() {
     local disk="$1"
     local password="$2"  # Pass the encryption password as an argument
 
-    log_output "Setting up LVM on disk: $disk"
+    log_info "Setting up LVM on disk: $disk"
 
     # Format EFI partition
       if [[ $disk =~ nvme ]]; then
@@ -475,7 +475,7 @@ setup_lvm() {
     get_lv_sizes() {
         read -r -p "Enter root logical volume size (e.g., 50G, 100G): " root_lv_size
         export ROOT_LV_SIZE="$root_lv_size"
-        log_output "Root logical volume size: $ROOT_LV_SIZE"
+        log_info "Root logical volume size: $ROOT_LV_SIZE"
     }
 
     get_lv_sizes
@@ -578,7 +578,7 @@ install_prerequisites() {
     # Installing prerequisite pkgs #
     #------------------------------#
     "
-    log_output "Installing prerequisite packages..."
+    log_info "Installing prerequisite packages..."
     if ! pacman -Sy --noconfirm --needed pacman-contrib reflector rsync; then
         log_error "Failed to install prerequisite packages" $?
         exit 1
@@ -592,7 +592,7 @@ configure_mirrors() {
     # Updating mirrorlist #
     #---------------------#
     "
-    log_output "Configuring pacman mirrors for faster downloads..."
+    log_info "Configuring pacman mirrors for faster downloads..."
     if ! cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup || \
        ! reflector -a 48 -f 5 -l 20 --sort rate --save /etc/pacman.d/mirrorlist; then
         log_error "Failed to configure pacman mirrors" $?
@@ -607,7 +607,7 @@ install_base_packages() {
     # Running pacstrap #
     #------------------#
     "
-    log_output "Installing base packages using pacstrap..."
+    log_info "Installing base packages using pacstrap..."
     if ! pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed; then
         log_error "Failed to install base packages" $?
         exit 1
@@ -621,7 +621,7 @@ configure_pacman() {
     # Configuring Pacman #
     #--------------------#
     "
-    log_output "Configuring pacman..."
+    log_info "Configuring pacman..."
 
     if ! sed -i "/^#Color/c\Color\nILoveCandy" /etc/pacman.conf || \
        ! sed -i "/^#VerbosePkgLists/c\VerbosePkgLists" /etc/pacman.conf || \
@@ -639,16 +639,16 @@ install_microcode() {
     # Installing microcode #
     #----------------------#
     "
-    log_output "Installing microcode..."
+    log_info "Installing microcode..."
     proc_type=$(lscpu | grep -oP '^Vendor ID:\s+\K\w+')
     if [ "$proc_type" = "GenuineIntel" ]; then
-        log_output "Installing Intel microcode"
+        log_info "Installing Intel microcode"
         if ! pacman -Sy --noconfirm --needed intel-ucode; then
             log_error "Failed to install Intel microcode" $?
             exit 1
         fi
     elif [ "$proc_type" = "AuthenticAMD" ]; then
-        log_output "Installing AMD microcode"
+        log_info "Installing AMD microcode"
         if ! pacman -Sy --noconfirm --needed amd-ucode; then
             log_error "Failed to install AMD microcode" $?
             exit 1
@@ -663,7 +663,7 @@ install_additional_packages() {
     # Installing additional pkgs #
     #----------------------------#
     "
-    log_output "Installing additional packages..."
+    log_info "Installing additional packages..."
     if ! pacman -S --noconfirm --needed - < ./pkgs.lst; then
         log_error "Failed to install additional packages" $?
         exit 1
@@ -677,7 +677,7 @@ enable_services() {
     # Enabling Services #
     #-------------------#
     "
-    log_output "Enabling services..."
+    log_info "Enabling services..."
     if ! systemctl enable NetworkManager.service || \
        ! systemctl enable ntpd.service || \
        ! systemctl enable fstrim.timer; then
@@ -693,7 +693,7 @@ set_locale() {
     # Setting Locale #
     #----------------#
     "
-    log_output "Setting locale..."
+    log_info "Setting locale..."
     if ! sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen || \
        ! locale-gen || \
        ! echo 'LANG=en_US.UTF-8' > /etc/locale.conf; then 
@@ -709,7 +709,7 @@ update_initramfs() {
     # Updating Initramfs #
     #--------------------#
     "
-    log_output "Updating initramfs..."
+    log_info "Updating initramfs..."
     if ! sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev plymouth autodetect modconf block encrypt lvm2 filesystems keyboard fsck)/' /etc/mkinitcpio.conf || \
        ! mkinitcpio -p linux; then
         log_error "Failed to update initramfs" $?
@@ -725,7 +725,7 @@ create_user() {
     #---------------#
     "
     local username="$1"
-    log_output "Creating user: $username"
+    log_info "Creating user: $username"
     if ! useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$username"; then
         log_error "Failed to create user" $?
         exit 1
@@ -739,7 +739,7 @@ set_passwords() {
     # Setting Passwords #
     #-------------------#
     "
-    log_output "Setting passwords..."
+    log_info "Setting passwords..."
     if ! echo "$USERNAME:$USER_PASSWORD" | chpasswd || \
        ! echo "root:$ROOT_PASSWORD" | chpasswd; then
         log_error "Failed to set passwords" $?
@@ -755,7 +755,7 @@ set_hostname() {
     #------------------#
     "
     local hostname="$1"
-    log_output "Setting hostname: $hostname"
+    log_info "Setting hostname: $hostname"
     if ! echo "$hostname" > /etc/hostname; then 
         log_error "Failed to set hostname" $?
         exit 1
@@ -769,7 +769,7 @@ update_sudoers() {
     # Updating sudoers #
     #------------------#
     "
-    log_output "Updating sudoers..."
+    log_info "Updating sudoers..."
     if ! cp /etc/sudoers /etc/sudoers.backup || \
        ! sed -i 's/^# *%wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers || \
        ! echo 'Defaults targetpw' >> /etc/sudoers || \
@@ -788,7 +788,7 @@ install_grub() {
   # Installing GRUB #
   #-----------------#
   "
-  log_output "Installing GRUB..."
+  log_info "Installing GRUB..."
   if ! grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck; then
     log_error "Failed to install GRUB" $?
     exit 1
@@ -802,7 +802,7 @@ install_grub_themes() {
   # Installing GRUB Theme #
   #-----------------------#
   "
-  log_output "Installing GRUB themes..."
+  log_info "Installing GRUB themes..."
 
   mkdir -p grub-themes
 
@@ -847,7 +847,7 @@ configure_grub() {
   # Configuring GRUB #
   #------------------#
   "
-  log_output "Configuring GRUB..."
+  log_info "Configuring GRUB..."
 
   # Make sure DISK is exported and available in the environment
   if [[ $DISK == "/dev/nvme"* ]]; then
@@ -885,13 +885,13 @@ install_gpu_drivers() {
   # Detect/Install GPU Drivers#
   #---------------------------#
   "
-  log_output "Detecting GPUs..."
+  log_info "Detecting GPUs..."
 
   # Detect GPUs (both NVIDIA and AMD)
   readarray -t gpus < <(lspci -k | grep -E "(VGA|3D)")
 
   if [[ ${#gpus[@]} -eq 0 ]]; then
-    log_output "No GPUs detected. Skipping driver installation."
+    log_info "No GPUs detected. Skipping driver installation."
     return 0 # Exit successfully if no GPU is found
   fi
 
@@ -899,23 +899,23 @@ install_gpu_drivers() {
     vendor=$(echo "$gpu" | grep -oE "(NVIDIA|AMD|Radeon|Vulkan)" | head -n 1)  # Extract vendor, including "Radeon" and "Vulkan"
 
     if [[ "$vendor" == "NVIDIA" ]]; then
-      log_output "NVIDIA GPU detected:"
-      log_output "$gpu"
+      log_info "NVIDIA GPU detected:"
+      log_info "$gpu"
 
-      log_output "Installing NVIDIA drivers..."
+      log_info "Installing NVIDIA drivers..."
       if ! pacman -S --noconfirm --needed nvidia libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings; then
         log_error "Failed to install NVIDIA packages" $?
         return 1 # Indicate failure
       fi
 
-      log_output "Updating initramfs..."
+      log_info "Updating initramfs..."
       if ! sed -i '/^MODULES=()/c\MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)' /etc/mkinitcpio.conf || \
        ! mkinitcpio -p linux; then
         log_error "Failed to update initramfs with NVIDIA modules" $?
         return 1 # Indicate failure
       fi
 
-      log_output "Updating GRUB configuration..."
+      log_info "Updating GRUB configuration..."
 
       # Make sure DISK is exported and available in the environment
       if [[ $DISK == "/dev/nvme"* ]]; then
@@ -939,14 +939,14 @@ install_gpu_drivers() {
         return 1 # Indicate failure
       fi
 
-      log_output "NVIDIA drivers installed and configured successfully."
+      log_info "NVIDIA drivers installed and configured successfully."
       return 0 # Exit successfully after NVIDIA installation
 
     elif [[ "$vendor" == "AMD" || "$vendor" == "Radeon" || "$vendor" == "Vulkan" ]]; then  # Check for all possible AMD identifiers
-      log_output "AMD Radeon GPU detected:"
-      log_output "$gpu"
+      log_info "AMD Radeon GPU detected:"
+      log_info "$gpu"
 
-      log_output "Installing Radeon drivers and related packages..."
+      log_info "Installing Radeon drivers and related packages..."
       if ! pacman -S --noconfirm --needed mesa mesa-utils amdgpu amdgpu-firmware vulkan-radeon xf86-video-amdgpu lib32-mesa lib32-vulkan-radeon; then
         log_error "Failed to install Radeon packages" $?
         return 1 # Indicate failure
@@ -957,7 +957,7 @@ install_gpu_drivers() {
         log_warn "amdgpu kernel module not loaded. Reboot may be required."
       fi
 
-      log_output "Radeon drivers and related packages installed successfully."
+      log_info "Radeon drivers and related packages installed successfully."
       return 0 # Exit successfully after AMD installation
 
     fi
@@ -1005,10 +1005,10 @@ install_gui() {
         # Remove the temporary sudoers entry
         sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
 
-        log_output "HyDE installation complete!"
+        log_info "HyDE installation complete!"
 
     elif [[ "$GUI_CHOICE" == "gnome" ]]; then
-        log_output "Installing GNOME desktop environment..."
+        log_info "Installing GNOME desktop environment..."
 
         if ! pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox; then
             log_error "Failed to install GNOME packages: $?"
@@ -1020,10 +1020,10 @@ install_gui() {
             exit 1
         fi
 
-        log_output "GNOME installed and gdm enabled."
+        log_info "GNOME installed and gdm enabled."
 
     elif [[ "$GUI_CHOICE" == "kde" ]]; then
-        log_output "Installing KDE Plasma desktop environment..."
+        log_info "Installing KDE Plasma desktop environment..."
 
         if ! pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance; then
             log_error "Failed to install KDE Plasma packages: $?"
@@ -1035,10 +1035,10 @@ install_gui() {
             exit 1
         fi
 
-        log_output "KDE Plasma installed and sddm enabled."
+        log_info "KDE Plasma installed and sddm enabled."
 
     else
-        log_output "No GUI selected. Skipping GUI installation."
+        log_info "No GUI selected. Skipping GUI installation."
     fi
 }
 
@@ -1049,7 +1049,7 @@ install_aur_helper() {
     # Installing AUR Helper #
     #-----------------------#
     "
-    log_output "Installing AUR helper..."
+    log_info "Installing AUR helper..."
 
      # Temporarily allow the user to run sudo without a password
      echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
@@ -1089,7 +1089,7 @@ install_aur_helper() {
     # Remove the temporary sudoers entry
     sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
 
-    log_output "AUR helper installed."
+    log_info "AUR helper installed."
 }
 
 install_aur_pkgs() {
@@ -1098,7 +1098,7 @@ install_aur_pkgs() {
     # Installing AUR Packages #
     #------------------------#
     "
-    log_output "Installing AUR packages..."
+    log_info "Installing AUR packages..."
 
     # Temporarily allow the user to run sudo without a password
     echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
@@ -1134,7 +1134,7 @@ numlock_auto_on() {
     # Updating Initramfs #
     #--------------------#
     "
-    log_output "Updating initramfs..."
+    log_info "Updating initramfs..."
     if ! sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev plymouth autodetect modconf numlock block encrypt lvm2 filesystems keyboard fsck)/' /etc/mkinitcpio.conf || \
        ! mkinitcpio -p linux; then
         log_error "Failed to update initramfs" $?
@@ -1144,7 +1144,7 @@ numlock_auto_on() {
 
 # --- Cleanup Function ---
 cleanup() {
-    log_output "Cleaning up..."
+    log_info "Cleaning up..."
 
     # Remove temporary files and directories created during the installation
     rm -rf /mnt/global_functions.sh
