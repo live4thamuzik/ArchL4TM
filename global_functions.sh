@@ -611,7 +611,7 @@ configure_mirrors() {
     "
     log_info "Configuring pacman mirrors for faster downloads..."
     if ! cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup || \
-       ! reflector --country US -a 72 -f 5 -l 20 --sort rate --save /etc/pacman.d/mirrorlist; then
+       ! reflector --country US -a 72 -f 10 -l 10 --sort rate --save /etc/pacman.d/mirrorlist; then
         log_error "Failed to configure pacman mirrors" $?
         exit 1
     fi
