@@ -24,7 +24,7 @@ log() {
     esac
 
     # Format the message with timestamp and color
-    formatted_message="[${timestamp}] [${color}${level}${tput sgr0}] ${message}"
+   formatted_message=$(printf "[%s] [%s%s%s] %s" "$timestamp" "$color" "$level" "$(tput sgr0)" "$message")
 
     # Print the message to the console
     echo "${formatted_message}"
