@@ -118,12 +118,12 @@ get_user_password() {
         echo
 
         if [[ "$USER_PASSWORD1" != "$USER_PASSWORD2" ]]; then
-            log_error "Passwords do not match."
+            log_error "Passwords do not match." 1
             continue
         fi
 
         export USER_PASSWORD="$USER_PASSWORD1"
-        log_info "Password set for $USERNAME successfully."
+        log_output "Password set for $USERNAME successfully."
         break
     done
 }
