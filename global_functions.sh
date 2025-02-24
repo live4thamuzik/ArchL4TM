@@ -820,7 +820,6 @@ install_grub() {
   fi
 }
 
-# --- Install selected GRUB theme ---
 install_grub_themes() {
   echo -ne "
   #-----------------------#
@@ -828,6 +827,12 @@ install_grub_themes() {
   #-----------------------#
   "
   log_info "Installing GRUB themes..."
+
+  # Check if a theme was selected before proceeding
+  if [[ "$GRUB_THEME" == "none" ]]; then
+    log_info "No GRUB theme selected. Skipping installation."
+    return 0  # Exit successfully
+  fi
 
   mkdir -p grub-themes
 
@@ -838,17 +843,17 @@ install_grub_themes() {
       sed -i 's|^#GRUB_THEME="/path/to/gfxtheme"|GRUB_THEME="/boot/grub/themes/poly-dark/theme.txt"|' /etc/default/grub
       ;;
     CyberEXS)
-      git clone https://github.com/HenriqueLopes42/themeGrub.CyberEXS.git ./grub-themes/themeGrub.CyberEXS 
+      git clone https://github.com/HenriqueLopes42/themeGrub.CyberEXS.git ./grub-themes/themeGrub.CyberEXS
       mv ./grub-themes/themeGrub.CyberEXS /boot/grub/themes/
       sed -i 's|^#GRUB_THEME="/path/to/gfxtheme"|GRUB_THEME="/boot/grub/themes/themeGrub.CyberEXS/theme.txt"|' /etc/default/grub
       ;;
     Cyberpunk)
-      git clone https://gitlab.com/anoopmsivadas/Cyberpunk-GRUB-Theme.git ./grub-themes/Cyberpunk-GRUB-Theme 
+      git clone https://gitlab.com/anoopmsivadas/Cyberpunk-GRUB-Theme.git ./grub-themes/Cyberpunk-GRUB-Theme
       mv ./grub-themes/Cyberpunk-GRUB-Theme /boot/grub/themes/
       sed -i 's|^#GRUB_THEME="/path/to/gfxtheme"|GRUB_THEME="/boot/grub/themes/Cyberpunk-GRUB-Theme/Cyberpunk/theme.txt"|' /etc/default/grub
       ;;
     HyperFluent)
-      git clone https://github.com/Coopydood/HyperFluent-GRUB-Theme.git ./grub-themes/HyperFluent-GRUB-Theme 
+      git clone https://github.com/Coopydood/HyperFluent-GRUB-Theme.git ./grub-themes/HyperFluent-GRUB-Theme
       mv ./grub-themes/HyperFluent-GRUB-Theme /boot/grub/themes/
       sed -i 's|^#GRUB_THEME="/path/to/gfxtheme"|GRUB_THEME="/boot/grub/themes/HyperFluent-GRUB-Theme/arch/theme.txt"|' /etc/default/grub
       ;;
@@ -859,9 +864,9 @@ install_grub_themes() {
   esac
 
   # Give user ownership of the themes directory
-  if ! chown -R $USERNAME:$USERNAME /boot/grub/themes; then 
+  if ! chown -R $USERNAME:$USERNAME /boot/grub/themes; then
     log_error "Failed to change ownership of GRUB themes directory"
-    exit 1  
+    exit 1
   fi
 }
 
