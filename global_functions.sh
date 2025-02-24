@@ -234,7 +234,7 @@ detect_and_set_timezone() {
     log_output "Detected timezone: $detected_timezone"
 
     # Set the timezone using timedatectl
-    if! timedatectl set-timezone "$detected_timezone"; then
+    if ! timedatectl set-timezone "$detected_timezone"; then
       log_error "Failed to set timezone" $?
       return 1
     fi
