@@ -53,6 +53,7 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
+# --- Update mkinitcpio.conf ---
 update_initramfs
 if [[ $? -ne 0 ]]; then
     log_error "Exiting due to initramfs update error."
