@@ -255,13 +255,12 @@ select_timezone() {
 }
 
 set_timezone() {
-  local timezone="$1"
-
-  if [[ -z "$timezone" ]]; then
+  # Use $ACTUAL_TIMEZONE directly
+  if [[ -z "$ACTUAL_TIMEZONE" ]]; then
     log_error "Timezone not provided. Using default (UTC)."
     timedatectl set-timezone UTC
   else
-    timedatectl set-timezone "$timezone"
+    timedatectl set-timezone "$ACTUAL_TIMEZONE"
   fi
 }
 
@@ -612,7 +611,7 @@ configure_mirrors() {
     "
     log_info "Configuring pacman mirrors for faster downloads..."
     if ! cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup || \
-       ! reflector -a 48 -f 5 -l 20 --sort rate --save /etc/pacman.d/mirrorlist; then
+       ! reflector --country US -a 72 -f 5 -l 20 --sort rate --save /etc/pacman.d/mirrorlist; then
         log_error "Failed to configure pacman mirrors" $?
         exit 1
     fi
