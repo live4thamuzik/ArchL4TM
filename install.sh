@@ -1,10 +1,16 @@
 #!/bin/bash
 
-# --- Source Functions ---
-source ./global_functions.sh
+# Define the log file path
+LOG_FILE="/var/log/arch_install.log"
 
-# --- Initialize Logging (Ensures everything logs to a single file) ---
-exec > >(tee -a "$LOG_FILE") 2> >(tee -a "${LOG_FILE}_error.log" >&2)
+# Create or clear the log file
+: > "$LOG_FILE"
+
+# Redirect all output to the log file
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+# Source global functions
+source ./global_functions.sh
 
 # Exit on any command failure
 set -e
