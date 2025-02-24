@@ -224,44 +224,46 @@ get_encryption_password() {
 }
 
 select_timezone() {
-  log_info "Please enter a partial or full timezone name (e.g., 'New_York', 'America'):"
-  read -r timezone_search
+    log_info "Please enter a partial or full timezone name (e.g., 'New_York', 'America'):"
+    read -r timezone_search
 
-  filtered_timezones=$(timedatectl list-timezones | grep -i "$timezone_search")
+    filtered_timezones=$(timedatectl list-timezones | grep -i "$timezone_search")
 
-  if [[ -z "$filtered_timezones" ]]; then
-    log_error "No timezones found matching '$timezone_search'. Using default (UTC)."
-    echo "UTC"
-  else
-    # Count the number of filtered timezones
-    num_timezones=$(echo "$filtered_timezones" | wc -l)
-
-    if [[ $num_timezones -eq 1 ]]; then
-      # If there's only one option, select it automatically
-      actual_timezone=$(echo "$filtered_timezones")
-      log_info "Automatically selected the only matching timezone: $actual_timezone"
-      echo "$actual_timezone"
-    else
-      # Otherwise, use `select` with scrolling using fzf
-      actual_timezone=$(echo "$filtered_timezones" | fzf --tac)  # Use fzf for scrolling
-      if [[ -n "$actual_timezone" ]]; then
-        echo "$actual_timezone"
-      else
-        log_error "No timezone selected. Using default (UTC)."
+    if [[ -z "$filtered_timezones" ]]; then
+        log_error "No timezones found matching '$timezone_search'. Using default (UTC)."
         echo "UTC"
-      fi
-    fi 
-  fi
+    else
+        # Count the number of filtered timezones
+        num_timezones=$(echo "$filtered_timezones" | wc -l)
+
+        if [[ $num_timezones -eq 1 ]]; then
+            # If there's only one option, select it automatically
+            ACTUAL_TIMEZONE=$(echo "$filtered_timezones")
+            log_info "Automatically selected the only matching timezone: $ACTUAL_TIMEZONE"
+            echo "$ACTUAL_TIMEZONE"
+            export ACTUAL_TIMEZONE=$ACTUAL_TIMEZONE
+        else
+            # Otherwise, use `select` with scrolling using fzf
+            ACTUAL_TIMEZONE=$(echo "$filtered_timezones" | fzf --tac)  # Use fzf for scrolling
+            if [[ -n "$ACTUAL_TIMEZONE" ]]; then
+                echo "$ACTUAL_TIMEZONE"
+                export ACTUAL_TIMEZONE=$ACTUAL_TIMEZONE
+            else
+                log_error "No timezone selected. Using default (UTC)."
+                echo "UTC"
+            fi
+        fi
+    fi
 }
 
 set_timezone() {
-  # Use $ACTUAL_TIMEZONE directly
-  if [[ -z "$ACTUAL_TIMEZONE" ]]; then
-    log_error "Timezone not provided. Using default (UTC)."
-    timedatectl set-timezone UTC
-  else
-    timedatectl set-timezone "$ACTUAL_TIMEZONE"
-  fi
+    # Use $ACTUAL_TIMEZONE directly
+    if [[ -z "$ACTUAL_TIMEZONE" ]]; then
+        log_error "Timezone not provided. Using default (UTC)."
+        timedatectl set-timezone UTC
+    else
+        timedatectl set-timezone "$ACTUAL_TIMEZONE"
+    fi
 }
 
 # --- Ask for desired server/desktop ---
