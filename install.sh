@@ -3,6 +3,9 @@
 # --- Source Functions ---
 source ./global_functions.sh
 
+# --- Initialize Logging (Ensures everything logs to a single file) ---
+exec > >(tee -a "$LOG_FILE") 2> >(tee -a "${LOG_FILE}_error.log" >&2)
+
 # Exit on any command failure
 set -e
 
