@@ -14,7 +14,7 @@ log() {
     local message=$2
     local timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 
-    # Set the color based on the log level
+    # Set the color based on the log level (for console output)
     case "$level" in
         DEBUG) color="\e[34m";;  # Blue for debug
         INFO) color="\e[33m";;   # Yellow for info
@@ -23,7 +23,7 @@ log() {
         *) color="\e[0m";;      # White (reset) for everything else
     esac
 
-    # Format the message with timestamp, log level, and color
+    # Format the message with timestamp, log level, and color (for console)
     formatted_message="[${timestamp}] [${color}${level}\e[0m] ${message}"
 
     # Print the message to the console
