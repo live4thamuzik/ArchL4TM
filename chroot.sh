@@ -104,7 +104,7 @@ fi
 install_gpu_drivers
 
 # --- Set plymouth splash screen ---
-mv./arch-glow /usr/share/plymouth/themes
+mv ./arch-glow /usr/share/plymouth/themes
 plymouth-set-default-theme -R arch-glow
 
 # --- AUR Installation ---
