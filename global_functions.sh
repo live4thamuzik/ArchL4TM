@@ -117,7 +117,7 @@ get_user_password() {
         read -rs -p "Confirm password: " USER_PASSWORD2
         echo
 
-        if [[ "$USER_PASSWORD1"!= "$USER_PASSWORD2" ]]; then
+        if [[ "$USER_PASSWORD1" != "$USER_PASSWORD2" ]]; then
             log_error "Passwords do not match."
             continue
         fi
