@@ -223,34 +223,35 @@ get_encryption_password() {
     done
 }
 
-set_timezone() {
-  log_info "Setting timezone interactively..."
+select_timezone() {
+  log_info "Please enter a partial or full timezone name (e.g., 'New_York', 'America'):"
+  read -r timezone_search
 
-  # Check if stdin is NOT a terminal (non-interactive)
-  if [[ ! -t 0 ]]; then
-    log_error "This script requires interactive mode for timezone selection."
-    return 1  # Indicate failure
-  fi
+  filtered_timezones=$(timedatectl list-timezones | grep -i "$timezone_search")
 
-  log_info "Please select your timezone interactively."
-  tzselect
-
-  selected_timezone=$(readlink /etc/localtime)
-  actual_timezone="${selected_timezone#/usr/share/zoneinfo/}"
-
-  if [[ -n "$actual_timezone" ]]; then
-    log_info "Selected timezone: $actual_timezone"
-
-    if ! timedatectl set-timezone "$actual_timezone"; then
-      log_error "Failed to set timezone" $?
-      return 1
-    fi
-
-    log_info "Timezone set successfully."
-    return 0
+  if [[ -z "$filtered_timezones" ]]; then
+    log_error "No timezones found matching '$timezone_search'. Using default (UTC)."
+    echo "UTC"  # Return UTC as the default
   else
-    log_error "Failed to determine selected timezone."
-    return 1
+    select actual_timezone in $filtered_timezones; do
+      if [[ -n "$actual_timezone" ]]; then
+        echo "$actual_timezone"  # Return the selected timezone
+        break
+      else
+        log_error "Invalid selection. Please try again."
+      fi
+    done
+  fi
+}
+
+sset_timezone() {
+  local timezone="$1"
+
+  if [[ -z "$timezone" ]]; then
+    log_error "Timezone not provided. Using default (UTC)."
+    timedatectl set-timezone UTC
+  else
+    timedatectl set-timezone "$timezone"
   fi
 }
 
