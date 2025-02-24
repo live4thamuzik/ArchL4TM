@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the log file path
-LOG_FILE="/var/log/arch_install.log"
+LOG_FILE="/var/log/archl4tm.log"
 
 # Create or clear the log file
 : > "$LOG_FILE"
@@ -104,7 +104,7 @@ cp -r ./global_functions.sh ./chroot.sh ./pkgs.lst ./aur_pkgs.lst ./hypr.sh ./So
 chmod +x /mnt/*.sh
 
 # --- Chroot Setup ---
-arch-chroot /mnt /bin/bash -c "./chroot.sh"
+arch-chroot /mnt /bin/bash -c "LOG_FILE=$LOG_FILE /mnt/chroot.sh"
 
 # --- Cleanup ---
 cleanup
