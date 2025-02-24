@@ -6,7 +6,7 @@
 source ./global_functions.sh
 
 # Check if LOG_FILE is set; if not, set a default
-LOG_FILE="${LOG_FILE:-/var/log/arch_install.log}"
+LOG_FILE="${LOG_FILE:-/var/log/archl4tm.log}"
 
 # Redirect all output to the log file
 exec > >(tee -a "$LOG_FILE") 2>&1
