@@ -6,9 +6,6 @@ source ./global_functions.sh
 # Exit on any command failure
 set -e
 
-# Log all output to separate log files with timestamps
-exec > >(tee -a /var/log/arch_install.log) 2> >(tee -a /var/log/arch_install_error.log >&2)
-
 # --- Welcome Message ---
 log_info "
 +--------------------------------+
