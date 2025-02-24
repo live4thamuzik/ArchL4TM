@@ -39,6 +39,7 @@ get_username
 get_user_password
 get_root_password
 get_hostname
+select_timezone
 get_disk
 get_partition_sizes
 get_encryption_password
@@ -47,10 +48,12 @@ get_grub_theme
 get_aur_helper
 
 # --- Export Variables --- 
-export HOSTNAME
 export USERNAME
 export USER_PASSWORD
 export ROOT_PASSWORD
+export HOSTNAME
+ACTUAL_TIMEZONE=$(select_timezone)
+export ACTUAL_TIME
 export GUI_CHOICE
 export GRUB_THEME
 export AUR_HELPER 
