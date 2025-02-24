@@ -136,13 +136,13 @@ get_root_password() {
         read -rs -p "Confirm root password: " ROOT_PASSWORD2
         echo
 
-        if [[ "$ROOT_PASSWORD1"!= "$ROOT_PASSWORD2" ]]; then
-            log_error "Passwords do not match."
+        if [[ "$ROOT_PASSWORD1" != "$ROOT_PASSWORD2" ]]; then
+            log_error "Passwords do not match." 1
             continue
         fi
 
         export ROOT_PASSWORD="$ROOT_PASSWORD1"
-        log_info "Root password set successfully."
+        log_output "Root password set successfully."
         break
     done
 }
@@ -157,7 +157,7 @@ get_hostname() {
         fi
 
         export HOSTNAME="$hostname"
-        log_info "Hostname set to: $HOSTNAME"
+        log_output "Hostname set to: $HOSTNAME"
         break
     done
 }
