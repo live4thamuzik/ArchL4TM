@@ -5,7 +5,8 @@
 # --- Logging Functions ---
 
 # Create a log file
-LOG_FILE="archl4tm.log"
+LOG_FILE="/var/log/archl4tm.log"
+exec > >(tee -a "$LOG_FILE") 2> >(tee -a "${LOG_FILE}_error.log" >&2)
 touch "$LOG_FILE"
 
 log() {
