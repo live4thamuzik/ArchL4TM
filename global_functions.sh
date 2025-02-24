@@ -20,7 +20,7 @@ log() {
         WARN) color="\e[33m";;   # Yellow for warn
         ERROR) color="\e[31m";;  # Red for error
         *) color="\e[0m";;      # White (reset) for everything else
-    done
+    esac
 
     # Format the message with timestamp, log level, and color
     formatted_message="[${timestamp}] [${color}${level}\e[0m] ${message}"
@@ -98,7 +98,7 @@ get_username() {
     while true; do
         read -r -p "Enter a username: " username
 
-        if! validate_username "$username"; then
+        if ! validate_username "$username"; then
             continue
         fi
 
@@ -151,7 +151,7 @@ get_hostname() {
     while true; do
         read -r -p "Enter a hostname: " hostname
 
-        if! validate_hostname "$hostname"; then
+        if ! validate_hostname "$hostname"; then
             continue
         fi
 
@@ -170,7 +170,7 @@ get_disk() {
     while true; do
         read -r -p "Enter the disk to use (e.g. /dev/nvme0n1, /dev/sda): " disk
 
-        if! validate_disk "$disk"; then
+        if ! validate_disk "$disk"; then
             continue
         fi
 
@@ -233,7 +233,7 @@ detect_and_set_timezone() {
         log_info "Detected timezone: $detected_timezone"
 
         # Set the timezone using timedatectl
-        if! timedatectl set-timezone "$detected_timezone"; then
+        if ! timedatectl set-timezone "$detected_timezone"; then
             log_error "Failed to set timezone: timedatectl set-timezone $detected_timezone failed with exit code $?"
             return 1
         fi
@@ -279,7 +279,7 @@ get_grub_theme() {
     log_info "Selecting GRUB Theme..."
 
     # Ask the user if they want to install a GRUB Theme
-    if! confirm_action "Do you want to install a GRUB Theme?"; then
+    if ! confirm_action "Do you want to install a GRUB Theme?"; then
         log_info "Skipping GRUB Theme installation."
         export GRUB_THEME="none"
         return 0
@@ -329,7 +329,7 @@ get_aur_helper() {
     log_info "Selecting AUR helper..."
 
     # Ask the user if they want to install an AUR helper
-    if! confirm_action "Do you want to install an AUR helper?"; then
+    if ! confirm_action "Do you want to install an AUR helper?"; then
         log_info "Skipping AUR helper installation."
         export AUR_HELPER="none"
         return 0
@@ -370,25 +370,25 @@ partition_disk() {
     log_info "Partitioning disk: $disk"
 
     # Create new GPT partition table
-    if! sgdisk --zap-all "$disk"; then
+    if ! sgdisk --zap-all "$disk"; then
         log_error "Failed to clear disk: sgdisk --zap-all $disk failed with exit code $?"
         exit 1
     fi
 
     # Create EFI partition
-    if! sgdisk -n 1:0:+"$efi_size" -t 1:EF00 "$disk"; then
+    if ! sgdisk -n 1:0:+"$efi_size" -t 1:EF00 "$disk"; then
         log_error "Failed to create EFI partition: sgdisk -n 1:0:+$efi_size -t 1:EF00 $disk failed with exit code $?"
         exit 1
     fi
 
     # Create boot partition
-    if! sgdisk -n 2:0:+"$boot_size" -t 2:8300 "$disk"; then
+    if ! sgdisk -n 2:0:+"$boot_size" -t 2:8300 "$disk"; then
         log_error "Failed to create boot partition: sgdisk -n 2:0:+$boot_size -t 2:8300 $disk failed with exit code $?"
         exit 1
     fi
 
     # Create LVM partition (using remaining space)
-    if! sgdisk -n 3:0:0 -t 3:8E00 "$disk"; then
+    if ! sgdisk -n 3:0:0 -t 3:8E00 "$disk"; then
         log_error "Failed to create LVM partition: sgdisk -n 3:0:0 -t 3:8E00 $disk failed with exit code $?"
         exit 1
     fi
@@ -408,12 +408,12 @@ setup_lvm() {
 
     # Format EFI partition
     if [[ $disk =~ nvme ]]; then
-        if! mkfs.fat -F32 "${disk}p1"; then
+        if ! mkfs.fat -F32 "${disk}p1"; then
             log_error "Failed to format EFI partition: mkfs.fat -F32 ${disk}p1 failed with exit code $?"
             exit 1
         fi
     else
-        if! mkfs.fat -F32 "${disk}1"; then
+        if ! mkfs.fat -F32 "${disk}1"; then
             log_error "Failed to format EFI partition: mkfs.fat -F32 ${disk}1 failed with exit code $?"
             exit 1
         fi
@@ -421,12 +421,12 @@ setup_lvm() {
 
     # Format boot partition
     if [[ $disk =~ nvme ]]; then
-        if! mkfs.ext4 "${disk}p2"; then
+        if ! mkfs.ext4 "${disk}p2"; then
             log_error "Failed to format boot partition: mkfs.ext4 ${disk}p2 failed with exit code $?"
             exit 1
         fi
     else
-        if! mkfs.ext4 "${disk}2"; then
+        if ! mkfs.ext4 "${disk}2"; then
             log_error "Failed to format boot partition: mkfs.ext4 ${disk}2 failed with exit code $?"
             exit 1
         fi
@@ -434,37 +434,37 @@ setup_lvm() {
 
     # Setup encryption on partition 3 using LUKS
     if [[ $disk =~ nvme ]]; then
-        if! echo "$password" | cryptsetup luksFormat "${disk}p3"; then
+        if ! echo "$password" | cryptsetup luksFormat "${disk}p3"; then
             log_error "Failed to format LUKS partition: cryptsetup luksFormat ${disk}p3 failed with exit code $?"
             exit 1
         fi
 
         # Open LUKS partition
-        if! echo "$password" | cryptsetup open --type luks --batch-mode "${disk}p3" lvm; then
+        if ! echo "$password" | cryptsetup open --type luks --batch-mode "${disk}p3" lvm; then
             log_error "Failed to open LUKS partition: cryptsetup open --type luks --batch-mode ${disk}p3 lvm failed with exit code $?"
             exit 1
         fi
     else
-        if! echo "$password" | cryptsetup luksFormat "${disk}3"; then
+        if ! echo "$password" | cryptsetup luksFormat "${disk}3"; then
             log_error "Failed to format LUKS partition: cryptsetup luksFormat ${disk}3 failed with exit code $?"
             exit 1
         fi
 
         # Open LUKS partition
-        if! echo "$password" | cryptsetup open --type luks --batch-mode "${disk}3" lvm; then
+        if ! echo "$password" | cryptsetup open --type luks --batch-mode "${disk}3" lvm; then
             log_error "Failed to open LUKS partition: cryptsetup open --type luks --batch-mode ${disk}3 lvm failed with exit code $?"
             exit 1
         fi
     fi
 
     # Create physical volume for LVM on partition 3 with data alignment 1m
-    if! pvcreate /dev/mapper/lvm; then
+    if ! pvcreate /dev/mapper/lvm; then
         log_error "Failed to create physical volume: pvcreate /dev/mapper/lvm failed with exit code $?"
         exit 1
     fi
 
     # Create volume group called volgroup0 on partition 3
-    if! vgcreate volgroup0 /dev/mapper/lvm; then
+    if ! vgcreate volgroup0 /dev/mapper/lvm; then
         log_error "Failed to create volume group: vgcreate volgroup0 /dev/mapper/lvm failed with exit code $?"
         exit 1
     fi
@@ -479,7 +479,7 @@ setup_lvm() {
     get_lv_sizes
 
     # Create logical volumes (lv_home will use remaining space)
-    if! lvcreate -L "$ROOT_LV_SIZE" volgroup0 -n lv_root || \
+    if ! lvcreate -L "$ROOT_LV_SIZE" volgroup0 -n lv_root || \
      ! lvcreate -l 100%FREE volgroup0 -n lv_home; then
         log_error "Failed to create logical volumes: lvcreate commands failed with exit code $?"
         exit 1
@@ -492,78 +492,78 @@ setup_lvm() {
     vgscan
 
     # Activate volume group
-    if! vgchange -ay; then
+    if ! vgchange -ay; then
         log_error "Failed to activate volume group: vgchange -ay failed with exit code $?"
         exit 1
     fi
 
     # Format and mount root volume
-    if! mkfs.ext4 /dev/volgroup0/lv_root; then
+    if ! mkfs.ext4 /dev/volgroup0/lv_root; then
         log_error "Failed to format root volume: mkfs.ext4 /dev/volgroup0/lv_root failed with exit code $?"
         exit 1
     fi
 
-    if! mount /dev/volgroup0/lv_root /mnt; then
+    if ! mount /dev/volgroup0/lv_root /mnt; then
         log_error "Failed to mount root volume: mount /dev/volgroup0/lv_root /mnt failed with exit code $?"
         exit 1
     fi
 
     # Create /boot directory and mount partition 2
-    if! mkdir -p /mnt/boot; then
+    if ! mkdir -p /mnt/boot; then
         log_error "Failed to create /boot directory: mkdir -p /mnt/boot failed with exit code $?"
         exit 1
     fi
 
     if [[ $disk =~ nvme ]]; then
-        if! mount "${disk}p2" /mnt/boot; then
+        if ! mount "${disk}p2" /mnt/boot; then
             log_error "Failed to mount /boot: mount ${disk}p2 /mnt/boot failed with exit code $?"
             exit 1
         fi
     else
-        if! mount "${disk}2" /mnt/boot; then
+        if ! mount "${disk}2" /mnt/boot; then
             log_error "Failed to mount /boot: mount ${disk}2 /mnt/boot failed with exit code $?"
             exit 1
         fi
     fi
 
     # Create /boot/EFI directory and mount partition 1
-    if! mkdir -p /mnt/boot/EFI; then
+    if ! mkdir -p /mnt/boot/EFI; then
         log_error "Failed to create /boot/EFI directory: mkdir -p /mnt/boot/EFI failed with exit code $?"
         exit 1
     fi
 
     if [[ $disk =~ nvme ]]; then
-        if! mount "${disk}p1" /mnt/boot/EFI; then
+        if ! mount "${disk}p1" /mnt/boot/EFI; then
             log_error "Failed to mount /boot/EFI: mount ${disk}p1 /mnt/boot/EFI failed with exit code $?"
             exit 1
         fi
     else
-        if! mount "${disk}1" /mnt/boot/EFI; then
+        if ! mount "${disk}1" /mnt/boot/EFI; then
             log_error "Failed to mount /boot/EFI: mount ${disk}1 /mnt/boot/EFI failed with exit code $?"
             exit 1
         fi
     fi
 
     # Format home volume
-    if! mkfs.ext4 /dev/volgroup0/lv_home; then
+    if ! mkfs.ext4 /dev/volgroup0/lv_home; then
         log_error "Failed to format home volume: mkfs.ext4 /dev/volgroup0/lv_home failed with exit code $?"
         exit 1
     fi
 
     # Create /home directory
-    if! mkdir -p /mnt/home; then
+    if ! mkdir -p /mnt/home; then
         log_error "Failed to create /home directory: mkdir -p /mnt/home failed with exit code $?"
         exit 1
     fi
 
     # Mount home volume
-    if! mount /dev/volgroup0/lv_home /mnt/home; then
+    if ! mount /dev/volgroup0/lv_home /mnt/home; then
         log_error "Failed to mount /home: mount /dev/volgroup0/lv_home /mnt/home failed with exit code $?"
         exit 1
     fi
 
     # Ensure /mnt/etc exists
-    if! mkdir -p /mnt/etc; then
+    if ! mkdir -p /mnt/etc; then
         log_error "Failed to create /mnt/etc directory: mkdir -p /mnt/etc failed with exit code $?"
         exit 1
     fi
@@ -572,7 +572,7 @@ setup_lvm() {
 # --- Install reflector dependencies ---
 install_prerequisites() {
     log_info "Installing prerequisite packages..."
-    if! pacman -Sy --noconfirm --needed pacman-contrib reflector rsync; then
+    if ! pacman -Sy --noconfirm --needed pacman-contrib reflector rsync; then
         log_error "Failed to install prerequisite packages: pacman -Sy --noconfirm --needed pacman-contrib reflector rsync failed with exit code $?"
         exit 1
     fi
@@ -581,7 +581,7 @@ install_prerequisites() {
 # --- Update mirrorlist with reflector ---
 configure_mirrors() {
     log_info "Configuring pacman mirrors for faster downloads..."
-    if! cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup || \
+    if ! cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup || \
      ! reflector -a 48 -f 5 -l 20 --sort rate --save /etc/pacman.d/mirrorlist; then
         log_error "Failed to configure pacman mirrors: reflector command failed with exit code $?"
         exit 1
@@ -591,7 +591,7 @@ configure_mirrors() {
 # --- Run pacstrap ---
 install_base_packages() {
     log_info "Installing base packages using pacstrap..."
-    if! pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed; then
+    if ! pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed; then
         log_error "Failed to install base packages: pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed failed with exit code $?"
         exit 1
     fi
@@ -601,7 +601,7 @@ install_base_packages() {
 configure_pacman() {
     log_info "Configuring pacman..."
 
-    if! sed -i "/^#Color/c\Color\nILoveCandy" /etc/pacman.conf || \
+    if ! sed -i "/^#Color/c\Color\nILoveCandy" /etc/pacman.conf || \
      ! sed -i "/^#VerbosePkgLists/c\VerbosePkgLists" /etc/pacman.conf || \
      ! sed -i "/^#ParallelDownloads/c\ParallelDownloads = 5" /etc/pacman.conf || \
      ! sed -i '/^#\[multilib\]/,+1 s/^#//' /etc/pacman.conf; then
@@ -616,13 +616,13 @@ install_microcode() {
     proc_type=$(lscpu | grep -oP '^Vendor ID:\s+\K\w+')
     if [ "$proc_type" = "GenuineIntel" ]; then
         log_info "Installing Intel microcode"
-        if! pacman -Sy --noconfirm --needed intel-ucode; then
+        if ! pacman -Sy --noconfirm --needed intel-ucode; then
             log_error "Failed to install Intel microcode: pacman -Sy --noconfirm --needed intel-ucode failed with exit code $?"
             exit 1
         fi
     elif [ "$proc_type" = "AuthenticAMD" ]; then
         log_info "Installing AMD microcode"
-        if! pacman -Sy --noconfirm --needed amd-ucode; then
+        if ! pacman -Sy --noconfirm --needed amd-ucode; then
             log_error "Failed to install AMD microcode: pacman -Sy --noconfirm --needed amd-ucode failed with exit code $?"
             exit 1
         fi
@@ -632,7 +632,7 @@ install_microcode() {
 # --- Install all pacman packages defined in pkgs.lst ---
 install_additional_packages() {
     log_info "Installing additional packages..."
-    if! pacman -S --noconfirm --needed - <./pkgs.lst; then
+    if ! pacman -S --noconfirm --needed - <./pkgs.lst; then
         log_error "Failed to install additional packages: pacman -S --noconfirm --needed - <./pkgs.lst failed with exit code $?"
         exit 1
     fi
@@ -641,7 +641,7 @@ install_additional_packages() {
 # --- Enable system services ---
 enable_services() {
     log_info "Enabling services..."
-    if! systemctl enable NetworkManager.service || \
+    if ! systemctl enable NetworkManager.service || \
      ! systemctl enable ntpd.service || \
      ! systemctl enable fstrim.timer; then
         log_error "Failed to enable services: systemctl enable commands failed with exit code $?"
@@ -652,7 +652,7 @@ enable_services() {
 # --- Set locale to en_US.UTF-8 ---
 set_locale() {
     log_info "Setting locale..."
-    if! sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen || \
+    if ! sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen || \
      ! locale-gen || \
      ! echo 'LANG=en_US.UTF-8' > /etc/locale.conf; then
         log_error "Failed to set locale: locale commands failed with exit code $?"
@@ -663,7 +663,7 @@ set_locale() {
 # --- Add HOOKS to mkinitcpoio.conf / Update initramfs --- 
 update_initramfs() {
     log_info "Updating initramfs..."
-    if! sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev autodetect modconf block encrypt lvm2 filesystems keyboard fsck)/' /etc/mkinitcpio.conf || \
+    if ! sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev autodetect modconf block encrypt lvm2 filesystems keyboard fsck)/' /etc/mkinitcpio.conf || \
      ! mkinitcpio -p linux; then
         log_error "Failed to update initramfs: mkinitcpio commands failed with exit code $?"
         exit 1
@@ -674,7 +674,7 @@ update_initramfs() {
 create_user() {
     local username="$1"
     log_info "Creating user: $username"
-    if! useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$username"; then
+    if ! useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$username"; then
         log_error "Failed to create user: useradd -m -G wheel,power,storage,uucp,network -s /bin/bash $username failed with exit code $?"
         exit 1
     fi
@@ -683,7 +683,7 @@ create_user() {
 # --- Set user and root passwords ---
 set_passwords() {
     log_info "Setting passwords..."
-    if! echo "$USERNAME:$USER_PASSWORD" | chpasswd || \
+    if ! echo "$USERNAME:$USER_PASSWORD" | chpasswd || \
      ! echo "root:$ROOT_PASSWORD" | chpasswd; then
         log_error "Failed to set passwords: chpasswd commands failed with exit code $?"
         exit 1
@@ -694,7 +694,7 @@ set_passwords() {
 set_hostname() {
     local hostname="$1"
     log_info "Setting hostname: $hostname"
-    if! echo "$hostname" > /etc/hostname; then
+    if ! echo "$hostname" > /etc/hostname; then
         log_error "Failed to set hostname: echo $hostname > /etc/hostname failed with exit code $?"
         exit 1
     fi
@@ -703,7 +703,7 @@ set_hostname() {
 # --- Update sudoers file ---
 update_sudoers() {
     log_info "Updating sudoers..."
-    if! cp /etc/sudoers /etc/sudoers.backup || \
+    if ! cp /etc/sudoers /etc/sudoers.backup || \
      ! sed -i 's/^# *%wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers || \
      ! echo 'Defaults targetpw' >> /etc/sudoers || \
      ! visudo -c; then
@@ -717,7 +717,7 @@ update_sudoers() {
 # --- Install GRUB ---
 install_grub() {
     log_info "Installing GRUB..."
-    if! grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck; then
+    if ! grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck; then
         log_error "Failed to install GRUB: grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck failed with exit code $?"
         exit 1
     fi
@@ -757,7 +757,7 @@ install_grub_themes() {
     esac
 
     # Give user ownership of the themes directory
-    if! chown -R $USERNAME:$USERNAME /boot/grub/themes; then 
+    if ! chown -R $USERNAME:$USERNAME /boot/grub/themes; then 
         log_error "Failed to change ownership of GRUB themes directory: chown -R $USERNAME:$USERNAME /boot/grub/themes failed with exit code $?"
         exit 1  
     fi
@@ -790,7 +790,7 @@ configure_grub() {
     sed -i '/^GRUB_GFXMODE=auto/c\GRUB_GFXMODE=1280x1024x32,auto' /etc/default/grub 
     sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub 
 
-    if! cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale.en.mo || \
+    if ! cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale.en.mo || \
      ! grub-mkconfig -o /boot/grub/grub.cfg; then
         log_error "Failed to configure GRUB: grub-mkconfig -o /boot/grub/grub.cfg failed with exit code $?"
         exit 1
@@ -816,13 +816,13 @@ install_gpu_drivers() {
             log_info "$gpu"
 
             log_info "Installing NVIDIA drivers..."
-            if! pacman -S --noconfirm --needed nvidia libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings; then
+            if ! pacman -S --noconfirm --needed nvidia libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings; then
                 log_error "Failed to install NVIDIA packages: pacman -S --noconfirm --needed nvidia libglvnd nvidia-utils opencl-nvidia lib32-libglvnd lib32-nvidia-utils lib32-opencl-nvidia nvidia-settings failed with exit code $?"
                 return 1 # Indicate failure
             fi
 
             log_info "Updating initramfs..."
-            if! sed -i '/^MODULES=()/c\MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)' /etc/mkinitcpio.conf || \
+            if ! sed -i '/^MODULES=()/c\MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)' /etc/mkinitcpio.conf || \
              ! mkinitcpio -p linux; then
                 log_error "Failed to update initramfs with NVIDIA modules: sed or mkinitcpio commands failed with exit code $?"
                 return 1 # Indicate failure
@@ -846,7 +846,7 @@ install_gpu_drivers() {
                 return 1 # Indicate failure
             fi
 
-            if! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' loglevel=3"|GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' nvidia_drm_modeset=1 loglevel=3"|' /etc/default/grub || \
+            if ! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' loglevel=3"|GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' nvidia_drm_modeset=1 loglevel=3"|' /etc/default/grub || \
              ! grub-mkconfig -o /boot/grub/grub.cfg; then
                 log_error "Failed to update GRUB configuration with NVIDIA settings: sed or grub-mkconfig commands failed with exit code $?"
                 return 1 # Indicate failure
@@ -860,13 +860,13 @@ install_gpu_drivers() {
             log_info "$gpu"
 
             log_info "Installing Radeon drivers and related packages..."
-            if! pacman -S --noconfirm --needed mesa mesa-utils amdgpu amdgpu-firmware vulkan-radeon xf86-video-amdgpu lib32-mesa lib32-vulkan-radeon; then
+            if ! pacman -S --noconfirm --needed mesa mesa-utils amdgpu amdgpu-firmware vulkan-radeon xf86-video-amdgpu lib32-mesa lib32-vulkan-radeon; then
                 log_error "Failed to install Radeon packages: pacman -S --noconfirm --needed mesa mesa-utils amdgpu amdgpu-firmware vulkan-radeon xf86-video-amdgpu lib32-mesa lib32-vulkan-radeon failed with exit code $?"
                 return 1 # Indicate failure
             fi
 
             # Check for amdgpu kernel module *only if a GPU was detected*
-            if! lsmod | grep amdgpu; then
+            if ! lsmod | grep amdgpu; then
                 log_warn "amdgpu kernel module not loaded. Reboot may be required."
             fi
 
@@ -898,9 +898,9 @@ install_gui() {
         echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers > /dev/null
 
         # Switch to the created user and install HyDE
-        if! runuser -u "$USERNAME" -- /bin/bash -c '
+        if ! runuser -u "$USERNAME" -- /bin/bash -c '
             # Call hypr.sh
-            if! bash./install.sh; then
+            if ! bash./install.sh; then
                 log_error "Failed to install HyDE" "$?"
                 exit 1
             fi
@@ -919,12 +919,12 @@ install_gui() {
     elif [[ "$GUI_CHOICE" == "gnome" ]]; then
         log_info "Installing GNOME desktop environment..."
 
-        if! pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox; then
+        if ! pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox; then
             log_error "Failed to install GNOME packages: pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox failed with exit code $?"
             exit 1
         fi
 
-        if! systemctl enable gdm.service; then
+        if ! systemctl enable gdm.service; then
             log_error "Failed to enable gdm service: systemctl enable gdm.service failed with exit code $?"
             exit 1
         fi
@@ -934,12 +934,12 @@ install_gui() {
     elif [[ "$GUI_CHOICE" == "kde" ]]; then
         log_info "Installing KDE Plasma desktop environment..."
 
-        if! pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance; then
+        if ! pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance; then
             log_error "Failed to install KDE Plasma packages: pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance failed with exit code $?"
             exit 1
         fi
 
-        if! systemctl enable sddm.service; then
+        if ! systemctl enable sddm.service; then
             log_error "Failed to enable sddm service: systemctl enable sddm.service failed with exit code $?"
             exit 1
         fi
@@ -959,10 +959,10 @@ install_aur_helper() {
     echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
     # Switch to the created user
-    if! runuser -u "$USERNAME" -- /bin/bash -c "
+    if ! runuser -u "$USERNAME" -- /bin/bash -c "
         # Install git if not already installed
-        if! pacman -Qi git &> /dev/null; then
-            if! sudo pacman -S --noconfirm git; then
+        if ! pacman -Qi git &> /dev/null; then
+            if ! sudo pacman -S --noconfirm git; then
                 log_error \"Failed to install git: sudo pacman -S --noconfirm git failed with exit code 3\"
                 exit 3
             fi
@@ -1003,15 +1003,15 @@ install_aur_pkgs() {
     echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
     # Switch to the created user and install AUR packages
-    if! runuser -u "$USERNAME" -- /bin/bash -c "
+    if ! runuser -u "$USERNAME" -- /bin/bash -c "
         # Check if the AUR helper is installed
-        if! command -v \"$AUR_HELPER\" &> /dev/null; then
+        if ! command -v \"$AUR_HELPER\" &> /dev/null; then
             log_error \"AUR helper '$AUR_HELPER' not found. Make sure it's installed.\"
             exit 1
         fi
 
         # Install AUR packages using paru
-        if! paru -S --noconfirm --needed - <./aur_pkgs.lst; then
+        if ! paru -S --noconfirm --needed - <./aur_pkgs.lst; then
             log_error \"Failed to install AUR packages: paru -S --noconfirm --needed - <./aur_pkgs.lst failed with exit code $?\"
             exit 1
         fi
@@ -1029,7 +1029,7 @@ install_aur_pkgs() {
 # --- Add HOOKS to mkinitcpoio.conf for numlock on boot / Update initramfs --- 
 numlock_auto_on() {
     log_info "Updating initramfs..."
-    if! sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev autodetect modconf numlock block encrypt lvm2 filesystems keyboard fsck)/' /etc/mkinitcpio.conf || \
+    if ! sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev autodetect modconf numlock block encrypt lvm2 filesystems keyboard fsck)/' /etc/mkinitcpio.conf || \
      ! mkinitcpio -p linux; then
         log_error "Failed to update initramfs: sed or mkinitcpio commands failed with exit code $?"
         exit 1
@@ -1067,7 +1067,7 @@ cleanup() {
                 return 1 # Indicate failure
             fi
 
-            if! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' loglevel=3"|GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' nvidia_drm_modeset=1 loglevel=3"|' /etc/default/grub || \
+            if ! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' loglevel=3"|GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' nvidia_drm_modeset=1 loglevel=3"|' /etc/default/grub || \
              ! grub-mkconfig -o /boot/grub/grub.cfg; then
                 log_error "Failed to update GRUB configuration with NVIDIA settings: sed or grub-mkconfig commands failed with exit code $?"
                 return 1 # Indicate failure
@@ -1081,13 +1081,13 @@ cleanup() {
             log_info "$gpu"
 
             log_info "Installing Radeon drivers and related packages..."
-            if! pacman -S --noconfirm --needed mesa mesa-utils amdgpu amdgpu-firmware vulkan-radeon xf86-video-amdgpu lib32-mesa lib32-vulkan-radeon; then
+            if ! pacman -S --noconfirm --needed mesa mesa-utils amdgpu amdgpu-firmware vulkan-radeon xf86-video-amdgpu lib32-mesa lib32-vulkan-radeon; then
                 log_error "Failed to install Radeon packages: pacman -S --noconfirm --needed mesa mesa-utils amdgpu amdgpu-firmware vulkan-radeon xf86-video-amdgpu lib32-mesa lib32-vulkan-radeon failed with exit code $?"
                 return 1 # Indicate failure
             fi
 
             # Check for amdgpu kernel module *only if a GPU was detected*
-            if! lsmod | grep amdgpu; then
+            if ! lsmod | grep amdgpu; then
                 log_warn "amdgpu kernel module not loaded. Reboot may be required."
             fi
 
@@ -1119,9 +1119,9 @@ install_gui() {
         echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers > /dev/null
 
         # Switch to the created user and install HyDE
-        if! runuser -u "$USERNAME" -- /bin/bash -c '
+        if ! runuser -u "$USERNAME" -- /bin/bash -c '
             # Call hypr.sh
-            if! bash./install.sh; then
+            if ! bash./install.sh; then
                 log_error "Failed to install HyDE" "$?"
                 exit 1
             fi
@@ -1140,12 +1140,12 @@ install_gui() {
     elif [[ "$GUI_CHOICE" == "gnome" ]]; then
         log_info "Installing GNOME desktop environment..."
 
-        if! pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox; then
+        if ! pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox; then
             log_error "Failed to install GNOME packages: pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox failed with exit code $?"
             exit 1
         fi
 
-        if! systemctl enable gdm.service; then
+        if ! systemctl enable gdm.service; then
             log_error "Failed to enable gdm service: systemctl enable gdm.service failed with exit code $?"
             exit 1
         fi
@@ -1155,12 +1155,12 @@ install_gui() {
     elif [[ "$GUI_CHOICE" == "kde" ]]; then
         log_info "Installing KDE Plasma desktop environment..."
 
-        if! pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance; then
+        if ! pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance; then
             log_error "Failed to install KDE Plasma packages: pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance failed with exit code $?"
             exit 1
         fi
 
-        if! systemctl enable sddm.service; then
+        if ! systemctl enable sddm.service; then
             log_error "Failed to enable sddm service: systemctl enable sddm.service failed with exit code $?"
             exit 1
         fi
@@ -1180,10 +1180,10 @@ install_aur_helper() {
     echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
     # Switch to the created user
-    if! runuser -u "$USERNAME" -- /bin/bash -c "
+    if ! runuser -u "$USERNAME" -- /bin/bash -c "
         # Install git if not already installed
-        if! pacman -Qi git &> /dev/null; then
-            if! sudo pacman -S --noconfirm git; then
+        if ! pacman -Qi git &> /dev/null; then
+            if ! sudo pacman -S --noconfirm git; then
                 log_error \"Failed to install git: sudo pacman -S --noconfirm git failed with exit code 3\"
                 exit 3
             fi
@@ -1224,15 +1224,15 @@ install_aur_pkgs() {
     echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
     # Switch to the created user and install AUR packages
-    if! runuser -u "$USERNAME" -- /bin/bash -c "
+    if ! runuser -u "$USERNAME" -- /bin/bash -c "
         # Check if the AUR helper is installed
-        if! command -v \"$AUR_HELPER\" &> /dev/null; then
+        if ! command -v \"$AUR_HELPER\" &> /dev/null; then
             log_error \"AUR helper '$AUR_HELPER' not found. Make sure it's installed.\"
             exit 1
         fi
 
         # Install AUR packages using paru
-        if! paru -S --noconfirm --needed - <./aur_pkgs.lst; then
+        if ! paru -S --noconfirm --needed - <./aur_pkgs.lst; then
             log_error \"Failed to install AUR packages: paru -S --noconfirm --needed - <./aur_pkgs.lst failed with exit code $?\"
             exit 1
         fi
@@ -1250,7 +1250,7 @@ install_aur_pkgs() {
 # --- Add HOOKS to mkinitcpoio.conf for numlock on boot / Update initramfs --- 
 numlock_auto_on() {
     log_info "Updating initramfs..."
-    if! sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev autodetect modconf numlock block encrypt lvm2 filesystems keyboard fsck)/' /etc/mkinitcpio.conf || \
+    if ! sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev autodetect modconf numlock block encrypt lvm2 filesystems keyboard fsck)/' /etc/mkinitcpio.conf || \
      ! mkinitcpio -p linux; then
         log_error "Failed to update initramfs: sed or mkinitcpio commands failed with exit code $?"
         exit 1
