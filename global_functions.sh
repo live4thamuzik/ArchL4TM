@@ -17,7 +17,7 @@ log() {
     # Set the color using tput
     case "$level" in
         DEBUG) color=$(tput setaf 4);;  # Blue for debug
-        INFO) color=$(tput setaf 3);;   # Yellow for info
+        INFO) color=$(tput setaf 2);;   # Green for info
         WARN) color=$(tput setaf 3);;   # Yellow for warn
         ERROR) color=$(tput setaf 1);;  # Red for error
         *) color=$(tput sgr0);;      # Reset color
