@@ -224,6 +224,7 @@ get_encryption_password() {
 }
 
 select_timezone() {
+    # Install dialog to generate interactive selection
     pacman -Sy --noconfirm --needed dialog
     
     local timezones
@@ -269,6 +270,9 @@ select_timezone() {
         echo "No timezone selected."
         exit 1
     fi
+
+    # Clean up by removing dialog
+    pacman -Rns --noconfirm dialog
 }
 
 #select_timezone() {
