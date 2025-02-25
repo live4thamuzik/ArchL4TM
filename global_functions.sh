@@ -227,26 +227,72 @@ select_timezone() {
     local timezones
     local selected_timezone
     local timezone_list=()
-    local index=1
+    local index=1  # Numbering for selection
+    local search_query=""
+    local filtered_timezones=()
+
+    # Set terminal dimensions dynamically
+    local HEIGHT=$(tput lines)
+    local WIDTH=$(tput cols)
+    local MENU_HEIGHT=$(( HEIGHT - 10 > 20 ? 20 : HEIGHT - 10 ))  # Ensure a reasonable menu size
+
+    # Allow user to search for a timezone
+    search_query=$(dialog --title "Search Timezone" --backtitle "Timezone Selection" \
+        --inputbox "Enter search query (or leave blank to show all):" 8 50 3>&1 1>&2 2>&3)
 
     # Get a list of available timezones
     while IFS= read -r line; do
-        timezone_list+=("$index" "$line")
-        ((index++))
+        if [[ -z "$search_query" || "$line" == *"$search_query"* ]]; then
+            timezone_list+=("$index" "$line")
+            ((index++))
+        fi
     done < <(timedatectl list-timezones)
 
-    # Use whiptail for timezone selection
-    selected_index=$(whiptail --title "Select Timezone" --menu "Choose your timezone:" 20 70 10 "${timezone_list[@]}" 3>&1 1>&2 2>&3)
+    # Ensure at least one result exists
+    if [[ ${#timezone_list[@]} -eq 0 ]]; then
+        dialog --msgbox "No timezones found matching '$search_query'." 8 50
+        return 1
+    fi
+
+    # Use dialog for selection with customized colors
+    selected_index=$(dialog --title "Select Timezone" --backtitle "Timezone Selection" \
+        --colors --menu "Choose your timezone:" $HEIGHT $WIDTH $MENU_HEIGHT "${timezone_list[@]}" \
+        --stdout)
 
     # Check if a timezone was selected
     if [[ -n "$selected_index" ]]; then
-        ACTUAL_TIME="${timezone_list[((selected_index * 2 - 1))]}"
+        ACTUAL_TIME="${timezone_list[((selected_index * 2 - 1))]}"  # Extract actual timezone name
         export ACTUAL_TIME
     else
         echo "No timezone selected."
         exit 1
     fi
 }
+
+#select_timezone() {
+#    local timezones
+#    local selected_timezone
+#    local timezone_list=()
+#    local index=1
+
+    # Get a list of available timezones
+#    while IFS= read -r line; do
+#        timezone_list+=("$index" "$line")
+#        ((index++))
+#    done < <(timedatectl list-timezones)
+
+    # Use whiptail for timezone selection
+#    selected_index=$(whiptail --title "Select Timezone" --menu "Choose your timezone:" 20 70 10 "${timezone_list[@]}" 3>&1 1>&2 2>&3)
+
+    # Check if a timezone was selected
+#    if [[ -n "$selected_index" ]]; then
+#        ACTUAL_TIME="${timezone_list[((selected_index * 2 - 1))]}"
+#        export ACTUAL_TIME
+#    else
+#        echo "No timezone selected."
+#        exit 1
+#    fi
+#}
 
 set_timezone() {
     echo -ne "
