@@ -236,9 +236,19 @@ select_timezone() {
     local WIDTH=$(tput cols)
     local MENU_HEIGHT=$(( HEIGHT - 10 > 20 ? 20 : HEIGHT - 10 ))  # Ensure a reasonable menu size
 
+    # Temporary color scheme for dialog
+    export DIALOGRC=$(mktemp)
+    cat <<EOF > "$DIALOGRC"
+screen_color = black
+title_color = white
+border_color = blue
+button_active_color = white
+button_inactive_color = blue
+EOF
+
     # Allow user to search for a timezone
     search_query=$(dialog --title "Search Timezone" --backtitle "Timezone Selection" \
-        --inputbox "Enter search query (or leave blank to show all):" 8 50 3>&1 1>&2 2>&3)
+        --colors --inputbox "\ZbSearch for a timezone e.g. 'New_York' or 'America' (leave blank to show all):" 8 50 3>&1 1>&2 2>&3)
 
     # Get a list of available timezones
     while IFS= read -r line; do
@@ -250,14 +260,17 @@ select_timezone() {
 
     # Ensure at least one result exists
     if [[ ${#timezone_list[@]} -eq 0 ]]; then
-        dialog --msgbox "No timezones found matching '$search_query'." 8 50
+        dialog --msgbox "\Z1No timezones found matching '$search_query'." 8 50
         return 1
     fi
 
-    # Use dialog for selection with customized colors
+    # Use dialog for selection with consistent colors
     selected_index=$(dialog --title "Select Timezone" --backtitle "Timezone Selection" \
-        --colors --menu "Choose your timezone:" $HEIGHT $WIDTH $MENU_HEIGHT "${timezone_list[@]}" \
+        --colors --menu "\ZbChoose your timezone:" $HEIGHT $WIDTH $MENU_HEIGHT "${timezone_list[@]}" \
         --stdout)
+
+    # Cleanup temp DIALOGRC
+    rm -f "$DIALOGRC"
 
     # Check if a timezone was selected
     if [[ -n "$selected_index" ]]; then
