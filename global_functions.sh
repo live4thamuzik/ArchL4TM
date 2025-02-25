@@ -233,24 +233,19 @@ select_timezone() {
         log_error "No timezones found matching '$timezone_search'. Using default (UTC)."
         echo "UTC"
     else
-        # Count the number of filtered timezones
         num_timezones=$(echo "$filtered_timezones" | wc -l)
 
         if [[ $num_timezones -eq 1 ]]; then
-            # If there's only one option, select it automatically
             ACTUAL_TIMEZONE=$(echo "$filtered_timezones")
             log_info "Automatically selected the only matching timezone: $ACTUAL_TIMEZONE"
             echo "$ACTUAL_TIMEZONE"
-            export ACTUAL_TIMEZONE=$ACTUAL_TIMEZONE
         else
-            # Otherwise, use `select` with scrolling using fzf
-            ACTUAL_TIMEZONE=$(echo "$filtered_timezones" | fzf --tac)  # Use fzf for scrolling
-            if [[ -n "$ACTUAL_TIMEZONE" ]]; then
-                echo "$ACTUAL_TIMEZONE"
-                export ACTUAL_TIMEZONE=$ACTUAL_TIMEZONE
-            else
+            ACTUAL_TIMEZONE=$(echo "$filtered_timezones" | fzf --tac)
+            if [[ -z "$ACTUAL_TIMEZONE" ]]; then
                 log_error "No timezone selected. Using default (UTC)."
                 echo "UTC"
+            else
+                echo "$ACTUAL_TIMEZONE"
             fi
         fi
     fi
@@ -262,14 +257,38 @@ set_timezone() {
     # Setting Timezone #
     #------------------#
     "
-    # Use $ACTUAL_TIMEZONE directly
+    ACTUAL_TIMEZONE=$(select_timezone)
+
     if [[ -z "$ACTUAL_TIMEZONE" ]]; then
         log_error "Timezone not provided. Using default (UTC)."
-        timedatectl set-timezone UTC
-    else
-        log_info "Setting timezone to $ACTUAL_TIMEZONE"
-        timedatectl set-timezone "$ACTUAL_TIMEZONE"
+        ACTUAL_TIMEZONE="UTC"
     fi
+
+    log_info "Setting timezone to $ACTUAL_TIMEZONE"
+    
+    # Set the system timezone:
+    timedatectl set-timezone "$ACTUAL_TIMEZONE"
+
+    # Update /etc/localtime:
+    ln -sf /usr/share/zoneinfo/"$ACTUAL_TIMEZONE" /etc/localtime
+
+    # (Optional but recommended) Update /etc/timezone:
+    echo "$ACTUAL_TIMEZONE" > /etc/timezone
+
+    # (For systemd systems) Check if systemd-timedated exists before restarting:
+    if systemctl --quiet is-active systemd-timedated; then
+        systemctl restart systemd-timedated
+        log_info "systemd-timedated service restarted."
+    else
+        log_warn "systemd-timedated service not found. Skipping restart."
+    fi
+
+    # Verify the change:
+    timedatectl status
+
+    # Synchronize hardware clock with system clock:
+    hwclock --systohc
+    log_info "Hardware clock synchronized with system clock."
 }
 
 # --- Ask for desired server/desktop ---
