@@ -224,6 +224,8 @@ get_encryption_password() {
 }
 
 select_timezone() {
+    pacman -Sy --noconfirm --needed dialog
+    
     local timezones
     local selected_timezone
     local timezone_list=()
