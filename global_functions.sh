@@ -231,21 +231,21 @@ select_timezone() {
 
     if [[ -z "$filtered_timezones" ]]; then
         log_error "No timezones found matching '$timezone_search'. Using default (UTC)."
-        echo "UTC"
+        return "UTC"  # Return the value directly
     else
         num_timezones=$(echo "$filtered_timezones" | wc -l)
 
         if [[ $num_timezones -eq 1 ]]; then
             ACTUAL_TIMEZONE=$(echo "$filtered_timezones")
             log_info "Automatically selected the only matching timezone: $ACTUAL_TIMEZONE"
-            echo "$ACTUAL_TIMEZONE"
+            return "$ACTUAL_TIMEZONE" # Return the value directly
         else
             ACTUAL_TIMEZONE=$(echo "$filtered_timezones" | fzf --tac)
             if [[ -z "$ACTUAL_TIMEZONE" ]]; then
                 log_error "No timezone selected. Using default (UTC)."
-                echo "UTC"
+                return "UTC"  # Return the value directly
             else
-                echo "$ACTUAL_TIMEZONE"
+                return "$ACTUAL_TIMEZONE" # Return the value directly
             fi
         fi
     fi
