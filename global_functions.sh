@@ -227,18 +227,21 @@ select_timezone() {
     local timezones
     local selected_timezone
     local timezone_list=()
+    local index=1
 
     # Get a list of available timezones
     while IFS= read -r line; do
-        timezone_list+=("$line" "$line")  # Add each timezone as both tag and description
+        timezone_list+=("$index" "$line")
+        ((index++))
     done < <(timedatectl list-timezones)
 
     # Use whiptail for timezone selection
-    selected_timezone=$(whiptail --title "Select Timezone" --menu "Choose your timezone:" 20 70 10 "${timezone_list[@]}" 3>&1 1>&2 2>&3)
+    selected_index=$(whiptail --title "Select Timezone" --menu "Choose your timezone:" 20 70 10 "${timezone_list[@]}" 3>&1 1>&2 2>&3)
 
     # Check if a timezone was selected
-    if [[ -n "$selected_timezone" ]]; then
-        export ACTUAL_TIME="$selected_timezone"
+    if [[ -n "$selected_index" ]]; then
+        ACTUAL_TIME="${timezone_list[((selected_index * 2 - 1))]}"
+        export ACTUAL_TIME
     else
         echo "No timezone selected."
         exit 1
