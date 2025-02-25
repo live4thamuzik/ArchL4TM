@@ -248,7 +248,7 @@ EOF
 
     # Allow user to search for a timezone
     search_query=$(dialog --title "Search Timezone" --backtitle "Timezone Selection" \
-        --colors --inputbox "\ZbSearch for a timezone e.g. 'New_York' or 'America' (leave blank to show all):" 8 50 3>&1 1>&2 2>&3)
+        --colors --inputbox "\ZbSearch for a timezone e.g. New_York or America (leave blank to show all):" 8 50 3>&1 1>&2 2>&3)
 
     # Get a list of available timezones
     while IFS= read -r line; do
