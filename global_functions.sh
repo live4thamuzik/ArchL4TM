@@ -224,74 +224,36 @@ get_encryption_password() {
 }
 
 select_timezone() {
-    log_info "Please enter a partial or full timezone name (e.g., 'New_York', 'America'):"
-    read -r timezone_search
+    local timezones
+    local selected_timezone
+    local timezone_list=()
 
-    filtered_timezones=$(timedatectl list-timezones | grep -i "$timezone_search")
+    # Get a list of available timezones
+    while IFS= read -r line; do
+        timezone_list+=("$line" "$line")  # Add each timezone as both tag and description
+    done < <(timedatectl list-timezones)
 
-    if [[ -z "$filtered_timezones" ]]; then
-        log_error "No timezones found matching '$timezone_search'. Using default (UTC)."
-        echo "UTC" 
+    # Use whiptail for timezone selection
+    selected_timezone=$(whiptail --title "Select Timezone" --menu "Choose your timezone:" 20 70 10 "${timezone_list[@]}" 3>&1 1>&2 2>&3)
+
+    # Check if a timezone was selected
+    if [[ -n "$selected_timezone" ]]; then
+        export ACTUAL_TIME="$selected_timezone"
     else
-        num_timezones=$(echo "$filtered_timezones" | wc -l)
-
-        if [[ $num_timezones -eq 1 ]]; then
-            ACTUAL_TIMEZONE=$(echo "$filtered_timezones")
-            log_info "Automatically selected the only matching timezone: $ACTUAL_TIMEZONE"
-            echo "$ACTUAL_TIMEZONE"
-        else
-            # Use command substitution to capture fzf's output directly
-            ACTUAL_TIMEZONE=$(echo "$filtered_timezones" | fzf --tac)
-
-            if [[ -z "$ACTUAL_TIMEZONE" ]]; then
-                log_error "No timezone selected. Using default (UTC)."
-                echo "UTC"
-            else
-                echo "$ACTUAL_TIMEZONE"
-            fi
-        fi
+        echo "No timezone selected."
+        exit 1
     fi
 }
 
 set_timezone() {
     echo -ne "
     #------------------#
-    # Setting Timezone #
+    # Set the timezone #
     #------------------#
     "
-
-    ACTUAL_TIMEZONE=$(select_timezone)
-
-    if [[ -z "$ACTUAL_TIMEZONE" ]]; then
-        log_error "Timezone not provided. Using default (UTC)."
-        ACTUAL_TIMEZONE="UTC"
-    fi
-
-    log_info "Setting timezone to: $ACTUAL_TIMEZONE"
-
-    # Quote the timezone string:
-    TZ_TO_SET=$(echo "$ACTUAL_TIMEZONE")
-
-    # Set the system timezone using the quoted variable:
-    timedatectl set-timezone "$TZ_TO_SET"
-
-    # Update /etc/localtime:
-    ln -sf /usr/share/zoneinfo/"$TZ_TO_SET" /etc/localtime
-
-    # (For systemd systems) Check if systemd-timedated exists before restarting:
-    if systemctl --quiet is-active systemd-timedated; then
-        systemctl restart systemd-timedated
-        log_info "systemd-timedated service restarted."
-    else
-        log_warn "systemd-timedated service not found. Skipping restart."
-    fi
-
-    # Verify the change:
-    timedatectl status
-
-    # Synchronize hardware clock with system clock:
+    log_info "Setting timezone to $ACTUAL_TIME"
+    ln -sf "/usr/share/zoneinfo/$ACTUAL_TIME" /etc/localtime
     hwclock --systohc
-    log_info "Hardware clock synchronized with system clock."
 }
 
 # --- Ask for desired server/desktop ---
