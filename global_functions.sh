@@ -378,13 +378,13 @@ get_aur_helper() {
                 log_info "No AUR helper selected."
                 ;;
             *)
-            log_info "Invalid option. Skipping AUR helper installation."
-            export AUR_HELPER="none"
-            exit 1
-            ;;
-    esac
-    break
-done
+                log_info "Invalid option. Skipping AUR helper installation."
+                export AUR_HELPER="none"
+                return 1 # Indicate an error
+                ;;
+        esac
+        break
+    done
 }
 
 # --- Disk Setup ---
@@ -1074,6 +1074,12 @@ install_gui() {
 
 # --- Install selected AUR Helper ---
 install_aur_helper() {
+    # Check if an AUR helper was actually selected
+    if [[ "$AUR_HELPER" == "none" ]]; then
+        log_info "No AUR helper installation requested. Skipping."
+        return 0
+    fi
+
     echo -ne "
     #-----------------------#
     # Installing AUR Helper #
@@ -1081,8 +1087,8 @@ install_aur_helper() {
     "
     log_info "Installing AUR helper..."
 
-     # Temporarily allow the user to run sudo without a password
-     echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    # Temporarily allow the user to run sudo without a password
+    echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
     # Switch to the created user
     if ! runuser -u "$USERNAME" -- /bin/bash -c "
@@ -1106,7 +1112,7 @@ install_aur_helper() {
                 cd tmp && git clone https://aur.archlinux.org/paru.git || { log_error \"Failed to clone paru repository\" 6; exit 6; }
                 cd paru && makepkg -si --noconfirm -C paru || { log_error \"Failed to build and install paru\" 7; exit 7; }
                 ;;
-            *)
+            *)  # This should now be unreachable due to the initial check
                 log_error \"Invalid AUR helper specified\" 8
                 exit 8
                 ;;
