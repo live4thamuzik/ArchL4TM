@@ -259,6 +259,7 @@ set_timezone() {
     # Setting Timezone #
     #------------------#
     "
+
     ACTUAL_TIMEZONE=$(select_timezone)
 
     if [[ -z "$ACTUAL_TIMEZONE" ]]; then
@@ -266,16 +267,16 @@ set_timezone() {
         ACTUAL_TIMEZONE="UTC"
     fi
 
-    log_info "Setting timezone to $ACTUAL_TIMEZONE"
-    
-    # Set the system timezone:
-    timedatectl set-timezone "$ACTUAL_TIMEZONE"
+    log_info "Setting timezone to: $ACTUAL_TIMEZONE"
+
+    # Quote the timezone string:
+    TZ_TO_SET=$(echo "$ACTUAL_TIMEZONE")
+
+    # Set the system timezone using the quoted variable:
+    timedatectl set-timezone "$TZ_TO_SET"
 
     # Update /etc/localtime:
-    ln -sf /usr/share/zoneinfo/"$ACTUAL_TIMEZONE" /etc/localtime
-
-    # (Optional but recommended) Update /etc/timezone:
-    echo "$ACTUAL_TIMEZONE" > /etc/timezone
+    ln -sf /usr/share/zoneinfo/"$TZ_TO_SET" /etc/localtime
 
     # (For systemd systems) Check if systemd-timedated exists before restarting:
     if systemctl --quiet is-active systemd-timedated; then
