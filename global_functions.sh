@@ -236,57 +236,37 @@ select_timezone() {
     local WIDTH=$(tput cols)
     local MENU_HEIGHT=$(( HEIGHT - 10 > 20 ? 20 : HEIGHT - 10 ))  # Ensure a reasonable menu size
 
-    # Temporary color scheme for dialog
-    export DIALOGRC=$(mktemp)
-    cat <<EOF > "$DIALOGRC"
-screen_color = black
-title_color = white
-border_color = blue
-button_active_color = white
-button_inactive_color = blue
-EOF
+    # Allow user to search for a timezone
+    search_query=$(dialog --title "Search Timezone" --backtitle "Timezone Selection" \
+        --inputbox "Enter a partial timezone: e.g. 'America' or 'New_York' (leave blank to show all):" 8 50 3>&1 1>&2 2>&3)
 
-    while true; do
-        # Allow user to search for a timezone
-        search_query=$(dialog --title "Search Timezone" --backtitle "Timezone Selection" \
-            --colors --inputbox "\ZbSearch for a timezone like New_York or America (or leave blank to show all):" \
-            10 60 3>&1 1>&2 2>&3)
-
-        # Check if user pressed Cancel
-        [[ $? -ne 0 ]] && { rm -f "$DIALOGRC"; return 1; }
-
-        # Get a list of available timezones matching the search
-        timezone_list=()
-        index=1
-        while IFS= read -r line; do
-            if [[ -z "$search_query" || "$line" == *"$search_query"* ]]; then
-                timezone_list+=("$index" "$line")
-                ((index++))
-            fi
-        done < <(timedatectl list-timezones)
-
-        # If no matches, show a warning and retry
-        if [[ ${#timezone_list[@]} -eq 0 ]]; then
-            dialog --title "No Matches" --msgbox "\Z1No timezones found matching '$search_query'. Try again." 8 50
-            continue
+    # Get a list of available timezones
+    while IFS= read -r line; do
+        if [[ -z "$search_query" || "$line" == *"$search_query"* ]]; then
+            timezone_list+=("$index" "$line")
+            ((index++))
         fi
+    done < <(timedatectl list-timezones)
 
-        # Use dialog for selection with consistent colors
-        selected_index=$(dialog --title "Select Timezone" --backtitle "Timezone Selection" \
-            --colors --menu "\ZbChoose your timezone (Total: ${#timezone_list[@]} results):" \
-            $HEIGHT $WIDTH $MENU_HEIGHT "${timezone_list[@]}" --stdout)
+    # Ensure at least one result exists
+    if [[ ${#timezone_list[@]} -eq 0 ]]; then
+        dialog --msgbox "No timezones found matching '$search_query'." 8 50
+        return 1
+    fi
 
-        # If user cancels, retry search instead of exiting
-        [[ -z "$selected_index" ]] && continue
+    # Use dialog for selection with customized colors
+    selected_index=$(dialog --title "Select Timezone" --backtitle "Timezone Selection" \
+        --colors --menu "Choose your timezone:" $HEIGHT $WIDTH $MENU_HEIGHT "${timezone_list[@]}" \
+        --stdout)
 
-        # Cleanup temp DIALOGRC
-        rm -f "$DIALOGRC"
-
-        # Set timezone and exit loop
+    # Check if a timezone was selected
+    if [[ -n "$selected_index" ]]; then
         ACTUAL_TIME="${timezone_list[((selected_index * 2 - 1))]}"  # Extract actual timezone name
         export ACTUAL_TIME
-        break
-    done
+    else
+        echo "No timezone selected."
+        exit 1
+    fi
 }
 
 #select_timezone() {
