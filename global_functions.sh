@@ -236,11 +236,6 @@ select_timezone() {
 }
 
 set_timezone() {
-    echo -ne "
-    #------------------#
-    # Set the timezone #
-    #------------------#
-    "
     log_info "Setting timezone to $ACTUAL_TIME"
     ln -sf "/usr/share/zoneinfo/$ACTUAL_TIME" /etc/localtime
     hwclock --systohc
@@ -581,11 +576,6 @@ setup_lvm() {
 
 # --- Install reflector dependencies ---
 install_prerequisites() {
-    echo -ne "
-    #------------------------------#
-    # Installing prerequisite pkgs #
-    #------------------------------#
-    "
     log_info "Installing prerequisite packages..."
     if ! pacman -Sy --noconfirm --needed pacman-contrib reflector rsync; then
         log_error "Failed to install prerequisite packages" $?
@@ -595,11 +585,6 @@ install_prerequisites() {
 
 # --- Update mirrorlist with reflector ---
 configure_mirrors() {
-    echo -ne "
-    #---------------------#
-    # Updating mirrorlist #
-    #---------------------#
-    "
     log_info "Configuring pacman mirrors for faster downloads..."
     if ! cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup || \
        ! reflector --country US -a 72 -f 10 -l 10 --sort rate --save /etc/pacman.d/mirrorlist; then
@@ -610,11 +595,6 @@ configure_mirrors() {
 
 # --- Run pacstrap ---
 install_base_packages() {
-    echo -ne "
-    #------------------#
-    # Running pacstrap #
-    #------------------#
-    "
     log_info "Installing base packages using pacstrap..."
     if ! pacstrap -K /mnt base linux linux-firmware linux-headers --noconfirm --needed; then
         log_error "Failed to install base packages" $?
@@ -624,13 +604,7 @@ install_base_packages() {
 
 # --- Configure pacman ---
 configure_pacman() {
-    echo -ne "
-    #--------------------#
-    # Configuring Pacman #
-    #--------------------#
-    "
     log_info "Configuring pacman..."
-
     if ! sed -i "/^#Color/c\Color\nILoveCandy" /etc/pacman.conf || \
        ! sed -i "/^#VerbosePkgLists/c\VerbosePkgLists" /etc/pacman.conf || \
        ! sed -i "/^#ParallelDownloads/c\ParallelDownloads = 5" /etc/pacman.conf || \
@@ -642,11 +616,6 @@ configure_pacman() {
 
 # --- Install microcode ---
 install_microcode() {
-    echo -ne "
-    #----------------------#
-    # Installing microcode #
-    #----------------------#
-    "
     log_info "Installing microcode..."
     proc_type=$(lscpu | grep -oP '^Vendor ID:\s+\K\w+')
     if [ "$proc_type" = "GenuineIntel" ]; then
@@ -666,11 +635,6 @@ install_microcode() {
 
 # --- Install all pacman packages defined in pkgs.lst ---
 install_additional_packages() {
-    echo -ne "
-    #----------------------------#
-    # Installing additional pkgs #
-    #----------------------------#
-    "
     log_info "Installing additional packages..."
     if ! pacman -S --noconfirm --needed - < ./pkgs.lst; then
         log_error "Failed to install additional packages" $?
@@ -680,11 +644,6 @@ install_additional_packages() {
 
 # --- Enable system services ---
 enable_services() {
-    echo -ne "
-    #-------------------#
-    # Enabling Services #
-    #-------------------#
-    "
     log_info "Enabling services..."
     if ! systemctl enable NetworkManager.service || \
        ! systemctl enable ntpd.service || \
@@ -696,11 +655,6 @@ enable_services() {
 
 # --- Set locale to en_US.UTF-8 ---
 set_locale() {
-    echo -ne "
-    #----------------#
-    # Setting Locale #
-    #----------------#
-    "
     log_info "Setting locale..."
     if ! sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen || \
        ! locale-gen || \
@@ -712,11 +666,6 @@ set_locale() {
 
 # --- Add HOOKS to mkinitcpoio.conf / Update initramfs --- 
 update_initramfs() {
-    echo -ne "
-    #--------------------#
-    # Updating Initramfs #
-    #--------------------#
-    "
     log_info "Updating initramfs..."
     if ! sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev plymouth autodetect modconf block encrypt lvm2 filesystems keyboard fsck)/' /etc/mkinitcpio.conf || \
        ! mkinitcpio -p linux; then
@@ -727,11 +676,6 @@ update_initramfs() {
 
 # --- Create User Account ---
 create_user() {
-    echo -ne "
-    #---------------#
-    # Creating User #
-    #---------------#
-    "
     local username="$1"
     log_info "Creating user: $username"
     if ! useradd -m -G wheel,power,storage,uucp,network -s /bin/bash "$username"; then
@@ -742,11 +686,6 @@ create_user() {
 
 # --- Set user and root passwords ---
 set_passwords() {
-    echo -ne "
-    #-------------------#
-    # Setting Passwords #
-    #-------------------#
-    "
     log_info "Setting passwords..."
     if ! echo "$USERNAME:$USER_PASSWORD" | chpasswd || \
        ! echo "root:$ROOT_PASSWORD" | chpasswd; then
@@ -757,11 +696,6 @@ set_passwords() {
 
 # --- Set hostname ---
 set_hostname() {
-    echo -ne "
-    #------------------#
-    # Setting hostname #
-    #------------------#
-    "
     local hostname="$1"
     log_info "Setting hostname: $hostname"
     if ! echo "$hostname" > /etc/hostname; then 
@@ -772,11 +706,6 @@ set_hostname() {
 
 # --- Update sudoers file ---
 update_sudoers() {
-    echo -ne "
-    #------------------#
-    # Updating sudoers #
-    #------------------#
-    "
     log_info "Updating sudoers..."
     if ! cp /etc/sudoers /etc/sudoers.backup || \
        ! sed -i 's/^# *%wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers || \
@@ -791,11 +720,6 @@ update_sudoers() {
 
 # --- Install GRUB ---
 install_grub() {
-  echo -ne "
-  #-----------------#
-  # Installing GRUB #
-  #-----------------#
-  "
   log_info "Installing GRUB..."
   if ! grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck; then
     log_error "Failed to install GRUB" $?
@@ -805,11 +729,6 @@ install_grub() {
 
 # --- Install GRUB Theme ---
 install_grub_themes() {
-  echo -ne "
-  #-----------------------#
-  # Installing GRUB Theme #
-  #-----------------------#
-  "
   log_info "Installing GRUB themes..."
 
   # Check if a theme was selected before proceeding
@@ -856,11 +775,6 @@ install_grub_themes() {
 
 # --- Update /etc/default/grub / Run grub-mkconfig ---
 configure_grub() {
-  echo -ne "
-  #------------------#
-  # Configuring GRUB #
-  #------------------#
-  "
   log_info "Configuring GRUB..."
 
   # Make sure DISK is exported and available in the environment
@@ -896,11 +810,6 @@ configure_grub() {
 }
 
 install_gpu_drivers() {
-  echo -ne "
-  #---------------------------#
-  # Detect/Install GPU Drivers#
-  #---------------------------#
-  "
   log_info "Detecting GPUs..."
 
   # Detect GPUs (both NVIDIA and AMD)
@@ -983,11 +892,6 @@ install_gpu_drivers() {
 }
 
 install_gui() {
-    echo -ne "
-    #---------------------------#
-    # Installing Server/Desktop #
-    #---------------------------#
-    "
     log_info "Starting GUI installation..."
 
     if [[ "$GUI_CHOICE" == "hyprland" ]]; then
@@ -1074,11 +978,6 @@ install_aur_helper() {
         return 0
     fi
 
-    echo -ne "
-    #-----------------------#
-    # Installing AUR Helper #
-    #-----------------------#
-    "
     log_info "Starting AUR helper installation process..."
 
     # Temporarily allow the user to run sudo without a password
@@ -1133,11 +1032,6 @@ install_aur_helper() {
 }
 
 install_aur_pkgs() {
-  echo -ne "
-  #------------------------#
-  # Installing AUR Packages #
-  #------------------------#
-  "
   log_info "Starting AUR package installation process..."
 
   # Determine AUR helper. Paru preferred, but checks for yay as well
@@ -1190,11 +1084,6 @@ install_aur_pkgs() {
 }
 
 numlock_auto_on() {
-  echo -ne "
-  #--------------------#
-  # Updating Initramfs #
-  #--------------------#
-  "
   log_info "Starting the initramfs update process..."
 
   # Check if mkinitcpio-numlock is installed via AUR helper
