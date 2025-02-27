@@ -1,53 +1,7 @@
 #!/bin/bash
 
 ## Global Functions ##
-
-# --- Logging Functions ---
-
-# Create a log file
-LOG_FILE="/var/log/archl4tm.log"
-exec > >(tee -a "$LOG_FILE") 2> >(tee -a "${LOG_FILE}_error.log" >&2)
-touch "$LOG_FILE"
-
-log() {
-    local level=$1
-    local message=$2
-    local timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-
-    # Set the color using tput
-    case "$level" in
-        DEBUG) color=$(tput setaf 4);;  # Blue for debug
-        INFO) color=$(tput setaf 2);;   # Green for info
-        WARN) color=$(tput setaf 3);;   # Yellow for warn
-        ERROR) color=$(tput setaf 1);;  # Red for error
-        *) color=$(tput sgr0);;      # Reset color
-    esac
-
-    # Format the message with timestamp and color
-   formatted_message=$(printf "[%s] [%s%s%s] %s" "$timestamp" "$color" "$level" "$(tput sgr0)" "$message")
-
-    # Print the message to the console
-    echo "${formatted_message}"
-
-    # Append the message to the log file (without color)
-    echo "[${timestamp}] [${level}] ${message}" >> "$LOG_FILE"
-}
-
-log_debug() {
-    log "DEBUG" "$1"
-}
-
-log_info() {
-    log "INFO" "$1"
-}
-
-log_warn() {
-    log "WARN" "$1"
-}
-
-log_error() {
-    log "ERROR" "$1"
-}
+source ./log.sh
 
 validate_username() {
     local username="$1"
@@ -64,7 +18,7 @@ validate_hostname() {
     if [[ "${hostname,,}" =~ ^[a-z][a-z0-9_.-]{0,62}[a-z0-9]$ ]]; then
         return 0  # True
     else
-        log_error "Invalid hostname: $hostname" 1
+        log_error "Invalid hostname: $hostname"
         return 1  # False
     fi
 }
@@ -86,9 +40,11 @@ confirm_action() {
     confirm=${confirm,,}  # Convert to lowercase
 
     # Check if confirm is "y" or empty
-    if [[ "$confirm" == "y" ]] || [[ -z "$confirm" ]]; then  
+    if [[ "$confirm" == "y" ]] || [[ -z "$confirm" ]]; then
+        log_info "User confirmed: $message"
         return 0  # True
     else
+        log_warn "User declined: $message"
         return 1  # False
     fi
 }
@@ -118,7 +74,7 @@ get_user_password() {
         echo
 
         if [[ "$USER_PASSWORD1" != "$USER_PASSWORD2" ]]; then
-            log_error "Passwords do not match." 1
+            log_error "Passwords do not match."
             continue
         fi
 
@@ -137,7 +93,7 @@ get_root_password() {
         echo
 
         if [[ "$ROOT_PASSWORD1" != "$ROOT_PASSWORD2" ]]; then
-            log_error "Passwords do not match." 1
+            log_error "Passwords do not match."
             continue
         fi
 
@@ -199,7 +155,7 @@ get_partition_sizes() {
             log_info "Boot partition size: $BOOT_SIZE"
             break
         else
-            log_error "Invalid partition size(s). Please use a format like 512M or 1G." 1
+            log_error "Invalid partition size(s). Please use a format like 512M or 1G."
         fi
     done
 }
@@ -213,7 +169,7 @@ get_encryption_password() {
         echo
 
         if [[ "$password" != "$confirm_password" ]]; then
-            log_error "Passwords do not match." 1
+            log_error "Passwords do not match."
             continue
         fi
 
@@ -254,6 +210,7 @@ select_timezone() {
     # Ensure at least one result exists
     if [[ ${#timezone_list[@]} -eq 0 ]]; then
         dialog --msgbox "No timezones found matching '$search_query'." 8 50
+        pacman -Rns --noconfirm dialog  # Clean up dialog installation
         return 1
     fi
 
@@ -264,41 +221,19 @@ select_timezone() {
 
     # Check if a timezone was selected
     if [[ -n "$selected_index" ]]; then
-        ACTUAL_TIME="${timezone_list[((selected_index * 2 - 1))]}"  # Extract actual timezone name
-        export ACTUAL_TIME
+        # Extract actual timezone name (accounting for index placement)
+        local selected_timezone_name="${timezone_list[((selected_index * 2))]}"
+        export ACTUAL_TIME="$selected_timezone_name"
+        log_info "Timezone set to $ACTUAL_TIME"
     else
         echo "No timezone selected."
+        pacman -Rns --noconfirm dialog  # Clean up dialog installation
         exit 1
     fi
 
-    # Clean up by removing dialog
+    # Clean up dialog installation after selection
     pacman -Rns --noconfirm dialog
 }
-
-#select_timezone() {
-#    local timezones
-#    local selected_timezone
-#    local timezone_list=()
-#    local index=1
-
-    # Get a list of available timezones
-#    while IFS= read -r line; do
-#        timezone_list+=("$index" "$line")
-#        ((index++))
-#    done < <(timedatectl list-timezones)
-
-    # Use whiptail for timezone selection
-#    selected_index=$(whiptail --title "Select Timezone" --menu "Choose your timezone:" 20 70 10 "${timezone_list[@]}" 3>&1 1>&2 2>&3)
-
-    # Check if a timezone was selected
-#    if [[ -n "$selected_index" ]]; then
-#        ACTUAL_TIME="${timezone_list[((selected_index * 2 - 1))]}"
-#        export ACTUAL_TIME
-#    else
-#        echo "No timezone selected."
-#        exit 1
-#    fi
-#}
 
 set_timezone() {
     echo -ne "
@@ -321,21 +256,27 @@ select_gui() {
             "Hyprland")
                 export GUI_CHOICE="hyprland"
                 log_info "Hyprland selected."
+                break
                 ;;
             "GNOME")
                 export GUI_CHOICE="gnome"
                 log_info "GNOME selected."
+                break
                 ;;
             "KDE Plasma")
                 export GUI_CHOICE="kde"
                 log_info "KDE Plasma selected."
+                break
                 ;;
-            *)
+            "Server (No GUI)")
                 export GUI_CHOICE="none"
                 log_info "No GUI selected."
+                break
+                ;;
+            *)
+                log_error "Invalid selection. Please choose a valid GUI option."
                 ;;
         esac
-        break
     done
 }
 
@@ -352,40 +293,37 @@ get_grub_theme() {
 
   # Ask the user which GRUB Theme they want
   options=("poly-dark" "CyberEXS" "Cyberpunk" "HyperFluent" "none")
-  while true; do
-    select grub_theme in "${options[@]}"; do
-      case "$grub_theme" in
+  select grub_theme in "${options[@]}"; do
+    case "$grub_theme" in
         poly-dark)
-          export GRUB_THEME="poly-dark" 
-          log_info "poly-dark selected."
-          break 
-          ;;
+            export GRUB_THEME="poly-dark" 
+            log_info "poly-dark selected."
+            break 
+            ;;
         CyberEXS)
-          export GRUB_THEME="CyberEXS" 
-          log_info "CyberEXS selected."
-          break 
-          ;;
+            export GRUB_THEME="CyberEXS" 
+            log_info "CyberEXS selected."
+            break 
+            ;;
         Cyberpunk)
-          export GRUB_THEME="Cyberpunk"
-          log_info "Cyberpunk selected."
-          break 
-          ;;
+            export GRUB_THEME="Cyberpunk"
+            log_info "Cyberpunk selected."
+            break 
+            ;;
         HyperFluent)
-          export GRUB_THEME="HyperFluent" 
-          log_info "HyperFluent selected."
-          break 
-          ;;
+            export GRUB_THEME="HyperFluent" 
+            log_info "HyperFluent selected."
+            break 
+            ;;
         none)
-          export GRUB_THEME="none" 
-          log_info "No GRUB Theme selected."
-          break 
-          ;;
+            export GRUB_THEME="none" 
+            log_info "No GRUB Theme selected."
+            break 
+            ;;
         *)
-          log_info "Invalid option. Please select a valid theme." 
-          ;; 
-      esac
-    done
-    break
+            log_error "Invalid selection. Please choose a valid GRUB theme." 
+            ;;
+    esac
   done
 }
 
@@ -407,22 +345,22 @@ get_aur_helper() {
             paru)
                 export AUR_HELPER="paru"
                 log_info "paru selected."
+                break
                 ;;
             yay)
                 export AUR_HELPER="yay"
                 log_info "yay selected."
+                break
                 ;;
             none)
                 export AUR_HELPER="none"
                 log_info "No AUR helper selected."
+                break
                 ;;
             *)
-                log_info "Invalid option. Skipping AUR helper installation."
-                export AUR_HELPER="none"
-                return 1 # Indicate an error
+                log_error "Invalid selection. Please choose a valid AUR helper."
                 ;;
         esac
-        break
     done
 }
 
@@ -436,33 +374,37 @@ partition_disk() {
 
     # Create new GPT partition table
     if ! sgdisk --zap-all "$disk"; then
-        log_error "Failed to clear disk" $?
+        log_error "Failed to clear disk $disk" $?
         exit 1
     fi
 
     # Create EFI partition
     if ! sgdisk -n 1:0:+"$efi_size" -t 1:EF00 "$disk"; then
-        log_error "Failed to create EFI partition" $?
+        log_error "Failed to create EFI partition on $disk" $?
         exit 1
     fi
 
     # Create boot partition
     if ! sgdisk -n 2:0:+"$boot_size" -t 2:8300 "$disk"; then
-        log_error "Failed to create boot partition" $?
+        log_error "Failed to create boot partition on $disk" $?
         exit 1
     fi
 
     # Create LVM partition (using remaining space)
     if ! sgdisk -n 3:0:0 -t 3:8E00 "$disk"; then
-        log_error "Failed to create LVM partition" $?
+        log_error "Failed to create LVM partition on $disk" $?
         exit 1
     fi
 
     # Print partition table
+    log_info "Partition table on $disk:"
     sgdisk -p "$disk"
 
     # Re-read partition table
-    partprobe "$disk"
+    if ! partprobe "$disk"; then
+        log_error "Failed to re-read partition table on $disk" $?
+        exit 1
+    fi
 }
 
 setup_lvm() {
@@ -472,66 +414,65 @@ setup_lvm() {
     log_info "Setting up LVM on disk: $disk"
 
     # Format EFI partition
-      if [[ $disk =~ nvme ]]; then
-          if ! mkfs.fat -F32 "${disk}p1"; then
-          log_error "Failed to format EFI partition" $?
-          exit 1
-      fi
+    if [[ $disk =~ nvme ]]; then
+        if ! mkfs.fat -F32 "${disk}p1"; then
+            log_error "Failed to format EFI partition on ${disk}p1" $?
+            exit 1
+        fi
     else
-      if ! mkfs.fat -F32 "${disk}1"; then
-          log_error "Failed to format EFI partition" $?
-          exit 1
-      fi
+        if ! mkfs.fat -F32 "${disk}1"; then
+            log_error "Failed to format EFI partition on ${disk}1" $?
+            exit 1
+        fi
     fi
 
-
     # Format boot partition
-     if [[ $disk =~ nvme ]]; then 
-      if ! mkfs.ext4 "${disk}p2"; then
-          log_error "Failed to format boot partition" $?
-          exit 1
-      fi
+    if [[ $disk =~ nvme ]]; then
+        if ! mkfs.ext4 "${disk}p2"; then
+            log_error "Failed to format boot partition on ${disk}p2" $?
+            exit 1
+        fi
     else
-      if ! mkfs.ext4 "${disk}2"; then
-          log_error "Failed to format boot partition" $?
-          exit 1
-      fi
-    fi 
+        if ! mkfs.ext4 "${disk}2"; then
+            log_error "Failed to format boot partition on ${disk}2" $?
+            exit 1
+        fi
+    fi
 
     # Setup encryption on partition 3 using LUKS
-      if [[ $disk =~ nvme ]]; then
+    if [[ $disk =~ nvme ]]; then
         if ! echo "$password" | cryptsetup luksFormat "${disk}p3"; then
-          log_error "Failed to format LUKS partition" $?
-          exit 1
+            log_error "Failed to format LUKS partition on ${disk}p3" $?
+            exit 1
         fi
 
-    # Open LUKS partition
-      if ! echo "$password" | cryptsetup open --type luks --batch-mode "${disk}p3" lvm; then
-        log_error "Failed to open LUKS partition" $?
-        exit 1
-      fi
+        # Open LUKS partition
+        if ! echo "$password" | cryptsetup open --type luks --batch-mode "${disk}p3" lvm; then
+            log_error "Failed to open LUKS partition on ${disk}p3" $?
+            exit 1
+        fi
     else
-      if ! echo "$password" | cryptsetup luksFormat "${disk}3"; then
-        log_error "Failed to format LUKS partition" $?
-        exit 1
-      fi
+        if ! echo "$password" | cryptsetup luksFormat "${disk}3"; then
+            log_error "Failed to format LUKS partition on ${disk}3" $?
+            exit 1
+        fi
 
-    # Open LUKS partition
-      if ! echo "$password" | cryptsetup open --type luks --batch-mode "${disk}3" lvm; then
-        log_error "Failed to open LUKS partition" $?
-        exit 1
-      fi
+        # Open LUKS partition
+        if ! echo "$password" | cryptsetup open --type luks --batch-mode "${disk}3" lvm; then
+            log_error "Failed to open LUKS partition on ${disk}3" $?
+            exit 1
+        fi
     fi
 
     # Create physical volume for LVM on partition 3 with data alignment 1m
     if ! pvcreate /dev/mapper/lvm; then
-        log_error "Failed to create physical volume" $?
+        log_error "Failed to create physical volume on /dev/mapper/lvm" $?
         exit 1
     fi
 
     # Create volume group called volgroup0 on partition 3
     if ! vgcreate volgroup0 /dev/mapper/lvm; then
-        log_error "Failed to create volume group" $?
+        log_error "Failed to create volume group volgroup0" $?
         exit 1
     fi
 
@@ -552,7 +493,10 @@ setup_lvm() {
     fi
 
     # Load kernel module
-    modprobe dm_mod
+    if ! modprobe dm_mod; then
+        log_error "Failed to load dm_mod kernel module" $?
+        exit 1
+    fi
 
     # Scan system for volume groups
     vgscan
@@ -576,38 +520,38 @@ setup_lvm() {
 
     # Create /boot directory and mount partition 2
     if ! mkdir -p /mnt/boot; then
-      log_error "Failed to create /boot directory" $?
-      exit 1
+        log_error "Failed to create /boot directory" $?
+        exit 1
     fi
 
     if [[ $disk =~ nvme ]]; then
-      if ! mount "${disk}p2" /mnt/boot; then
-        log_error "Failed to mount /boot" $?
-        exit 1
-      fi
+        if ! mount "${disk}p2" /mnt/boot; then
+            log_error "Failed to mount /boot on ${disk}p2" $?
+            exit 1
+        fi
     else
-      if ! mount "${disk}2" /mnt/boot; then
-        log_error "Failed to mount /boot" $?
-        exit 1
-      fi
+        if ! mount "${disk}2" /mnt/boot; then
+            log_error "Failed to mount /boot on ${disk}2" $?
+            exit 1
+        fi
     fi
 
     # Create /boot/EFI directory and mount partition 1
     if ! mkdir -p /mnt/boot/EFI; then
-      log_error "Failed to create /boot/EFI directory" $?
-      exit 1
+        log_error "Failed to create /boot/EFI directory" $?
+        exit 1
     fi
 
     if [[ $disk =~ nvme ]]; then
-      if ! mount "${disk}p1" /mnt/boot/EFI; then
-        log_error "Failed to mount /boot/EFI" $?
-        exit 1
-      fi
+        if ! mount "${disk}p1" /mnt/boot/EFI; then
+            log_error "Failed to mount /boot/EFI on ${disk}p1" $?
+            exit 1
+        fi
     else
-      if ! mount "${disk}1" /mnt/boot/EFI; then
-        log_error "Failed to mount /boot/EFI" $?
-        exit 1
-      fi
+        if ! mount "${disk}1" /mnt/boot/EFI; then
+            log_error "Failed to mount /boot/EFI on ${disk}1" $?
+            exit 1
+        fi
     fi
 
     # Format home volume
@@ -859,6 +803,7 @@ install_grub() {
   fi
 }
 
+# --- Install GRUB Theme ---
 install_grub_themes() {
   echo -ne "
   #-----------------------#
@@ -904,7 +849,7 @@ install_grub_themes() {
 
   # Give user ownership of the themes directory
   if ! chown -R $USERNAME:$USERNAME /boot/grub/themes; then
-    log_error "Failed to change ownership of GRUB themes directory"
+    log_error "Failed to change ownership of GRUB themes directory" $?
     exit 1
   fi
 }
@@ -930,17 +875,19 @@ configure_grub() {
   ROOT_UUID=$(blkid -s UUID -o value /dev/volgroup0/lv_root)
 
   if [[ -z $CRYPT_UUID || -z $ROOT_UUID ]]; then
-    log_error "Failed to retrieve UUID's for cryptdevice or root partition"
+    log_error "Failed to retrieve UUID's for cryptdevice or root partition" $?
     exit 1
   fi
 
+  # Update /etc/default/grub configurations
   sed -i '/^GRUB_DEFAULT=/c\GRUB_DEFAULT=saved' /etc/default/grub 
   sed -i '/^GRUB_TIMEOUT=5/c\GRUB_TIMEOUT=3' /etc/default/grub 
-  sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/c\GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='${CRYPT_UUID}':volgroup0 root=UUID='${ROOT_UUID}' loglevel=3"' /etc/default/grub 
+  sed -i "/^GRUB_CMDLINE_LINUX_DEFAULT=\"loglevel=3 quiet\"/c\GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash cryptdevice=UUID=${CRYPT_UUID}:volgroup0 root=UUID=${ROOT_UUID} loglevel=3\"" /etc/default/grub 
   sed -i '/^#GRUB_ENABLE_CRYPTODISK=y/c\GRUB_ENABLE_CRYPTODISK=y' /etc/default/grub 
   sed -i '/^GRUB_GFXMODE=auto/c\GRUB_GFXMODE=1280x1024x32,auto' /etc/default/grub 
   sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub 
 
+  # Locale and GRUB configuration
   if ! cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale.en.mo || \
      ! grub-mkconfig -o /boot/grub/grub.cfg; then
     log_error "Failed to configure GRUB" $?
@@ -986,7 +933,7 @@ install_gpu_drivers() {
 
       log_info "Updating GRUB configuration..."
 
-      # Make sure DISK is exported and available in the environment
+      # Ensure DISK variable is available in the environment
       if [[ $DISK == "/dev/nvme"* ]]; then
         PART_PREFIX="p"
       else
@@ -998,8 +945,8 @@ install_gpu_drivers() {
       ROOT_UUID=$(blkid -s UUID -o value /dev/volgroup0/lv_root)
 
       if [[ -z $CRYPT_UUID || -z $ROOT_UUID ]]; then
-        log_error "Failed to retrieve UUID's for cryptdevice or root partition"
-        return 1 # Indicate failure
+        log_error "Failed to retrieve UUID's for cryptdevice or root partition" $?
+        return 1
       fi
 
       if ! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' loglevel=3"|GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' nvidia_drm_modeset=1 loglevel=3"|' /etc/default/grub || \
@@ -1029,6 +976,8 @@ install_gpu_drivers() {
       log_info "Radeon drivers and related packages installed successfully."
       return 0
 
+    else
+      log_warn "Unknown GPU vendor detected: $gpu"
     fi
   done
 }
@@ -1039,39 +988,42 @@ install_gui() {
     # Installing Server/Desktop #
     #---------------------------#
     "
+    log_info "Starting GUI installation..."
 
     if [[ "$GUI_CHOICE" == "hyprland" ]]; then
-        # Clone the dotfiles branch
+        log_info "Installing Hyprland with HyDE..."
+
+        # Clone the dotfiles repository
         git clone --progress --verbose https://github.com/live4thamuzik/L4TM-HyDE.git /home/$USERNAME/L4TM-HyDE || {
-            log_error "Failed to clone L4TM-HyDE"
+            log_error "Failed to clone L4TM-HyDE repository"
             exit 1
         }
 
-        #Fix permissions
+        # Fix permissions
         chown $USERNAME /home/$USERNAME/L4TM-HyDE
         chmod -R 777 /home/$USERNAME/L4TM-HyDE
 
-        # Copy Configs to /
+        # Switch to the user's directory and install HyDE
         cd /home/$USERNAME/L4TM-HyDE/Scripts
 
         # Temporarily allow the user to run sudo without a password (within the chroot)
         echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers > /dev/null
 
-        # Switch to the created user and install HyDE
+        # Switch to the created user and run the install script
         if ! runuser -u "$USERNAME" -- /bin/bash -c '
-            # Call hypr.sh
+            log_info "Running HyDE installer..."
             if ! bash ./install.sh; then
                 log_error "Failed to install HyDE" "$?"
                 exit 1
             fi
         '; then
-            log_error "Failed to install AUR packages as $USERNAME" "$?"
+            log_error "Failed to install AUR packages as $USERNAME"
             # Remove the temporary sudoers entry in case of failure
             sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
             exit 1
         fi
 
-        # Remove the temporary sudoers entry
+        # Clean up the temporary sudoers entry
         sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
 
         log_info "HyDE installation complete!"
@@ -1079,39 +1031,42 @@ install_gui() {
     elif [[ "$GUI_CHOICE" == "gnome" ]]; then
         log_info "Installing GNOME desktop environment..."
 
+        # Install GNOME and related packages
         if ! pacman -S --noconfirm --needed gnome gnome-extra gnome-tweaks gnome-shell-extensions gnome-browser-connector firefox; then
-            log_error "Failed to install GNOME packages: $?"
+            log_error "Failed to install GNOME packages"
             exit 1
         fi
 
+        # Enable GDM service
         if ! systemctl enable gdm.service; then
-            log_error "Failed to enable gdm service: $?"
+            log_error "Failed to enable GDM service"
             exit 1
         fi
 
-        log_info "GNOME installed and gdm enabled."
+        log_info "GNOME installed and GDM service enabled."
 
     elif [[ "$GUI_CHOICE" == "kde" ]]; then
         log_info "Installing KDE Plasma desktop environment..."
 
+        # Install KDE Plasma and related packages
         if ! pacman -S --noconfirm --needed xorg plasma-desktop sddm kde-applications dolphin firefox lxappearance; then
-            log_error "Failed to install KDE Plasma packages: $?"
+            log_error "Failed to install KDE Plasma packages"
             exit 1
         fi
 
+        # Enable SDDM service
         if ! systemctl enable sddm.service; then
-            log_error "Failed to enable sddm service: $?"
+            log_error "Failed to enable SDDM service"
             exit 1
         fi
 
-        log_info "KDE Plasma installed and sddm enabled."
+        log_info "KDE Plasma installed and SDDM service enabled."
 
     else
         log_info "No GUI selected. Skipping GUI installation."
     fi
 }
 
-# --- Install selected AUR Helper ---
 install_aur_helper() {
     # Check if an AUR helper was actually selected
     if [[ "$AUR_HELPER" == "none" ]]; then
@@ -1124,29 +1079,38 @@ install_aur_helper() {
     # Installing AUR Helper #
     #-----------------------#
     "
-    log_info "Installing AUR helper..."
+    log_info "Starting AUR helper installation process..."
 
     # Temporarily allow the user to run sudo without a password
+    log_info "Granting temporary sudo access for $USERNAME"
     echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
     # Switch to the created user
+    log_info "Switching to user $USERNAME to install the AUR helper..."
     if ! runuser -u "$USERNAME" -- /bin/bash -c "
         # Install git if not already installed
+        log_info \"Checking if git is installed...\"
         if ! pacman -Qi git &> /dev/null; then
+            log_info \"Installing git...\"
             if ! sudo pacman -S --noconfirm git; then
                 log_error \"Failed to install git\" 3
                 exit 3
             fi
+        else
+            log_info \"git is already installed.\"
         fi
 
         # Install the chosen AUR helper
+        log_info \"Installing the selected AUR helper: $AUR_HELPER...\"
         case \"$AUR_HELPER\" in
             yay)
+                log_info \"Cloning yay repository...\"
                 mkdir -p tmp
                 cd tmp && git clone https://aur.archlinux.org/yay.git || { log_error \"Failed to clone yay repository\" 4; exit 4; }
                 cd yay && makepkg -si --noconfirm -C yay || { log_error \"Failed to build and install yay\" 5; exit 5; }
                 ;;
             paru)
+                log_info \"Cloning paru repository...\"
                 mkdir -p tmp
                 cd tmp && git clone https://aur.archlinux.org/paru.git || { log_error \"Failed to clone paru repository\" 6; exit 6; }
                 cd paru && makepkg -si --noconfirm -C paru || { log_error \"Failed to build and install paru\" 7; exit 7; }
@@ -1157,14 +1121,15 @@ install_aur_helper() {
                 ;;
         esac
     "; then
-        log_error "Failed to switch to user" 9
+        log_error "Failed to switch to user $USERNAME for AUR helper installation" 9
         return 9
     fi
 
     # Remove the temporary sudoers entry
+    log_info "Cleaning up sudoers file by removing temporary sudo access for $USERNAME"
     sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
 
-    log_info "AUR helper installed."
+    log_info "AUR helper $AUR_HELPER installed successfully."
 }
 
 install_aur_pkgs() {
@@ -1173,7 +1138,7 @@ install_aur_pkgs() {
   # Installing AUR Packages #
   #------------------------#
   "
-  log_info "Installing AUR packages..."
+  log_info "Starting AUR package installation process..."
 
   # Determine AUR helper. Paru preferred, but checks for yay as well
   AUR_HELPER=""
@@ -1190,17 +1155,20 @@ install_aur_pkgs() {
   fi
 
   # Temporarily allow the user to run sudo without a password
+  log_info "Granting temporary sudo access for $USERNAME"
   echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
   # Switch to the created user and install AUR packages
+  log_info "Switching to user $USERNAME to install AUR packages..."
   if ! runuser -u "$USERNAME" -- /bin/bash -c "
       # Install AUR packages using the selected helper
+      log_info \"Installing AUR packages using \$AUR_HELPER...\"
       if [[ \"\$AUR_HELPER\" == \"paru\" ]]; then
         if ! paru -S --noconfirm --needed - < ./aur_pkgs.lst; then
           log_error \"Failed to install AUR packages with \$AUR_HELPER\" \$?
           exit 1
         fi
-      elif [[ \"\$AUR_HELPER\" == \"yay\" ]]; then # Added yay
+      elif [[ \"\$AUR_HELPER\" == \"yay\" ]]; then
         if ! yay -S --noconfirm --needed - < ./aur_pkgs.lst; then
           log_error \"Failed to install AUR packages with \$AUR_HELPER\" \$?
           exit 1
@@ -1209,12 +1177,16 @@ install_aur_pkgs() {
     "; then
     log_error "Failed to install AUR packages as $USERNAME" $?
     # Remove the temporary sudoers entry in case of failure
+    log_info "Removing temporary sudo access for $USERNAME"
     sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
     exit 1
   fi
 
   # Remove the temporary sudoers entry
+  log_info "Removing temporary sudo access for $USERNAME"
   sed -i "/$USERNAME ALL=(ALL) NOPASSWD: ALL/d" /etc/sudoers
+
+  log_info "AUR packages installed successfully using $AUR_HELPER."
 }
 
 numlock_auto_on() {
@@ -1223,12 +1195,13 @@ numlock_auto_on() {
   # Updating Initramfs #
   #--------------------#
   "
-  log_info "Updating initramfs..."
+  log_info "Starting the initramfs update process..."
 
   # Check if mkinitcpio-numlock is installed via AUR helper
   if [[ -n "$AUR_HELPER" ]]; then  # Check if AUR_HELPER is set
+    log_info "Checking if mkinitcpio-numlock is installed using $AUR_HELPER..."
     if ! runuser -u "$USERNAME" -- /bin/bash -c "command -v $AUR_HELPER &> /dev/null && $AUR_HELPER -Qs mkinitcpio-numlock &> /dev/null"; then
-      log_warn "mkinitcpio-numlock not found (or $AUR_HELPER issue). Skipping numlock configuration."
+      log_warn "mkinitcpio-numlock not found (or issue with $AUR_HELPER). Skipping numlock configuration."
       return 0
     fi
   else
@@ -1236,27 +1209,43 @@ numlock_auto_on() {
     return 0
   fi
 
-
+  log_info "Updating mkinitcpio configuration to include numlock..."
   if ! sed -i 's/^HOOKS\s*=\s*(.*)/HOOKS=(base udev plymouth autodetect modconf numlock block encrypt lvm2 filesystems keyboard fsck)/' /etc/mkinitcpio.conf || \
      ! mkinitcpio -p linux; then
-    log_error "Failed to update initramfs" $?
+    log_error "Failed to update initramfs with numlock" $?
     exit 1
   fi
+
+  log_info "Initramfs updated successfully with numlock."
 }
 
 # --- Cleanup Function ---
 cleanup() {
-    log_info "Cleaning up..."
+    log_info "Starting cleanup process..."
 
     # Remove temporary files and directories created during the installation
-    rm -rf /mnt/global_functions.sh
-    rm -rf /mnt/chroot.sh
-    rm -rf /mnt/pkgs.lst
-    rm -rf /mnt/aur_pkgs.lst
-    rm -rf /mnt/tmp
-    rm -rf /mnt/grub-themes
+    log_info "Removing temporary files and directories..."
+    rm -rf /mnt/global_functions.sh && log_info "/mnt/global_functions.sh removed."
+    rm -rf /mnt/chroot.sh && log_info "/mnt/chroot.sh removed."
+    rm -rf /mnt/log.sh && log_info "/mnt/log.sh removed."
+    rm -rf /mnt/pkgs.lst && log_info "/mnt/pkgs.lst removed."
+    rm -rf /mnt/aur_pkgs.lst && log_info "/mnt/aur_pkgs.lst removed."
+    rm -rf /mnt/tmp && log_info "/mnt/tmp removed."
+    rm -rf /mnt/grub-themes && log_info "/mnt/grub-themes removed."
 
     # Copy log files to the installed system
-    cp /var/log/archl4tm.log /mnt/var/log/archl4tm.log
-    cp /var/log/archl4tm_error.log /mnt/var/log/archl4tm_error.log
+    log_info "Copying log files to the installed system..."
+    if ! cp /var/log/archl4tm.log /mnt/var/log/archl4tm.log; then
+        log_error "Failed to copy archl4tm.log" $?
+    else
+        log_info "/var/log/archl4tm.log copied successfully."
+    fi
+
+    if ! cp /var/log/archl4tm_error.log /mnt/var/log/archl4tm_error.log; then
+        log_error "Failed to copy archl4tm_error.log" $?
+    else
+        log_info "/var/log/archl4tm_error.log copied successfully."
+    fi
+
+    log_info "Cleanup process completed."
 }
