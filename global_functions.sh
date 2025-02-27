@@ -1130,11 +1130,5 @@ cleanup() {
         log_info "/var/log/archl4tm.log copied successfully."
     fi
 
-    if ! cp /var/log/archl4tm_error.log /mnt/var/log/archl4tm_error.log; then
-        log_error "Failed to copy archl4tm_error.log" $?
-    else
-        log_info "/var/log/archl4tm_error.log copied successfully."
-    fi
-
     log_info "Cleanup process completed."
 }
