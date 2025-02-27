@@ -6,8 +6,8 @@ LOG_FILE="/var/log/archl4tm.log"
 # ANSI color codes for readability
 RED="\e[31m"
 YELLOW="\e[33m"
-BLUE="\e[34m"   # DEBUG is now BLUE
-GREEN="\e[32m"  # INFO is now GREEN
+BLUE="\e[34m"
+GREEN="\e[32m"
 RESET="\e[0m"
 
 # Function to log messages with details
@@ -30,10 +30,10 @@ log_message() {
     # Determine log level color
     local color=""
     case "$level" in
-        INFO) color="$GREEN" ;;  # Now green
+        INFO) color="$GREEN" ;;
         WARN) color="$YELLOW" ;;
         ERROR) color="$RED" ;;
-        DEBUG) color="$BLUE" ;;  # Now blue
+        DEBUG) color="$BLUE" ;;
         *) color="$RESET" ;;
     esac
 
