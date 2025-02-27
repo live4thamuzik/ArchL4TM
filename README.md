@@ -69,3 +69,25 @@ The following settings are enabled in `/etc/pacman.conf`:
    station wlan0 get-networks
    station wlan0 connect "NETWORK_NAME"
    exit
+
+4. **Check IP Address**:
+   ```bash
+   ip addr show
+
+5. **Ping Test**:
+   ```bash
+   ping -c 4 archlinux.org
+
+6. **Install Git**:
+   ```bash
+   pacman -Sy git
+
+7. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/live4thamuzik/ArchL4TM.git
+   
+8. **Run the Installation Script**:
+   ```bash
+   cd ArchL4TM/
+   chmod +x *.sh
+   ./install.sh
