@@ -92,7 +92,7 @@ genfstab -U -p /mnt >> /mnt/etc/fstab
 
 # --- Copy sources to /mnt and make script executable
 log_info "Copying resources for chroot..."
-cp -r ./global_functions.sh ./chroot.sh ./pkgs.lst ./aur_pkgs.lst ./hypr.sh ./Source/arch-glow /mnt
+cp -r ./log.sh ./global_functions.sh ./chroot.sh ./pkgs.lst ./aur_pkgs.lst ./Source/arch-glow /mnt
 chmod +x /mnt/*.sh
 
 # --- Chroot Setup ---
