@@ -799,7 +799,8 @@ configure_grub() {
   sed -i "/^GRUB_CMDLINE_LINUX_DEFAULT=\"loglevel=3 quiet\"/c\GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash cryptdevice=UUID=${CRYPT_UUID}:volgroup0 root=UUID=${ROOT_UUID} loglevel=3\"" /etc/default/grub 
   sed -i '/^#GRUB_ENABLE_CRYPTODISK=y/c\GRUB_ENABLE_CRYPTODISK=y' /etc/default/grub 
   sed -i '/^GRUB_GFXMODE=auto/c\GRUB_GFXMODE=1280x1024x32,auto' /etc/default/grub 
-  sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub 
+  sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub
+  sed -i '/^#GRUB_DISABLE_OS_PROBER=false/c\GRUB_DISABLE_OS_PROBER=false' /etc/default/grub
 
   # Locale and GRUB configuration
   if ! cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale.en.mo || \
