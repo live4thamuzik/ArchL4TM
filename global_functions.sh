@@ -532,19 +532,19 @@ setup_lvm() {
     fi
 
     # Create /boot/EFI directory and mount partition 1
-    if ! mkdir -p /mnt/boot/EFI; then
-        log_error "Failed to create /boot/EFI directory" $?
+    if ! mkdir -p /mnt/boot/efi; then
+        log_error "Failed to create /boot/efi directory" $?
         exit 1
     fi
 
     if [[ $disk =~ nvme ]]; then
-        if ! mount "${disk}p1" /mnt/boot/EFI; then
-            log_error "Failed to mount /boot/EFI on ${disk}p1" $?
+        if ! mount "${disk}p1" /mnt/boot/efi; then
+            log_error "Failed to mount /boot/efi on ${disk}p1" $?
             exit 1
         fi
     else
-        if ! mount "${disk}1" /mnt/boot/EFI; then
-            log_error "Failed to mount /boot/EFI on ${disk}1" $?
+        if ! mount "${disk}1" /mnt/boot/efi; then
+            log_error "Failed to mount /boot/efi on ${disk}1" $?
             exit 1
         fi
     fi
@@ -798,7 +798,7 @@ configure_grub() {
   sed -i '/^GRUB_TIMEOUT=5/c\GRUB_TIMEOUT=3' /etc/default/grub 
   sed -i "/^GRUB_CMDLINE_LINUX_DEFAULT=\"loglevel=3 quiet\"/c\GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash cryptdevice=UUID=${CRYPT_UUID}:volgroup0 root=UUID=${ROOT_UUID} loglevel=3\"" /etc/default/grub 
   sed -i '/^#GRUB_ENABLE_CRYPTODISK=y/c\GRUB_ENABLE_CRYPTODISK=y' /etc/default/grub 
-  sed -i '/^GRUB_GFXMODE=auto/c\GRUB_GFXMODE=1280x1024x32,auto' /etc/default/grub 
+  sed -i '/^GRUB_GFXMODE=auto/c\GRUB_GFXMODE=1920x1440x32' /etc/default/grub 
   sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub
  
   # Locale and GRUB configuration
