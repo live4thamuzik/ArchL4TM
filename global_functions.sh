@@ -800,8 +800,7 @@ configure_grub() {
   sed -i '/^#GRUB_ENABLE_CRYPTODISK=y/c\GRUB_ENABLE_CRYPTODISK=y' /etc/default/grub 
   sed -i '/^GRUB_GFXMODE=auto/c\GRUB_GFXMODE=1280x1024x32,auto' /etc/default/grub 
   sed -i '/^#GRUB_SAVEDEFAULT=true/c\GRUB_SAVEDEFAULT=true' /etc/default/grub
-  sed -i '/^#GRUB_DISABLE_OS_PROBER=false/c\GRUB_DISABLE_OS_PROBER=false' /etc/default/grub
-
+ 
   # Locale and GRUB configuration
   if ! cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale.en.mo || \
      ! grub-mkconfig -o /boot/grub/grub.cfg; then
@@ -822,7 +821,7 @@ install_gpu_drivers() {
   fi
 
   for gpu in "${gpus[@]}"; do
-    vendor=$(echo "$gpu" | grep -oE "(NVIDIA|AMD|Radeon|Vulkan)" | head -n 1)
+    vendor=$(echo "$gpu" | grep -oE "(NVIDIA|Advanced Micro Devices)" | head -n 1)
 
     if [[ "$vendor" == "NVIDIA" ]]; then
       log_info "NVIDIA GPU detected:"
@@ -868,19 +867,14 @@ install_gpu_drivers() {
       log_info "NVIDIA drivers installed and configured successfully."
       return 0
 
-    elif [[ "$vendor" == "AMD" || "$vendor" == "Radeon" || "$vendor" == "Vulkan" ]]; then
+    elif [[ "$vendor" == "Advanced Micro Devices" ]]; then
       log_info "AMD Radeon GPU detected:"
       log_info "$gpu"
 
       log_info "Installing Radeon drivers and related packages..."
-      if ! pacman -S --noconfirm --needed mesa mesa-utils amdgpu amdgpu-firmware vulkan-radeon xf86-video-amdgpu lib32-mesa lib32-vulkan-radeon; then
+      if ! pacman -S --noconfirm --needed vulkan-radeon lib32-vulkan-radeon; then
         log_error "Failed to install Radeon packages" $?
         return 1
-      fi
-
-      # Check for amdgpu kernel module *only if a GPU was detected*
-      if ! lsmod | grep amdgpu; then
-        log_warn "amdgpu kernel module not loaded. Reboot may be required."
       fi
 
       log_info "Radeon drivers and related packages installed successfully."
