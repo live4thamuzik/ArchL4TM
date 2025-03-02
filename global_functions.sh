@@ -841,8 +841,7 @@ install_gpu_drivers() {
       fi
 
       log_info "Updating GRUB configuration..."
-
-      # Ensure DISK variable is available in the environment
+      
       if [[ $DISK == "/dev/nvme"* ]]; then
         PART_PREFIX="p"
       else
@@ -872,12 +871,42 @@ install_gpu_drivers() {
       log_info "$gpu"
 
       log_info "Installing Radeon drivers and related packages..."
-      if ! pacman -S --noconfirm --needed vulkan-radeon lib32-vulkan-radeon; then
+      if ! pacman -S --noconfirm --needed mesa lib32-mesa xf86-video-amdgpu vulkan-radeon lib32-vulkan-radeon linux-firmware mesa-utils; then
         log_error "Failed to install Radeon packages" $?
         return 1
       fi
 
-      log_info "Radeon drivers and related packages installed successfully."
+      log_info "Updating initramfs to include amdgpu..."
+      if ! sed -i '/^MODULES=()/c\MODULES=(amdgpu)' /etc/mkinitcpio.conf || \
+       ! mkinitcpio -P; then
+        log_error "Failed to update initramfs with AMD modules" $?
+        return 1
+      fi
+
+      log_info "Updating GRUB configuration..."
+      
+      if [[ $DISK == "/dev/nvme"* ]]; then
+        PART_PREFIX="p"
+      else
+        PART_PREFIX=""
+      fi
+
+      ENCRYPTED_PARTITION="${DISK}${PART_PREFIX}3"
+      CRYPT_UUID=$(blkid -s UUID -o value "${ENCRYPTED_PARTITION}")
+      ROOT_UUID=$(blkid -s UUID -o value /dev/volgroup0/lv_root)
+
+      if [[ -z $CRYPT_UUID || -z $ROOT_UUID ]]; then
+        log_error "Failed to retrieve UUID's for cryptdevice or root partition" $?
+        return 1
+      fi
+
+      if ! sed -i 's|^GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' loglevel=3"|GRUB_CMDLINE_LINUX_DEFAULT="quiet splash cryptdevice=UUID='"${CRYPT_UUID}"':volgroup0 root=UUID='"${ROOT_UUID}"' amdgpu.dc=1 loglevel=3"|' /etc/default/grub || \
+       ! grub-mkconfig -o /boot/grub/grub.cfg; then
+        log_error "Failed to update GRUB configuration with AMD settings" $?
+        return 1
+      fi
+
+      log_info "AMD Radeon drivers installed and configured successfully."
       return 0
 
     else
