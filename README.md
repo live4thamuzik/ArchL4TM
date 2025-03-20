@@ -22,6 +22,8 @@ ArchL4TM is a **semi-interactive minimal Arch Linux installation script** design
 
 ### Default Packages:
 - `pacman-contrib`, `reflector`, `rsync`, `base-devel`, `networkmanager`, `lvm2`, `pipewire`, `btop`, `man-db`, `man-pages`, `texinfo`, `tldr`, `bash-completion`, `openssh`, `git`, `neovim`, `grub`, `efibootmgr`, `python`, `debugedit`, etc.
+- Pacman packages can be added or removed by editing `pkgs.lst`.
+- AUR packages can be added by editing`aur_pkgs.lst`. **Warning:** `mkinitcpio-numlock` is installed and configured in `/etc/mkinitcpio.conf` if an AUR Helper is selected. Removing `mkinitcpio-numlock` may cause errors.
 
 ### Microcode Detection:
 - Automatically detects and installs the appropriate **microcode** for **AMD** and **Intel** processors using `lscpu`.
