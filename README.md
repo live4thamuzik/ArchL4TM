@@ -2,7 +2,7 @@
 
 ArchL4TM is a **semi-interactive minimal Arch Linux installation script** designed for advanced users. It automates Arch Linux installation on EFI systems with **LVM**, **LUKS**, and **ext4**, without swap.
 
-**Warning:** This script is not intended for beginners! If you're new to Arch Linux, please consult the [Arch Linux Installation Guide]([https://wiki.archlinux.org/title/Installation_guide](https://wiki.archlinux.org/title/Installation_guide)) and ensure you understand the installation process before using this script.
+**Warning:** This script is not intended for beginners! If you're new to Arch Linux, please consult the [Arch Linux Installation Guide](https://wiki.archlinux.org/title/Installation_guide) and ensure you understand the installation process before using this script.
 
 ## Features
 
