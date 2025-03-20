@@ -50,7 +50,7 @@ The following settings are enabled in `/etc/pacman.conf`:
 
 ### Desktop Environments:
 - **Server**: No GUI, only core packages.
-- **Hyprland**: Includes Hyprland and custom dotfiles from [HyDE](https://github.com/live4thamuzik/L4TM-HyDE). **TESTING - Not fully working** 
+- **Hyprland**: Includes Hyprland and custom dotfiles from [HyDE](https://github.com/live4thamuzik/L4TM-HyDE). **TESTING** 
 - **GNOME**: Full GNOME desktop environment.
 - **KDE (Plasma)**: Full KDE Plasma desktop environment.
 
